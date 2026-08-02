@@ -4,6 +4,7 @@ import {
   updateProfileService,
   getUserProfileService,
   updateAvatarService,
+  updateCoverImageService,
 } from "../services/user.service.js";
 
 // ====================================
@@ -43,8 +44,6 @@ export const getUserProfile = asyncHandler(async (req, res) => {
 // Update Avatar
 // ====================================
 export const updateAvatar = asyncHandler(async (req, res) => {
-  
-
   const avatarLocalPath = req.file?.path;
 
   const updatedUser = await updateAvatarService(
@@ -57,6 +56,26 @@ export const updateAvatar = asyncHandler(async (req, res) => {
       200,
       updatedUser,
       "Avatar updated successfully"
+    )
+  );
+});
+
+// ====================================
+// Update Cover Image
+// ====================================
+export const updateCoverImage = asyncHandler(async (req, res) => {
+  const coverImageLocalPath = req.file?.path;
+
+  const updatedUser = await updateCoverImageService(
+    req.user._id,
+    coverImageLocalPath
+  );
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      updatedUser,
+      "Cover image updated successfully"
     )
   );
 });

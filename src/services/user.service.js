@@ -54,9 +54,6 @@ export const getUserProfileService = async (username) => {
 // ====================================
 // Update Avatar
 // ====================================
-// ====================================
-// Update Avatar
-// ====================================
 export const updateAvatarService = async (
   userId,
   avatarLocalPath
@@ -75,6 +72,42 @@ export const updateAvatarService = async (
     userId,
     {
       avatar: avatar.secure_url,
+    },
+    {
+      new: true,
+    }
+  ).select("-password -refreshToken");
+
+  if (!updatedUser) {
+    throw new ApiError(404, "User not found");
+  }
+
+  return updatedUser;
+};
+
+// ====================================
+// Update Cover Image
+// ====================================
+export const updateCoverImageService = async (
+  userId,
+  coverImageLocalPath
+) => {
+  if (!coverImageLocalPath) {
+    throw new ApiError(400, "Cover image is required");
+  }
+
+  const coverImage = await uploadOnCloudinary(
+    coverImageLocalPath
+  );
+
+  if (!coverImage) {
+    throw new ApiError(500, "Failed to upload cover image");
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    {
+      coverImage: coverImage.secure_url,
     },
     {
       new: true,

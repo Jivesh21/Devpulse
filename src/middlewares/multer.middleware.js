@@ -10,13 +10,16 @@ const storage = multer.diskStorage({
     const uniqueSuffix =
       Date.now() + "-" + Math.round(Math.random() * 1e9);
 
-    cb(
-      null,
-      uniqueSuffix + path.extname(file.originalname)
-    );
+    cb(null, uniqueSuffix + path.extname(file.originalname));
   },
 });
 
+const fileFilter = (req, file, cb) => {
+  console.log("Incoming field:", file.fieldname);
+  cb(null, true);
+};
+
 export const upload = multer({
   storage,
+  fileFilter,
 });

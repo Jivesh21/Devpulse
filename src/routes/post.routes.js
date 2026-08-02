@@ -7,11 +7,21 @@ import {
   updateAvatar,
   updateCoverImage,
 } from "../controllers/user.controller.js";
+import { getUserPosts } from "../controllers/post.controller.js";
 
 const router = Router();
 
+// ====================================
 // Protected Routes
+// ====================================
 router.patch("/profile", verifyJWT, updateProfile);
+
+router.patch(
+  "/avatar",
+  verifyJWT,
+  upload.single("avatar"),
+  updateAvatar
+);
 
 router.patch(
   "/cover-image",
@@ -20,7 +30,10 @@ router.patch(
   updateCoverImage
 );
 
-// Public Route
+// ====================================
+// Public Routes
+// ====================================
+router.get("/:username/posts", getUserPosts);
 router.get("/:username", getUserProfile);
 
 export default router;

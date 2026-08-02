@@ -1,14 +1,15 @@
 const errorHandler = (err, req, res, next) => {
-    const statusCode = err.statusCode || 500;
+  console.error(" Error Stack:");
+  console.error(err.stack);
 
-    const message = err.message || "Internal Server Error";
+  const statusCode = err.statusCode || 500;
 
-    res.status(statusCode).json({
-        success: false,
-        statusCode,
-        message,
-        errors: err.errors || []
-    });
+  res.status(statusCode).json({
+    success: false,
+    statusCode,
+    message: err.message || "Internal Server Error",
+    errors: err.errors || [],
+  });
 };
 
 export default errorHandler;

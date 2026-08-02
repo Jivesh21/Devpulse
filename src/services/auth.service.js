@@ -42,3 +42,35 @@ export const registerUser = async (userData) => {
     accessToken,
   };
 };
+
+// =========================
+// Login User
+// =========================
+export const loginUser = async (userData) => {
+  const { email, password } = userData;
+
+  // Find user and include password
+  const user = await User.findOne({ email }).select("+password");
+
+  if (!user) {
+    throw new ApiError(401, "Invalid credentials");
+  }
+
+  // Compare password
+  const isPasswordValid = await user.isPasswordCorrect(password);
+
+  if (!isPasswordValid) {
+    throw new ApiError(401, "Invalid credentials");
+  }
+
+  // Generate Access Token
+  const accessToken = user.generateAccessToken();
+
+  // Remove password before sending response
+  user.password = undefined;
+
+  return {
+    user,
+    accessToken,
+  };
+};

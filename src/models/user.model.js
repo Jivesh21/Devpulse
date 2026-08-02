@@ -49,9 +49,51 @@ const userSchema = new Schema(
       minlength: [8, "Password must be at least 8 characters long"],
       select: false,
     },
-    refreshToken: {
+bio: {
+  type: String,
+  trim: true,
+  maxlength: 250,
+  default: "",
+},
+
+avatar: {
+  type: String,
+  default: "",
+},
+
+coverImage: {
+  type: String,
+  default: "",
+},
+
+skills: [
+  {
     type: String,
-    select: false,
+    trim: true,
+  },
+],
+
+github: {
+  type: String,
+  trim: true,
+  default: "",
+},
+
+linkedin: {
+  type: String,
+  trim: true,
+  default: "",
+},
+
+website: {
+  type: String,
+  trim: true,
+  default: "",
+},
+
+refreshToken: {
+  type: String,
+  select: false,
 },
   },
   {

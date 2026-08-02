@@ -80,8 +80,13 @@ export const logout = asyncHandler(async (req, res) => {
 // Refresh Access Token
 // ======================
 export const refreshAccessToken = asyncHandler(async (req, res) => {
+  console.log("Cookies:", req.cookies);
+  console.log("Body:", req.body);
+
   const incomingRefreshToken =
     req.cookies?.refreshToken || req.body?.refreshToken;
+
+  console.log("Incoming Refresh Token:", incomingRefreshToken);
 
   const { accessToken, refreshToken } =
     await refreshAccessTokenService(incomingRefreshToken);

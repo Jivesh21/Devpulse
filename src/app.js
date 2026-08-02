@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import authRoutes from "./routes/auth.routes.js";
+import errorHandler from "./middlewares/error.middleware.js";
 
 const app = express();
 
@@ -32,5 +34,7 @@ app.get("/", (req, res) => {
     message: "Welcome to DevPulse API ",
   });
 });
+app.use("/api/v1/auth", authRoutes);
+app.use(errorHandler);
 
 export default app;

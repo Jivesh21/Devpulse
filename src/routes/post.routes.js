@@ -2,38 +2,50 @@ import { Router } from "express";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import {
-  updateProfile,
-  getUserProfile,
-  updateAvatar,
-  updateCoverImage,
-} from "../controllers/user.controller.js";
-import { getUserPosts } from "../controllers/post.controller.js";
+  createPost,
+  getAllPosts,
+  getPostById,
+  updatePost,
+  deletePost,
+} from "../controllers/post.controller.js";
 
 const router = Router();
 
 // ====================================
-// Protected Routes
-// ====================================
-router.patch("/profile", verifyJWT, updateProfile);
-
-router.patch(
-  "/avatar",
-  verifyJWT,
-  upload.single("avatar"),
-  updateAvatar
-);
-
-router.patch(
-  "/cover-image",
-  verifyJWT,
-  upload.single("coverImage"),
-  updateCoverImage
-);
-
-// ====================================
 // Public Routes
 // ====================================
-router.get("/:username/posts", getUserPosts);
-router.get("/:username", getUserProfile);
+
+// Get Feed
+router.get("/", getAllPosts);
+
+// Get Single Post
+router.get("/:postId", getPostById);
+
+// ====================================
+// Protected Routes
+// ====================================
+
+// Create Post
+router.post(
+  "/",
+  verifyJWT,
+  upload.single("image"),
+  createPost
+);
+
+// Update Post
+router.patch(
+  "/:postId",
+  verifyJWT,
+  upload.single("image"),
+  updatePost
+);
+
+// Delete Post
+router.delete(
+  "/:postId",
+  verifyJWT,
+  deletePost
+);
 
 export default router;

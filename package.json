@@ -1,5 +1,5 @@
 {
-  "name": "devpulse_backend",
+"name": "devpulse-backend",
   "version": "1.0.0",
   "description": "Devpulse Project",
   "keywords": [
@@ -9,11 +9,12 @@
   ],
   "license": "ISC",
   "author": "Jivesh Sharma",
-  "type": "commonjs",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "type": "module",
+  "main": "src/server.js",
+"scripts": {
+  "dev": "nodemon src/server.js",
+  "start": "node src/server.js"
+},
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",

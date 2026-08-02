@@ -5,8 +5,12 @@ import {
   registerUser,
   loginUser,
   logoutUser,
+  refreshAccessTokenService,
 } from "../services/auth.service.js";
 
+// ======================
+// Register
+// ======================
 export const register = asyncHandler(async (req, res) => {
   const result = await registerUser(req.body);
 
@@ -19,6 +23,9 @@ export const register = asyncHandler(async (req, res) => {
   );
 });
 
+// ======================
+// Login
+// ======================
 export const login = asyncHandler(async (req, res) => {
   const result = await loginUser(req.body);
 
@@ -37,6 +44,9 @@ export const login = asyncHandler(async (req, res) => {
     );
 });
 
+// ======================
+// Get Current User
+// ======================
 export const getCurrentUser = asyncHandler(async (req, res) => {
   return res.status(200).json(
     new ApiResponse(
@@ -47,6 +57,9 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
   );
 });
 
+// ======================
+// Logout
+// ======================
 export const logout = asyncHandler(async (req, res) => {
   await logoutUser(req.user._id);
 
@@ -59,6 +72,29 @@ export const logout = asyncHandler(async (req, res) => {
         200,
         null,
         "User logged out successfully"
+      )
+    );
+});
+
+// ======================
+// Refresh Access Token
+// ======================
+export const refreshAccessToken = asyncHandler(async (req, res) => {
+  const incomingRefreshToken =
+    req.cookies?.refreshToken || req.body?.refreshToken;
+
+  const { accessToken, refreshToken } =
+    await refreshAccessTokenService(incomingRefreshToken);
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, cookieOptions)
+    .cookie("refreshToken", refreshToken, cookieOptions)
+    .json(
+      new ApiResponse(
+        200,
+        null,
+        "Access token refreshed successfully"
       )
     );
 });

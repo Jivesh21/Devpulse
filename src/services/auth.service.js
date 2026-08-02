@@ -1,7 +1,10 @@
+import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
 import ApiError from "../utils/ApiError.js";
 
-
+// ====================================
+// Generate Access & Refresh Tokens
+// ====================================
 const generateAccessAndRefreshTokens = async (userId) => {
   const user = await User.findById(userId).select("+refreshToken");
 
@@ -22,10 +25,12 @@ const generateAccessAndRefreshTokens = async (userId) => {
   };
 };
 
+// ====================================
+// Register User
+// ====================================
 export const registerUser = async (userData) => {
   const { fullName, username, email, password } = userData;
 
-  // Check if email or username already exists
   const existingUser = await User.findOne({
     $or: [{ email }, { username }],
   });
@@ -40,7 +45,6 @@ export const registerUser = async (userData) => {
     }
   }
 
-  // Create user
   const user = await User.create({
     fullName,
     username,
@@ -48,56 +52,58 @@ export const registerUser = async (userData) => {
     password,
   });
 
-  // Fetch created user (password is excluded because of select: false)
   const createdUser = await User.findById(user._id);
 
   if (!createdUser) {
     throw new ApiError(500, "Failed to create user");
   }
 
-  // Generate Access Token
-  const accessToken = createdUser.generateAccessToken();
+  const { accessToken, refreshToken } =
+    await generateAccessAndRefreshTokens(createdUser._id);
 
   return {
     user: createdUser,
     accessToken,
+    refreshToken,
   };
 };
 
-// =========================
+// ====================================
 // Login User
-// =========================
+// ====================================
 export const loginUser = async (userData) => {
   const { email, password } = userData;
 
-  // Find user and include password
-  const user = await User.findOne({ email }).select("+password");
+  const user = await User.findOne({ email }).select(
+    "+password +refreshToken"
+  );
 
   if (!user) {
     throw new ApiError(401, "Invalid credentials");
   }
 
-  // Compare password
   const isPasswordValid = await user.isPasswordCorrect(password);
 
   if (!isPasswordValid) {
     throw new ApiError(401, "Invalid credentials");
   }
 
-const { accessToken, refreshToken } =
-  await generateAccessAndRefreshTokens(user._id);
+  const { accessToken, refreshToken } =
+    await generateAccessAndRefreshTokens(user._id);
 
-// Remove sensitive fields before sending response
-user.password = undefined;
-user.refreshToken = undefined;
+  user.password = undefined;
+  user.refreshToken = undefined;
 
-return {
-  user,
-  accessToken,
-  refreshToken,
+  return {
+    user,
+    accessToken,
+    refreshToken,
+  };
 };
-}; // ✅ This closes loginUser
 
+// ====================================
+// Logout User
+// ====================================
 export const logoutUser = async (userId) => {
   await User.findByIdAndUpdate(
     userId,
@@ -110,4 +116,43 @@ export const logoutUser = async (userId) => {
       new: true,
     }
   );
+};
+
+// ====================================
+// Refresh Access Token
+// ====================================
+export const refreshAccessTokenService = async (
+  incomingRefreshToken
+) => {
+  if (!incomingRefreshToken) {
+    throw new ApiError(401, "Unauthorized request");
+  }
+
+  const decodedToken = jwt.verify(
+    incomingRefreshToken,
+    process.env.JWT_REFRESH_SECRET
+  );
+
+  const user = await User.findById(decodedToken._id).select(
+    "+refreshToken"
+  );
+
+  if (!user) {
+    throw new ApiError(401, "Invalid refresh token");
+  }
+
+  if (incomingRefreshToken !== user.refreshToken) {
+    throw new ApiError(
+      401,
+      "Refresh token is expired or already used"
+    );
+  }
+
+  const { accessToken, refreshToken } =
+    await generateAccessAndRefreshTokens(user._id);
+
+  return {
+    accessToken,
+    refreshToken,
+  };
 };

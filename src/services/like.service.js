@@ -5,10 +5,7 @@ import ApiError from "../utils/ApiError.js";
 // ====================================
 // Toggle Like
 // ====================================
-export const toggleLikeService = async (
-  postId,
-  userId
-) => {
+export const toggleLikeService = async (postId, userId) => {
   const post = await Post.findById(postId);
 
   if (!post) {
@@ -57,4 +54,44 @@ export const getLikeCountService = async (postId) => {
   return {
     likeCount,
   };
+};
+
+// ====================================
+// Get Like Status
+// ====================================
+export const getLikeStatusService = async (postId, userId) => {
+  const post = await Post.findById(postId);
+
+  if (!post) {
+    throw new ApiError(404, "Post not found");
+  }
+
+  const like = await Like.findOne({
+    post: postId,
+    user: userId,
+  });
+
+  return {
+    isLiked: !!like,
+  };
+};
+
+// ====================================
+// Get Users Who Liked
+// ====================================
+export const getLikedUsersService = async (postId) => {
+  const post = await Post.findById(postId);
+
+  if (!post) {
+    throw new ApiError(404, "Post not found");
+  }
+
+  const likes = await Like.find({
+    post: postId,
+  }).populate(
+    "user",
+    "fullName username avatar"
+  );
+
+  return likes.map((like) => like.user);
 };

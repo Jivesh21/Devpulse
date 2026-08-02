@@ -3,6 +3,7 @@ import { verifyJWT } from "../middlewares/auth.middleware.js";
 import {
   toggleLike,
   getLikeCount,
+  getLikeStatus,
 } from "../controllers/like.controller.js";
 
 const router = Router();
@@ -18,7 +19,14 @@ router.get("/:postId/count", getLikeCount);
 // Protected Routes
 // ====================================
 
-// Toggle Like / Unlike
+// Check Like Status
+router.get(
+  "/:postId/status",
+  verifyJWT,
+  getLikeStatus
+);
+
+// Toggle Like
 router.post(
   "/:postId",
   verifyJWT,

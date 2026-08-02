@@ -3,6 +3,7 @@ import ApiResponse from "../utils/ApiResponse.js";
 import {
   toggleLikeService,
   getLikeCountService,
+  getLikeStatusService,
 } from "../services/like.service.js";
 
 // ====================================
@@ -36,6 +37,24 @@ export const getLikeCount = asyncHandler(async (req, res) => {
       200,
       result,
       "Like count fetched successfully"
+    )
+  );
+});
+
+// ====================================
+// Get Like Status
+// ====================================
+export const getLikeStatus = asyncHandler(async (req, res) => {
+  const result = await getLikeStatusService(
+    req.params.postId,
+    req.user._id
+  );
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      result,
+      "Like status fetched successfully"
     )
   );
 });

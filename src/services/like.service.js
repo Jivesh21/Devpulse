@@ -9,20 +9,17 @@ export const toggleLikeService = async (
   postId,
   userId
 ) => {
-  // Check if post exists
   const post = await Post.findById(postId);
 
   if (!post) {
     throw new ApiError(404, "Post not found");
   }
 
-  // Check if already liked
   const existingLike = await Like.findOne({
     post: postId,
     user: userId,
   });
 
-  // Unlike
   if (existingLike) {
     await Like.findByIdAndDelete(existingLike._id);
 
@@ -32,7 +29,6 @@ export const toggleLikeService = async (
     };
   }
 
-  // Like
   await Like.create({
     post: postId,
     user: userId,
@@ -41,5 +37,24 @@ export const toggleLikeService = async (
   return {
     liked: true,
     message: "Post liked successfully",
+  };
+};
+
+// ====================================
+// Get Like Count
+// ====================================
+export const getLikeCountService = async (postId) => {
+  const post = await Post.findById(postId);
+
+  if (!post) {
+    throw new ApiError(404, "Post not found");
+  }
+
+  const likeCount = await Like.countDocuments({
+    post: postId,
+  });
+
+  return {
+    likeCount,
   };
 };

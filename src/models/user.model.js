@@ -49,6 +49,10 @@ const userSchema = new Schema(
       minlength: [8, "Password must be at least 8 characters long"],
       select: false,
     },
+    refreshToken: {
+    type: String,
+    select: false,
+},
   },
   {
     timestamps: true,
@@ -77,6 +81,17 @@ userSchema.methods.generateAccessToken = function () {
     process.env.JWT_SECRET,
     {
       expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+    }
+  );
+};
+userSchema.methods.generateRefreshToken = function () {
+  return jwt.sign(
+    {
+      _id: this._id,
+    },
+    process.env.JWT_REFRESH_SECRET,
+    {
+      expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
     }
   );
 };

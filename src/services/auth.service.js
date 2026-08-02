@@ -1,6 +1,27 @@
 import User from "../models/user.model.js";
 import ApiError from "../utils/ApiError.js";
 
+
+const generateAccessAndRefreshTokens = async (userId) => {
+  const user = await User.findById(userId).select("+refreshToken");
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const accessToken = user.generateAccessToken();
+  const refreshToken = user.generateRefreshToken();
+
+  user.refreshToken = refreshToken;
+
+  await user.save({ validateBeforeSave: false });
+
+  return {
+    accessToken,
+    refreshToken,
+  };
+};
+
 export const registerUser = async (userData) => {
   const { fullName, username, email, password } = userData;
 
@@ -63,14 +84,30 @@ export const loginUser = async (userData) => {
     throw new ApiError(401, "Invalid credentials");
   }
 
-  // Generate Access Token
-  const accessToken = user.generateAccessToken();
+const { accessToken, refreshToken } =
+  await generateAccessAndRefreshTokens(user._id);
 
-  // Remove password before sending response
-  user.password = undefined;
+// Remove sensitive fields before sending response
+user.password = undefined;
+user.refreshToken = undefined;
 
-  return {
-    user,
-    accessToken,
-  };
+return {
+  user,
+  accessToken,
+  refreshToken,
+};
+}; // ✅ This closes loginUser
+
+export const logoutUser = async (userId) => {
+  await User.findByIdAndUpdate(
+    userId,
+    {
+      $unset: {
+        refreshToken: 1,
+      },
+    },
+    {
+      new: true,
+    }
+  );
 };

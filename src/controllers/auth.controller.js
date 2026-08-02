@@ -1,6 +1,11 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiResponse from "../utils/ApiResponse.js";
-import { registerUser, loginUser } from "../services/auth.service.js";
+import cookieOptions from "../utils/cookieOptions.js";
+import {
+  registerUser,
+  loginUser,
+  logoutUser,
+} from "../services/auth.service.js";
 
 export const register = asyncHandler(async (req, res) => {
   const result = await registerUser(req.body);
@@ -17,11 +22,43 @@ export const register = asyncHandler(async (req, res) => {
 export const login = asyncHandler(async (req, res) => {
   const result = await loginUser(req.body);
 
+  return res
+    .status(200)
+    .cookie("accessToken", result.accessToken, cookieOptions)
+    .cookie("refreshToken", result.refreshToken, cookieOptions)
+    .json(
+      new ApiResponse(
+        200,
+        {
+          user: result.user,
+        },
+        "User logged in successfully"
+      )
+    );
+});
+
+export const getCurrentUser = asyncHandler(async (req, res) => {
   return res.status(200).json(
     new ApiResponse(
       200,
-      result,
-      "User logged in successfully"
+      req.user,
+      "Current user fetched successfully"
     )
   );
+});
+
+export const logout = asyncHandler(async (req, res) => {
+  await logoutUser(req.user._id);
+
+  return res
+    .status(200)
+    .clearCookie("accessToken", cookieOptions)
+    .clearCookie("refreshToken", cookieOptions)
+    .json(
+      new ApiResponse(
+        200,
+        null,
+        "User logged out successfully"
+      )
+    );
 });

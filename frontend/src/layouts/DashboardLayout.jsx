@@ -4,31 +4,31 @@ import RightSidebar from "@/components/layout/RightSidebar";
 
 function DashboardLayout({ children }) {
   return (
-    <div className="min-h-screen bg-background">
-      {/* Fixed Navbar */}
-      <header className="fixed top-0 left-0 right-0 z-50 h-16 border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+    <div className="h-screen overflow-hidden bg-background">
+      {/* Navbar */}
+      <header className="fixed inset-x-0 top-0 z-50 h-16 border-b bg-background/90 backdrop-blur-xl">
         <Navbar />
       </header>
 
-      {/* Main Layout */}
-      <div className="flex pt-16">
+      {/* Dashboard */}
+      <div className="flex h-screen pt-16">
         {/* Left Sidebar */}
-        <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-20 shrink-0 border-r lg:block xl:w-64">
-          <div className="h-full overflow-y-auto p-3 xl:p-5">
+        <aside className="hidden w-20 shrink-0 border-r lg:block xl:w-64">
+          <div className="sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto p-4">
             <LeftSidebar />
           </div>
         </aside>
 
-        {/* Main Content */}
-        <main className="min-h-[calc(100vh-4rem)] flex-1">
-          <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
+        {/* Feed */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="mx-auto w-full max-w-3xl px-4 py-6">
             {children}
           </div>
         </main>
 
         {/* Right Sidebar */}
-        <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-80 shrink-0 border-l xl:block">
-          <div className="h-full overflow-y-auto p-5">
+        <aside className="hidden w-80 shrink-0 border-l xl:block">
+          <div className="sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto p-4">
             <RightSidebar />
           </div>
         </aside>

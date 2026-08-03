@@ -7,10 +7,11 @@ import {
   getFollowingCountService,
   getFollowStatusService,
   getFollowersService,
+  getFollowingService,
 } from "../services/follow.service.js";
 
 // ====================================
-// Toggle Follow / Unfollow
+// Toggle Follow
 // ====================================
 export const toggleFollow = asyncHandler(async (req, res) => {
   const result = await toggleFollowService(
@@ -96,6 +97,27 @@ export const getFollowers = asyncHandler(async (req, res) => {
       200,
       result,
       "Followers fetched successfully"
+    )
+  );
+});
+
+// ====================================
+// Get Following List
+// ====================================
+export const getFollowing = asyncHandler(async (req, res) => {
+  const { page = 1, limit = 10 } = req.query;
+
+  const result = await getFollowingService(
+    req.params.userId,
+    page,
+    limit
+  );
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      result,
+      "Following fetched successfully"
     )
   );
 });

@@ -2,7 +2,7 @@ import Post from "../models/post.model.js";
 import User from "../models/user.model.js";
 import ApiError from "../utils/ApiError.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
-
+import getPagination from "../utils/pagination.js";
 // ====================================
 // Create Post
 // ====================================
@@ -60,14 +60,18 @@ export const createPostService = async (
 // ====================================
 // Get All Posts (Paginated)
 // ====================================
+// ====================================
+// Get All Posts (Paginated)
+// ====================================
 export const getAllPostsService = async (
   page = 1,
   limit = 10
 ) => {
-  page = Number(page);
-  limit = Number(limit);
-
-  const skip = (page - 1) * limit;
+  const {
+    currentPage,
+    perPage,
+    skip,
+  } = getPagination(page, limit);
 
   const totalPosts = await Post.countDocuments();
 
@@ -76,18 +80,24 @@ export const getAllPostsService = async (
       "author",
       "fullName username avatar"
     )
-    .sort({ createdAt: -1 })
+    .sort({
+      createdAt: -1,
+    })
     .skip(skip)
-    .limit(limit);
+    .limit(perPage);
 
   return {
     posts,
-    page,
-    limit,
+    currentPage,
+    perPage,
     totalPosts,
-    totalPages: Math.ceil(totalPosts / limit),
-    hasNextPage: page * limit < totalPosts,
-    hasPrevPage: page > 1,
+    totalPages: Math.ceil(
+      totalPosts / perPage
+    ),
+    hasNextPage:
+      currentPage * perPage < totalPosts,
+    hasPrevPage:
+      currentPage > 1,
   };
 };
 // ====================================

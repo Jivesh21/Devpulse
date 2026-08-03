@@ -22,11 +22,30 @@ const followSchema = new Schema(
   }
 );
 
+// ====================================
+// Indexes
+// ====================================
+
 // Prevent duplicate follows
 followSchema.index(
-  { follower: 1, following: 1 },
-  { unique: true }
+  {
+    follower: 1,
+    following: 1,
+  },
+  {
+    unique: true,
+  }
 );
+
+// Followers queries
+followSchema.index({
+  following: 1,
+});
+
+// Following queries
+followSchema.index({
+  follower: 1,
+});
 
 const Follow = model("Follow", followSchema);
 

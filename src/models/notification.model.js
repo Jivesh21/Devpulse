@@ -43,6 +43,22 @@ const notificationSchema = new Schema(
   }
 );
 
+// ====================================
+// Indexes
+// ====================================
+
+// Fetch notifications for a user
+notificationSchema.index({
+  recipient: 1,
+  createdAt: -1,
+});
+
+// Fetch unread notifications
+notificationSchema.index({
+  recipient: 1,
+  isRead: 1,
+});
+
 const Notification = model(
   "Notification",
   notificationSchema

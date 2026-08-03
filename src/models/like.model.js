@@ -22,6 +22,10 @@ const likeSchema = new Schema(
   }
 );
 
+// ====================================
+// Indexes
+// ====================================
+
 // One user can like one post only once
 likeSchema.index(
   {
@@ -32,6 +36,13 @@ likeSchema.index(
     unique: true,
   }
 );
+
+// Optimizes:
+// Like.find({ post })
+// Like.countDocuments({ post })
+likeSchema.index({
+  post: 1,
+});
 
 const Like = model("Like", likeSchema);
 

@@ -8,7 +8,6 @@ const postSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: [true, "Post author is required"],
-      index: true,
     },
 
     content: {
@@ -41,6 +40,22 @@ const postSchema = new Schema(
     versionKey: false,
   }
 );
+
+// ====================================
+// Indexes
+// ====================================
+
+// Optimizes feed queries:
+// Post.find({ author: { $in: [...] } }).sort({ createdAt: -1 })
+postSchema.index({
+  author: 1,
+  createdAt: -1,
+});
+
+// Optimizes hashtag searches
+postSchema.index({
+  hashtags: 1,
+});
 
 const Post = model("Post", postSchema);
 

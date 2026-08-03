@@ -40,6 +40,22 @@ const commentSchema = new Schema(
   }
 );
 
+// ====================================
+// Indexes
+// ====================================
+
+// Optimizes:
+// Comment.find({ post })
+// Comment.countDocuments({ post })
+commentSchema.index({
+  post: 1,
+});
+
+// Optimizes replies (future feature)
+commentSchema.index({
+  parentComment: 1,
+});
+
 const Comment = model("Comment", commentSchema);
 
 export default Comment;

@@ -7,6 +7,8 @@ import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
 import FeedPage from "../pages/feed/FeedPage";
 
+import ProtectedRoute from "./ProtectedRoute";
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -22,7 +24,11 @@ const router = createBrowserRouter([
   },
   {
     path: "/feed",
-    element: <FeedPage />,
+    element: (
+      <ProtectedRoute>
+        <FeedPage />
+      </ProtectedRoute>
+    ),
   },
 ]);
 

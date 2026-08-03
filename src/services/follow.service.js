@@ -1,6 +1,7 @@
 import Follow from "../models/follow.model.js";
 import User from "../models/user.model.js";
 import ApiError from "../utils/ApiError.js";
+import { createNotificationService } from "./notification.service.js";
 
 // ====================================
 // Toggle Follow
@@ -30,6 +31,7 @@ export const toggleFollowService = async (
     following: targetUserId,
   });
 
+  // Unfollow
   if (existingFollow) {
     await Follow.findByIdAndDelete(existingFollow._id);
 
@@ -43,6 +45,15 @@ export const toggleFollowService = async (
   await Follow.create({
     follower: currentUserId,
     following: targetUserId,
+  });
+
+  // ====================================
+  // Create Notification Automatically
+  // ====================================
+  await createNotificationService({
+    recipient: targetUserId,
+    sender: currentUserId,
+    type: "follow",
   });
 
   return {
@@ -124,18 +135,15 @@ export const getFollowersService = async (
   page = 1,
   limit = 10
 ) => {
-  // Check if user exists
   const user = await User.findById(userId);
 
   if (!user) {
     throw new ApiError(404, "User not found");
   }
 
-  // Pagination
   const skip =
     (Number(page) - 1) * Number(limit);
 
-  // Fetch followers
   const followers = await Follow.find({
     following: userId,
   })
@@ -149,7 +157,6 @@ export const getFollowersService = async (
     .skip(skip)
     .limit(Number(limit));
 
-  // Count followers
   const totalFollowers =
     await Follow.countDocuments({
       following: userId,
@@ -173,18 +180,15 @@ export const getFollowingService = async (
   page = 1,
   limit = 10
 ) => {
-  // Check if user exists
   const user = await User.findById(userId);
 
   if (!user) {
     throw new ApiError(404, "User not found");
   }
 
-  // Pagination
   const skip =
     (Number(page) - 1) * Number(limit);
 
-  // Fetch following users
   const following = await Follow.find({
     follower: userId,
   })
@@ -198,7 +202,6 @@ export const getFollowingService = async (
     .skip(skip)
     .limit(Number(limit));
 
-  // Count following
   const totalFollowing =
     await Follow.countDocuments({
       follower: userId,

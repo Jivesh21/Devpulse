@@ -1,6 +1,7 @@
 import Like from "../models/like.model.js";
 import Post from "../models/post.model.js";
 import ApiError from "../utils/ApiError.js";
+import { createNotificationService } from "./notification.service.js";
 
 // ====================================
 // Toggle Like
@@ -17,6 +18,7 @@ export const toggleLikeService = async (postId, userId) => {
     user: userId,
   });
 
+  // Unlike
   if (existingLike) {
     await Like.findByIdAndDelete(existingLike._id);
 
@@ -26,9 +28,20 @@ export const toggleLikeService = async (postId, userId) => {
     };
   }
 
+  // Create Like
   await Like.create({
     post: postId,
     user: userId,
+  });
+
+  // ====================================
+  // Create Notification Automatically
+  // ====================================
+  await createNotificationService({
+    recipient: post.author,
+    sender: userId,
+    type: "like",
+    post: postId,
   });
 
   return {

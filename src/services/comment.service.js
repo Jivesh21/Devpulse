@@ -1,6 +1,7 @@
 import Comment from "../models/comment.model.js";
 import Post from "../models/post.model.js";
 import ApiError from "../utils/ApiError.js";
+import { createNotificationService } from "./notification.service.js";
 
 // ====================================
 // Create Comment
@@ -26,6 +27,16 @@ export const createCommentService = async (
     post: postId,
   });
 
+  // ====================================
+  // Create Notification Automatically
+  // ====================================
+  await createNotificationService({
+    recipient: post.author,
+    sender: userId,
+    type: "comment",
+    post: postId,
+  });
+
   return await Comment.findById(comment._id)
     .populate(
       "author",
@@ -47,7 +58,7 @@ export const getCommentsService = async (
     throw new ApiError(404, "Post not found");
   }
 
-  const skip = (page - 1) * limit;
+  const skip = (Number(page) - 1) * Number(limit);
 
   const comments = await Comment.find({
     post: postId,
@@ -71,7 +82,9 @@ export const getCommentsService = async (
     comments,
     totalComments,
     currentPage: Number(page),
-    totalPages: Math.ceil(totalComments / limit),
+    totalPages: Math.ceil(
+      totalComments / Number(limit)
+    ),
   };
 };
 
@@ -111,6 +124,7 @@ export const updateCommentService = async (
       "fullName username avatar"
     );
 };
+
 // ====================================
 // Delete Comment
 // ====================================
@@ -137,6 +151,7 @@ export const deleteCommentService = async (
     deleted: true,
   };
 };
+
 // ====================================
 // Comment Count
 // ====================================

@@ -4,6 +4,7 @@ import {
   toggleLike,
   getLikeCount,
   getLikeStatus,
+  getLikedUsers,
 } from "../controllers/like.controller.js";
 
 const router = Router();
@@ -14,6 +15,9 @@ const router = Router();
 
 // Get Like Count
 router.get("/:postId/count", getLikeCount);
+
+// Get Users Who Liked
+router.get("/:postId/users", getLikedUsers);
 
 // ====================================
 // Protected Routes
@@ -26,7 +30,7 @@ router.get(
   getLikeStatus
 );
 
-// Toggle Like
+// Toggle Like / Unlike
 router.post(
   "/:postId",
   verifyJWT,

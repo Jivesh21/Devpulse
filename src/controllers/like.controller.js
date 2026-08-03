@@ -4,6 +4,7 @@ import {
   toggleLikeService,
   getLikeCountService,
   getLikeStatusService,
+  getLikedUsersService,
 } from "../services/like.service.js";
 
 // ====================================
@@ -55,6 +56,23 @@ export const getLikeStatus = asyncHandler(async (req, res) => {
       200,
       result,
       "Like status fetched successfully"
+    )
+  );
+});
+
+// ====================================
+// Get Users Who Liked
+// ====================================
+export const getLikedUsers = asyncHandler(async (req, res) => {
+  const users = await getLikedUsersService(
+    req.params.postId
+  );
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      users,
+      "Liked users fetched successfully"
     )
   );
 });

@@ -4,7 +4,19 @@ import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
+import EditPostDialog from "./EditPostDialog";
+import DeletePostDialog from "./DeletePostDialog";
+
+import { useAuthContext } from "@/context/AuthContext";
+
+import { Pencil, Trash2 } from "lucide-react";
 import {
   Heart,
   MessageCircle,
@@ -23,6 +35,15 @@ import CommentSection from "./CommentSection";
 
 function PostCard({ post }) {
   const [showComments, setShowComments] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+
+const [deleteOpen, setDeleteOpen] =
+  useState(false);
+
+const { user } = useAuthContext();
+
+const isOwner =
+  user?._id === post.author?._id;
 
   const toggleLikeMutation = useToggleLike(post._id);
 
@@ -64,12 +85,37 @@ function PostCard({ post }) {
             </div>
           </Link>
 
-          <Button
-            variant="ghost"
-            size="icon"
-          >
-            <MoreHorizontal className="h-5 w-5" />
-          </Button>
+          {isOwner && (
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Button
+        variant="ghost"
+        size="icon"
+      >
+        <MoreHorizontal className="h-5 w-5" />
+      </Button>
+    </DropdownMenuTrigger>
+
+    <DropdownMenuContent align="end">
+      <DropdownMenuItem
+        onClick={() => setEditOpen(true)}
+      >
+        <Pencil className="mr-2 h-4 w-4" />
+        Edit
+      </DropdownMenuItem>
+
+      <DropdownMenuItem
+        onClick={() =>
+          setDeleteOpen(true)
+        }
+        className="text-red-500"
+      >
+        <Trash2 className="mr-2 h-4 w-4" />
+        Delete
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>
+)}
         </div>
 
         {/* Content */}
@@ -153,6 +199,17 @@ function PostCard({ post }) {
             postId={post._id}
           />
         )}
+        <EditPostDialog
+  open={editOpen}
+  onOpenChange={setEditOpen}
+  post={post}
+/>
+
+<DeletePostDialog
+  open={deleteOpen}
+  onOpenChange={setDeleteOpen}
+  postId={post._id}
+/>
       </CardContent>
     </Card>
   );

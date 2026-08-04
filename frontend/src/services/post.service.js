@@ -23,6 +23,26 @@ export const getAllPosts = async () => {
 };
 
 // ================================
+// Update Post
+// ================================
+export const updatePost = async ({
+  postId,
+  formData,
+}) => {
+  const { data } = await api.patch(
+    `/posts/${postId}`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+
+  return data;
+};
+
+// ================================
 // Delete Post
 // ================================
 export const deletePost = async (postId) => {

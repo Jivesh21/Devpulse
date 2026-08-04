@@ -2,7 +2,7 @@ import {
   createBrowserRouter,
   RouterProvider,
 } from "react-router-dom";
-
+import NotificationsPage from "../pages/NotificationsPage";
 import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
 import FeedPage from "../pages/feed/FeedPage";
@@ -68,13 +68,13 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: "/notifications",
-    element: (
-      <ProtectedRoute>
-        <PlaceholderPage title="Notifications" />
-      </ProtectedRoute>
-    ),
-  },
+  path: "/notifications",
+  element: (
+    <ProtectedRoute>
+      <NotificationsPage />
+    </ProtectedRoute>
+  ),
+},
   {
     path: "/settings",
     element: (

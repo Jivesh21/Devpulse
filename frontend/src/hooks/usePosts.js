@@ -7,6 +7,7 @@ import {
 import {
   createPost,
   getAllPosts,
+  updatePost,
   deletePost,
 } from "@/services/post.service";
 
@@ -34,6 +35,22 @@ export function usePosts() {
   return useQuery({
     queryKey: ["posts"],
     queryFn: getAllPosts,
+  });
+}
+// ================================
+// Update Post
+// ================================
+export function useUpdatePost() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updatePost,
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["posts"],
+      });
+    },
   });
 }
 

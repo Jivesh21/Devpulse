@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
-
+import { Link, useNavigate } from "react-router-dom";
+import { useUnreadCount } from "@/hooks/useNotification";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -36,6 +36,13 @@ import { useLogout } from "@/hooks/useAuth";
 function Navbar() {
   const { user } = useAuthContext();
   const logoutMutation = useLogout();
+  const navigate = useNavigate();
+
+const { data: unreadData } =
+  useUnreadCount();
+
+const unreadCount =
+  unreadData?.data?.unreadCount || 0;
 
   const handleLogout = async () => {
     try {
@@ -118,15 +125,24 @@ function Navbar() {
         </Button>
 
         {/* Notifications */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative"
-        >
-          <Bell className="h-5 w-5" />
+       <Button
+  variant="ghost"
+  size="icon"
+  className="relative"
+  onClick={() =>
+    navigate("/notifications")
+  }
+>
+  <Bell className="h-5 w-5" />
 
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-violet-500" />
-        </Button>
+  {unreadCount > 0 && (
+    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+      {unreadCount > 99
+        ? "99+"
+        : unreadCount}
+    </span>
+  )}
+</Button>
 
         {/* Theme */}
         <Button

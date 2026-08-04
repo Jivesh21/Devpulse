@@ -8,6 +8,7 @@ import RegisterPage from "../pages/auth/RegisterPage";
 import FeedPage from "../pages/feed/FeedPage";
 import ProfilePage from "../pages/profile/ProfilePage";
 import SettingsPage from "../pages/settings/SettingsPage";
+import BookmarksPage from "../pages/BookmarksPage";
 import ProtectedRoute from "./ProtectedRoute";
 import DashboardLayout from "../layouts/DashboardLayout";
 
@@ -63,7 +64,7 @@ const router = createBrowserRouter([
     path: "/bookmarks",
     element: (
       <ProtectedRoute>
-        <PlaceholderPage title="Bookmarks" />
+        <BookmarksPage />
       </ProtectedRoute>
     ),
   },

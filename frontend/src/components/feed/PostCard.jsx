@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,19 +12,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import EditPostDialog from "./EditPostDialog";
-import DeletePostDialog from "./DeletePostDialog";
-
-import { useAuthContext } from "@/context/AuthContext";
-
-import { Pencil, Trash2 } from "lucide-react";
 import {
   Heart,
   MessageCircle,
   Bookmark,
   Share2,
   MoreHorizontal,
+  Pencil,
+  Trash2,
 } from "lucide-react";
+
+import { useAuthContext } from "@/context/AuthContext";
 
 import {
   useToggleLike,
@@ -31,25 +30,41 @@ import {
   useLikeStatus,
 } from "@/hooks/useLike";
 
+import {
+  useToggleBookmark,
+  useBookmarkStatus,
+} from "@/hooks/useBookmark";
+
 import CommentSection from "./CommentSection";
+import EditPostDialog from "./EditPostDialog";
+import DeletePostDialog from "./DeletePostDialog";
 
 function PostCard({ post }) {
-  const [showComments, setShowComments] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
+  const [showComments, setShowComments] =
+    useState(false);
 
-const [deleteOpen, setDeleteOpen] =
-  useState(false);
+  const [editOpen, setEditOpen] =
+    useState(false);
 
-const { user } = useAuthContext();
+  const [deleteOpen, setDeleteOpen] =
+    useState(false);
 
-const isOwner =
-  user?._id === post.author?._id;
+  const { user } = useAuthContext();
 
-  const toggleLikeMutation = useToggleLike(post._id);
+  const isOwner =
+    user?._id === post.author?._id;
 
-  const { data: likeCountData } = useLikeCount(post._id);
+  // ================================
+  // Like Hooks
+  // ================================
+  const toggleLikeMutation =
+    useToggleLike(post._id);
 
-  const { data: likeStatusData } = useLikeStatus(post._id);
+  const { data: likeCountData } =
+    useLikeCount(post._id);
+
+  const { data: likeStatusData } =
+    useLikeStatus(post._id);
 
   const likeCount =
     likeCountData?.data?.likeCount || 0;
@@ -57,9 +72,24 @@ const isOwner =
   const isLiked =
     likeStatusData?.data?.isLiked || false;
 
+  // ================================
+  // Bookmark Hooks
+  // ================================
+  const toggleBookmarkMutation =
+    useToggleBookmark();
+
+  const {
+    data: bookmarkStatusData,
+  } = useBookmarkStatus(post._id);
+
+  const isBookmarked =
+    bookmarkStatusData?.data?.bookmarked ||
+    false;
+
   return (
     <Card className="overflow-hidden rounded-2xl border shadow-sm">
       <CardContent className="p-0">
+
         {/* Header */}
         <div className="flex items-center justify-between p-5">
           <Link
@@ -67,55 +97,60 @@ const isOwner =
             className="flex items-center gap-3"
           >
             <Avatar className="h-11 w-11">
-              <AvatarImage src={post.author?.avatar} />
+              <AvatarImage
+                src={post.author?.avatar}
+              />
 
               <AvatarFallback className="bg-violet-600 text-white">
-                {post.author?.fullName?.charAt(0) || "U"}
+                {post.author?.fullName?.charAt(0) ||
+                  "U"}
               </AvatarFallback>
             </Avatar>
 
             <div>
-              <h3 className="font-semibold leading-none hover:text-violet-600">
+              <h3 className="font-semibold hover:text-violet-600">
                 {post.author?.fullName}
               </h3>
 
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 @{post.author?.username}
               </p>
             </div>
           </Link>
 
           {isOwner && (
-  <DropdownMenu>
-    <DropdownMenuTrigger asChild>
-      <Button
-        variant="ghost"
-        size="icon"
-      >
-        <MoreHorizontal className="h-5 w-5" />
-      </Button>
-    </DropdownMenuTrigger>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                >
+                  <MoreHorizontal className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
 
-    <DropdownMenuContent align="end">
-      <DropdownMenuItem
-        onClick={() => setEditOpen(true)}
-      >
-        <Pencil className="mr-2 h-4 w-4" />
-        Edit
-      </DropdownMenuItem>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() =>
+                    setEditOpen(true)
+                  }
+                >
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
 
-      <DropdownMenuItem
-        onClick={() =>
-          setDeleteOpen(true)
-        }
-        className="text-red-500"
-      >
-        <Trash2 className="mr-2 h-4 w-4" />
-        Delete
-      </DropdownMenuItem>
-    </DropdownMenuContent>
-  </DropdownMenu>
-)}
+                <DropdownMenuItem
+                  onClick={() =>
+                    setDeleteOpen(true)
+                  }
+                  className="text-red-500"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
 
         {/* Content */}
@@ -140,10 +175,11 @@ const isOwner =
 
         {/* Actions */}
         <div className="flex items-center justify-around border-t p-2">
+
           {/* Like */}
           <Button
             variant="ghost"
-            className={`flex-1 gap-2 transition-colors ${
+            className={`flex-1 gap-2 ${
               isLiked
                 ? "text-red-500 hover:text-red-600"
                 : ""
@@ -151,14 +187,17 @@ const isOwner =
             onClick={() =>
               toggleLikeMutation.mutate()
             }
-            disabled={toggleLikeMutation.isPending}
+            disabled={
+              toggleLikeMutation.isPending
+            }
           >
             <Heart
               className={`h-5 w-5 ${
-                isLiked ? "fill-current" : ""
+                isLiked
+                  ? "fill-current"
+                  : ""
               }`}
             />
-
             {likeCount}
           </Button>
 
@@ -167,7 +206,9 @@ const isOwner =
             variant="ghost"
             className="flex-1 gap-2"
             onClick={() =>
-              setShowComments(!showComments)
+              setShowComments(
+                !showComments
+              )
             }
           >
             <MessageCircle className="h-5 w-5" />
@@ -177,10 +218,31 @@ const isOwner =
           {/* Bookmark */}
           <Button
             variant="ghost"
-            className="flex-1 gap-2"
+            className={`flex-1 gap-2 ${
+              isBookmarked
+                ? "text-violet-600 hover:text-violet-700"
+                : ""
+            }`}
+            onClick={() =>
+              toggleBookmarkMutation.mutate(
+                post._id
+              )
+            }
+            disabled={
+              toggleBookmarkMutation.isPending
+            }
           >
-            <Bookmark className="h-5 w-5" />
-            Save
+            <Bookmark
+              className={`h-5 w-5 ${
+                isBookmarked
+                  ? "fill-current"
+                  : ""
+              }`}
+            />
+
+            {isBookmarked
+              ? "Saved"
+              : "Save"}
           </Button>
 
           {/* Share */}
@@ -199,17 +261,19 @@ const isOwner =
             postId={post._id}
           />
         )}
-        <EditPostDialog
-  open={editOpen}
-  onOpenChange={setEditOpen}
-  post={post}
-/>
 
-<DeletePostDialog
-  open={deleteOpen}
-  onOpenChange={setDeleteOpen}
-  postId={post._id}
-/>
+        <EditPostDialog
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          post={post}
+        />
+
+        <DeletePostDialog
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          postId={post._id}
+        />
+
       </CardContent>
     </Card>
   );

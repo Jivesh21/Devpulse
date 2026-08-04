@@ -128,3 +128,16 @@
     @apply font-sans;
     }
 }
+/* ==============================
+   DevPulse Toast
+============================== */
+
+.devpulse-toast {
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: all 0.25s ease;
+}
+
+.devpulse-toast:hover {
+  transform: translateY(-2px) scale(1.02);
+}

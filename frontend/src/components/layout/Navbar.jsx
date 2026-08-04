@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useUnreadCount } from "@/hooks/useNotification";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import SearchBar from "@/components/search/SearchBar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,6 +50,8 @@ const unreadCount =
       await logoutMutation.mutateAsync();
     } catch (error) {
       console.error("Logout failed:", error);
+    } finally {
+      navigate("/login", { replace: true });
     }
   };
 
@@ -89,16 +92,9 @@ const unreadCount =
 
       {/* Center Search */}
       <div className="hidden flex-1 justify-center md:flex">
-        <div className="relative w-full max-w-md">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-
-          <Input
-            type="search"
-            placeholder="Search developers, posts..."
-            className="h-10 rounded-full bg-muted/50 pl-10 focus-visible:bg-background"
-          />
-        </div>
-      </div>
+  <SearchBar />
+</div>
+ 
 
       {/* Right Section */}
       <div className="ml-auto flex items-center gap-2">

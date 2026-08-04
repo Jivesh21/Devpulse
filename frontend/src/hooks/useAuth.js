@@ -11,10 +11,15 @@ export const useLogin = () => {
 
   return useMutation({
     mutationFn: login,
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["current-user"],
-      });
+    onSuccess: (response) => {
+      const user = response?.data?.user;
+
+      if (user) {
+        queryClient.setQueryData(["current-user"], {
+          ...response,
+          data: user,
+        });
+      }
     },
   });
 };
@@ -30,7 +35,7 @@ export const useLogout = () => {
 
   return useMutation({
     mutationFn: logout,
-    onSuccess: () => {
+    onSettled: () => {
       queryClient.removeQueries({
         queryKey: ["current-user"],
       });

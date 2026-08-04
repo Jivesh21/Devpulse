@@ -9,6 +9,17 @@ export const getProfile = async (username) => {
 };
 
 // ================================
+// Search Users
+// ================================
+export const searchUsers = async (query) => {
+  const { data } = await api.get(
+    `/users/search?q=${query}`
+  );
+
+  return data;
+};
+
+// ================================
 // Get User Posts
 // ================================
 export const getUserPosts = async (username) => {

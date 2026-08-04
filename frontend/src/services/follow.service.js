@@ -29,3 +29,28 @@ export const getFollowingCount = async (userId) => {
 
   return data;
 };
+// Followers List
+export const getFollowers = async (
+  userId,
+  page = 1,
+  limit = 20
+) => {
+  const { data } = await api.get(
+    `/follows/${userId}/followers?page=${page}&limit=${limit}`
+  );
+
+  return data;
+};
+
+// Following List
+export const getFollowing = async (
+  userId,
+  page = 1,
+  limit = 20
+) => {
+  const { data } = await api.get(
+    `/follows/${userId}/following?page=${page}&limit=${limit}`
+  );
+
+  return data;
+};

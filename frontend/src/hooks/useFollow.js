@@ -9,6 +9,8 @@ import {
   getFollowStatus,
   getFollowersCount,
   getFollowingCount,
+  getFollowers,
+  getFollowing,
 } from "@/services/follow.service";
 
 // ================================
@@ -70,5 +72,34 @@ export function useToggleFollow(userId) {
         queryKey: ["profile", userId],
       });
     },
+  });
+}
+// ================================
+// Followers List
+// ================================
+export function useFollowers(
+  userId,
+  page = 1
+) {
+  return useQuery({
+    queryKey: ["followers", userId, page],
+    queryFn: () =>
+      getFollowers(userId, page),
+    enabled: !!userId,
+  });
+}
+
+// ================================
+// Following List
+// ================================
+export function useFollowing(
+  userId,
+  page = 1
+) {
+  return useQuery({
+    queryKey: ["following", userId, page],
+    queryFn: () =>
+      getFollowing(userId, page),
+    enabled: !!userId,
   });
 }

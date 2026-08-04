@@ -1,17 +1,14 @@
-import { useRef } from "react";
-import { Loader2 } from "lucide-react";
+import { useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { useState } from "react";
-import EditProfileDialog from "@/components/profile/EditProfileDialog";
+import { Loader2 } from "lucide-react";
+
 import DashboardLayout from "@/layouts/DashboardLayout";
 import ProfileHeader from "@/components/profile/ProfileHeader";
-
 import ProfileSkills from "@/components/profile/ProfileSkills";
 import ProfilePosts from "@/components/profile/ProfilePosts";
-import {
-  useFollowersCount,
-  useFollowingCount,
-} from "@/hooks/useFollow";
+import EditProfileDialog from "@/components/profile/EditProfileDialog";
+import FollowListDialog from "@/components/profile/FollowListDialog";
+
 import { useAuthContext } from "@/context/AuthContext";
 
 import {
@@ -21,6 +18,11 @@ import {
   useUpdateCoverImage,
 } from "@/hooks/useProfile";
 
+import {
+  useFollowersCount,
+  useFollowingCount,
+} from "@/hooks/useFollow";
+
 function ProfilePage() {
   const { username } = useParams();
 
@@ -28,7 +30,13 @@ function ProfilePage() {
 
   const avatarInputRef = useRef(null);
   const coverInputRef = useRef(null);
-const [editOpen, setEditOpen] = useState(false);
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [followersOpen, setFollowersOpen] =
+    useState(false);
+  const [followingOpen, setFollowingOpen] =
+    useState(false);
+
   const {
     data: profileData,
     isLoading: profileLoading,
@@ -40,48 +48,28 @@ const [editOpen, setEditOpen] = useState(false);
   } = useUserPosts(username);
 
   const profile = profileData?.data;
-  const { data: followersData } = useFollowersCount(
-  profile?._id
-);
-
-const { data: followingData } = useFollowingCount(
-  profile?._id
-);
-
-const followers =
-  followersData?.data?.followersCount || 0;
-
-const following =
-  followingData?.data?.followingCount || 0;
-
   const posts = postsData?.data || [];
 
-  const updateAvatar = useUpdateAvatar(username);
+  const { data: followersData } =
+    useFollowersCount(profile?._id);
 
-  const updateCover = useUpdateCoverImage(username);
+  const { data: followingData } =
+    useFollowingCount(profile?._id);
+
+  const followers =
+    followersData?.data?.followersCount || 0;
+
+  const following =
+    followingData?.data?.followingCount || 0;
+
+  const updateAvatar =
+    useUpdateAvatar(username);
+
+  const updateCover =
+    useUpdateCoverImage(username);
 
   const isOwner =
     currentUser?._id === profile?._id;
-
-  if (profileLoading) {
-    return (
-      <DashboardLayout>
-        <div className="flex h-[60vh] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  if (!profile) {
-    return (
-      <DashboardLayout>
-        <div className="rounded-2xl border bg-card p-12 text-center">
-          Profile not found.
-        </div>
-      </DashboardLayout>
-    );
-  }
 
   function handleAvatarChange(e) {
     const file = e.target.files?.[0];
@@ -107,22 +95,52 @@ const following =
     updateCover.mutate(formData);
   }
 
+  if (profileLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex h-[60vh] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <DashboardLayout>
+        <div className="rounded-2xl border bg-card p-12 text-center">
+          Profile not found.
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
 
-<ProfileHeader
-  profile={profile}
-  isOwner={isOwner}
-  postsCount={posts.length}
-  onAvatarClick={() =>
-    avatarInputRef.current.click()
-  }
-  onCoverClick={() =>
-    coverInputRef.current.click()
-  }
-  onEditClick={() => setEditOpen(true)}
-/>
+        <ProfileHeader
+          profile={profile}
+          isOwner={isOwner}
+          postsCount={posts.length}
+          followers={followers}
+          following={following}
+          onFollowersClick={() =>
+            setFollowersOpen(true)
+          }
+          onFollowingClick={() =>
+            setFollowingOpen(true)
+          }
+          onAvatarClick={() =>
+            avatarInputRef.current.click()
+          }
+          onCoverClick={() =>
+            coverInputRef.current.click()
+          }
+          onEditClick={() =>
+            setEditOpen(true)
+          }
+        />
 
         <input
           ref={avatarInputRef}
@@ -140,7 +158,6 @@ const following =
           onChange={handleCoverChange}
         />
 
-
         <ProfileSkills
           skills={profile.skills}
         />
@@ -151,11 +168,27 @@ const following =
         />
 
       </div>
+
       <EditProfileDialog
-  open={editOpen}
-  onOpenChange={setEditOpen}
-  profile={profile}
-/>
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        profile={profile}
+      />
+
+      <FollowListDialog
+        open={followersOpen}
+        onOpenChange={setFollowersOpen}
+        userId={profile._id}
+        type="followers"
+      />
+
+      <FollowListDialog
+        open={followingOpen}
+        onOpenChange={setFollowingOpen}
+        userId={profile._id}
+        type="following"
+      />
+
     </DashboardLayout>
   );
 }

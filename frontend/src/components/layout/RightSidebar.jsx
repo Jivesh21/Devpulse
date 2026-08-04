@@ -5,6 +5,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar";
+
 import {
   TrendingUp,
   Users,
@@ -12,33 +13,27 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 
-const TRENDING = [
-  "React 19",
-  "Node.js",
-  "TypeScript",
-  "Next.js",
-  "AI Agents",
-];
+import { useSuggestedDevelopers } from "@/hooks/useSuggestedDevelopers";
 
-const SUGGESTED_USERS = [
-  {
-    name: "Sarah Chen",
-    username: "@sarahdev",
-    initials: "SC",
-  },
-  {
-    name: "Alex Johnson",
-    username: "@alexjs",
-    initials: "AJ",
-  },
-  {
-    name: "Priya Sharma",
-    username: "@priyadev",
-    initials: "PS",
-  },
-];
+import {
+  useTrending,
+  useCommunityAnalytics,
+} from "@/hooks/useTrending";
 
 function RightSidebar() {
+  const { data } = useSuggestedDevelopers();
+const { data: trendingData } =
+  useTrending();
+
+const trending =
+  trendingData?.data || [];
+  const suggestedUsers =
+    data?.data || [];
+const { data: communityData } =
+  useCommunityAnalytics();
+
+const analytics =
+  communityData?.data || {};
   return (
     <div className="space-y-5">
       {/* Trending */}
@@ -46,25 +41,34 @@ function RightSidebar() {
         <CardContent className="p-5">
           <div className="mb-4 flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-violet-600" />
+
             <h2 className="font-semibold">
               Trending Technologies
             </h2>
           </div>
 
           <div className="space-y-3">
-            {TRENDING.map((item) => (
-              <button
-                key={item}
-                type="button"
-                className="flex w-full items-center justify-between rounded-lg px-2 py-2 text-left transition hover:bg-muted"
-              >
-                <span className="text-sm font-medium">
-                  {item}
-                </span>
+           {trending.length > 0 ? (
+  trending.map((item) => (
+    <button
+      key={item.name}
+      type="button"
+      className="flex w-full items-center justify-between rounded-lg px-2 py-2 text-left transition hover:bg-muted"
+    >
+      <span className="text-sm font-medium">
+        #{item.name}
+      </span>
 
-                <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
-              </button>
-            ))}
+      <span className="text-xs font-semibold text-violet-600">
+        {item.count}
+      </span>
+    </button>
+  ))
+) : (
+  <p className="text-sm text-muted-foreground">
+    No trending technologies yet.
+  </p>
+)}
           </div>
         </CardContent>
       </Card>
@@ -74,33 +78,40 @@ function RightSidebar() {
         <CardContent className="p-5">
           <div className="mb-4 flex items-center gap-2">
             <Users className="h-5 w-5 text-violet-600" />
+
             <h2 className="font-semibold">
               Suggested Developers
             </h2>
           </div>
 
           <div className="space-y-4">
-            {SUGGESTED_USERS.map((user) => (
+            {suggestedUsers.map((user) => (
               <div
-                key={user.username}
+                key={user._id}
                 className="flex items-center justify-between"
               >
                 <div className="flex items-center gap-3">
                   <Avatar>
-                    <AvatarImage src="" />
+                    <AvatarImage
+                      src={user.avatar}
+                    />
 
                     <AvatarFallback className="bg-gradient-to-br from-violet-600 to-cyan-500 text-white">
-                      {user.initials}
+                      {user.fullName
+                        ?.split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .slice(0, 2)}
                     </AvatarFallback>
                   </Avatar>
 
                   <div>
                     <p className="text-sm font-semibold">
-                      {user.name}
+                      {user.fullName}
                     </p>
 
                     <p className="text-xs text-muted-foreground">
-                      {user.username}
+                      @{user.username}
                     </p>
                   </div>
                 </div>
@@ -134,9 +145,9 @@ function RightSidebar() {
                 Developers Online
               </span>
 
-              <span className="font-semibold">
-                2,481
-              </span>
+             <span className="font-semibold">
+  {analytics.totalUsers ?? 0}
+</span>
             </div>
 
             <div className="flex items-center justify-between">
@@ -145,17 +156,17 @@ function RightSidebar() {
               </span>
 
               <span className="font-semibold">
-                386
+                {analytics.totalPosts ?? 0}
               </span>
             </div>
 
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">
-                Repositories Shared
+              Bookmarkk
               </span>
 
               <span className="font-semibold">
-                142
+                {analytics.totalBookmarks ?? 0}
               </span>
             </div>
           </div>

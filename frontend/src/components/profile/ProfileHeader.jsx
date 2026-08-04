@@ -1,12 +1,21 @@
-import { Camera, Edit3 } from "lucide-react";
+import {
+  Camera,
+  Edit3,
+  Globe,
+  Calendar,
+  ExternalLink,
+} from "lucide-react";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar";
+
 import { Button } from "@/components/ui/button";
 
 import {
   useFollowStatus,
-  useFollowersCount,
-  useFollowingCount,
   useToggleFollow,
 } from "@/hooks/useFollow";
 
@@ -14,35 +23,31 @@ function ProfileHeader({
   profile,
   isOwner,
   postsCount,
+  followers,
+  following,
+  onFollowersClick,
+  onFollowingClick,
   onAvatarClick,
   onCoverClick,
   onEditClick,
 }) {
-  const { data: followStatusData } =
-    useFollowStatus(profile._id);
-
-  const { data: followersData } =
-    useFollowersCount(profile._id);
-
-  const { data: followingData } =
-    useFollowingCount(profile._id);
+  const {
+    data: followStatusData,
+  } = useFollowStatus(profile._id);
 
   const toggleFollowMutation =
     useToggleFollow(profile._id);
 
   const isFollowing =
-    followStatusData?.data?.isFollowing || false;
-
-  const followers =
-    followersData?.data?.followersCount || 0;
-
-  const following =
-    followingData?.data?.followingCount || 0;
+    followStatusData?.data?.isFollowing ||
+    false;
 
   return (
     <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+
       {/* Cover */}
       <div className="relative h-52 bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-500">
+
         {profile.coverImage && (
           <img
             src={profile.coverImage}
@@ -64,8 +69,11 @@ function ProfileHeader({
 
       {/* Profile */}
       <div className="relative px-6 pb-6">
+
         <Avatar className="-mt-16 h-32 w-32 border-4 border-background">
-          <AvatarImage src={profile.avatar} />
+          <AvatarImage
+            src={profile.avatar}
+          />
 
           <AvatarFallback className="text-3xl">
             {profile.fullName?.charAt(0)}
@@ -83,7 +91,9 @@ function ProfileHeader({
         )}
 
         <div className="mt-4 flex items-start justify-between">
+
           <div>
+
             <h1 className="text-3xl font-bold">
               {profile.fullName}
             </h1>
@@ -97,46 +107,107 @@ function ProfileHeader({
                 {profile.bio}
               </p>
             )}
+<div className="mt-5 space-y-3">
 
-            {/* Stats */}
-<div className="mt-6 flex gap-8">
+  {profile.website && (
+    <a
+      href={profile.website}
+      target="_blank"
+      rel="noreferrer"
+      className="flex items-center gap-2 text-sm text-violet-600 transition hover:underline"
+    >
+      <Globe className="h-4 w-4" />
+      {profile.website}
+    </a>
+  )}
+
+  {profile.github && (
+    <a
+      href={profile.github}
+      target="_blank"
+      rel="noreferrer"
+      className="flex items-center gap-2 text-sm text-violet-600 transition hover:underline"
+    >
+      <ExternalLink className="h-4 w-4" />
+      GitHub
+    </a>
+  )}
+
+  {profile.linkedin && (
+    <a
+      href={profile.linkedin}
+      target="_blank"
+      rel="noreferrer"
+      className="flex items-center gap-2 text-sm text-violet-600 transition hover:underline"
+    >
+      <ExternalLink className="h-4 w-4" />
+      LinkedIn
+    </a>
+  )}
+
+  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+    <Calendar className="h-4 w-4" />
+    Joined{" "}
+    {new Date(profile.createdAt).toLocaleDateString(
+      "en-US",
+      {
+        month: "long",
+        year: "numeric",
+      }
+    )}
+  </div>
+
+</div>
+          <div className="mt-8 flex flex-wrap gap-8">
+
   <div>
-    <p className="text-xl font-bold">
+    <p className="text-2xl font-bold">
       {postsCount}
     </p>
+
     <p className="text-sm text-muted-foreground">
       Posts
     </p>
   </div>
 
-  <div>
-    <p className="text-xl font-bold">
+  <button
+    onClick={onFollowersClick}
+    className="text-left transition hover:scale-105"
+  >
+    <p className="text-2xl font-bold">
       {followers}
     </p>
-    <p className="text-sm text-muted-foreground">
+
+    <p className="text-sm text-muted-foreground hover:text-violet-600">
       Followers
     </p>
-  </div>
+  </button>
 
-  <div>
-    <p className="text-xl font-bold">
+  <button
+    onClick={onFollowingClick}
+    className="text-left transition hover:scale-105"
+  >
+    <p className="text-2xl font-bold">
       {following}
     </p>
-    <p className="text-sm text-muted-foreground">
+
+    <p className="text-sm text-muted-foreground hover:text-violet-600">
       Following
     </p>
-  </div>
+  </button>
+
 </div>
+
           </div>
 
           {isOwner ? (
-          <Button
-  className="gap-2"
-  onClick={onEditClick}
->
-  <Edit3 className="h-4 w-4" />
-  Edit Profile
-</Button>
+            <Button
+              className="gap-2"
+              onClick={onEditClick}
+            >
+              <Edit3 className="h-4 w-4" />
+              Edit Profile
+            </Button>
           ) : (
             <Button
               onClick={() =>
@@ -153,8 +224,11 @@ function ProfileHeader({
                 : "Follow"}
             </Button>
           )}
+
         </div>
+
       </div>
+
     </div>
   );
 }

@@ -16,6 +16,7 @@ function ProfileHeader({
   postsCount,
   onAvatarClick,
   onCoverClick,
+  onEditClick,
 }) {
   const { data: followStatusData } =
     useFollowStatus(profile._id);
@@ -129,10 +130,13 @@ function ProfileHeader({
           </div>
 
           {isOwner ? (
-            <Button className="gap-2">
-              <Edit3 className="h-4 w-4" />
-              Edit Profile
-            </Button>
+          <Button
+  className="gap-2"
+  onClick={onEditClick}
+>
+  <Edit3 className="h-4 w-4" />
+  Edit Profile
+</Button>
           ) : (
             <Button
               onClick={() =>

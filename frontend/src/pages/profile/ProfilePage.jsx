@@ -1,10 +1,11 @@
 import { useRef } from "react";
 import { Loader2 } from "lucide-react";
 import { useParams } from "react-router-dom";
-
+import { useState } from "react";
+import EditProfileDialog from "@/components/profile/EditProfileDialog";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import ProfileHeader from "@/components/profile/ProfileHeader";
-import ProfileStats from "@/components/profile/ProfileStats";
+
 import ProfileSkills from "@/components/profile/ProfileSkills";
 import ProfilePosts from "@/components/profile/ProfilePosts";
 import {
@@ -27,7 +28,7 @@ function ProfilePage() {
 
   const avatarInputRef = useRef(null);
   const coverInputRef = useRef(null);
-
+const [editOpen, setEditOpen] = useState(false);
   const {
     data: profileData,
     isLoading: profileLoading,
@@ -110,7 +111,7 @@ const following =
     <DashboardLayout>
       <div className="space-y-6">
 
-       <ProfileHeader
+<ProfileHeader
   profile={profile}
   isOwner={isOwner}
   postsCount={posts.length}
@@ -120,6 +121,7 @@ const following =
   onCoverClick={() =>
     coverInputRef.current.click()
   }
+  onEditClick={() => setEditOpen(true)}
 />
 
         <input
@@ -149,6 +151,11 @@ const following =
         />
 
       </div>
+      <EditProfileDialog
+  open={editOpen}
+  onOpenChange={setEditOpen}
+  profile={profile}
+/>
     </DashboardLayout>
   );
 }

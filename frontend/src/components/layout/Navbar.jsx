@@ -5,11 +5,13 @@ import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
 import {
   Avatar,
   AvatarFallback,
@@ -28,7 +30,21 @@ import {
   LogOut,
 } from "lucide-react";
 
+import { useAuthContext } from "@/context/AuthContext";
+import { useLogout } from "@/hooks/useAuth";
+
 function Navbar() {
+  const { user } = useAuthContext();
+  const logoutMutation = useLogout();
+
+  const handleLogout = async () => {
+    try {
+      await logoutMutation.mutateAsync();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
   return (
     <nav className="flex h-full items-center gap-4 px-4 sm:px-6">
       {/* Left Section */}
@@ -129,49 +145,59 @@ function Navbar() {
               className="rounded-full"
             >
               <Avatar className="h-9 w-9">
-                <AvatarImage src="" />
+                <AvatarImage src={user?.avatar} />
 
                 <AvatarFallback className="bg-gradient-to-br from-violet-600 to-cyan-500 text-white">
-                  DP
+                  {user?.fullName?.charAt(0) || "U"}
                 </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
 
           <DropdownMenuContent
-            align="end"
-            className="w-56"
-          >
-            <DropdownMenuLabel>
-              <p className="font-medium">
-                Jordan Rivera
-              </p>
+  align="end"
+  className="w-56"
+>
+  <DropdownMenuGroup>
+    <DropdownMenuLabel>
+      <p className="font-medium">
+        {user?.fullName || "Developer"}
+      </p>
 
-              <p className="text-xs text-muted-foreground">
-                @jordanrivera
-              </p>
-            </DropdownMenuLabel>
+      <p className="text-xs text-muted-foreground">
+        @{user?.username || "username"}
+      </p>
+    </DropdownMenuLabel>
+  </DropdownMenuGroup>
 
-            <DropdownMenuSeparator />
+  <DropdownMenuSeparator />
 
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              Profile
-            </DropdownMenuItem>
+  <DropdownMenuItem asChild>
+    <Link to={`/profile/${user?.username}`}>
+      <User className="mr-2 h-4 w-4" />
+      Profile
+    </Link>
+  </DropdownMenuItem>
 
-            <DropdownMenuItem>
-              <Settings className="mr-2 h-4 w-4" />
-              Settings
-            </DropdownMenuItem>
+  <DropdownMenuItem>
+    <Settings className="mr-2 h-4 w-4" />
+    Settings
+  </DropdownMenuItem>
 
-            <DropdownMenuSeparator />
+  <DropdownMenuSeparator />
 
-            <DropdownMenuItem className="text-red-500 focus:text-red-500">
-              <LogOut className="mr-2 h-4 w-4" />
-              Logout
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+  <DropdownMenuItem
+    onClick={handleLogout}
+    disabled={logoutMutation.isPending}
+    className="cursor-pointer text-red-500 focus:text-red-500"
+  >
+    <LogOut className="mr-2 h-4 w-4" />
+    {logoutMutation.isPending
+      ? "Logging out..."
+      : "Logout"}
+  </DropdownMenuItem>
+</DropdownMenuContent>
+           </DropdownMenu>
       </div>
     </nav>
   );

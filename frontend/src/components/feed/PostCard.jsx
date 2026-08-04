@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,22 +13,48 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 
+import {
+  useToggleLike,
+  useLikeCount,
+  useLikeStatus,
+} from "@/hooks/useLike";
+
+import CommentSection from "./CommentSection";
+
 function PostCard({ post }) {
+  const [showComments, setShowComments] = useState(false);
+
+  const toggleLikeMutation = useToggleLike(post._id);
+
+  const { data: likeCountData } = useLikeCount(post._id);
+
+  const { data: likeStatusData } = useLikeStatus(post._id);
+
+  const likeCount =
+    likeCountData?.data?.likeCount || 0;
+
+  const isLiked =
+    likeStatusData?.data?.isLiked || false;
+
   return (
     <Card className="overflow-hidden rounded-2xl border shadow-sm">
       <CardContent className="p-0">
         {/* Header */}
         <div className="flex items-center justify-between p-5">
-          <div className="flex items-center gap-3">
+          <Link
+            to={`/profile/${post.author?.username}`}
+            className="flex items-center gap-3"
+          >
             <Avatar className="h-11 w-11">
               <AvatarImage src={post.author?.avatar} />
+
               <AvatarFallback className="bg-violet-600 text-white">
-                {post.author?.fullName?.charAt(0)}
+                {post.author?.fullName?.charAt(0) || "U"}
               </AvatarFallback>
             </Avatar>
 
             <div>
-              <h3 className="font-semibold leading-none">
+              <h3 className="font-semibold leading-none hover:text-violet-600">
                 {post.author?.fullName}
               </h3>
 
@@ -33,9 +62,12 @@ function PostCard({ post }) {
                 @{post.author?.username}
               </p>
             </div>
-          </div>
+          </Link>
 
-          <Button variant="ghost" size="icon">
+          <Button
+            variant="ghost"
+            size="icon"
+          >
             <MoreHorizontal className="h-5 w-5" />
           </Button>
         </div>
@@ -62,22 +94,41 @@ function PostCard({ post }) {
 
         {/* Actions */}
         <div className="flex items-center justify-around border-t p-2">
+          {/* Like */}
           <Button
             variant="ghost"
-            className="flex-1 gap-2"
+            className={`flex-1 gap-2 transition-colors ${
+              isLiked
+                ? "text-red-500 hover:text-red-600"
+                : ""
+            }`}
+            onClick={() =>
+              toggleLikeMutation.mutate()
+            }
+            disabled={toggleLikeMutation.isPending}
           >
-            <Heart className="h-5 w-5" />
-            Like
+            <Heart
+              className={`h-5 w-5 ${
+                isLiked ? "fill-current" : ""
+              }`}
+            />
+
+            {likeCount}
           </Button>
 
+          {/* Comment */}
           <Button
             variant="ghost"
             className="flex-1 gap-2"
+            onClick={() =>
+              setShowComments(!showComments)
+            }
           >
             <MessageCircle className="h-5 w-5" />
             Comment
           </Button>
 
+          {/* Bookmark */}
           <Button
             variant="ghost"
             className="flex-1 gap-2"
@@ -86,6 +137,7 @@ function PostCard({ post }) {
             Save
           </Button>
 
+          {/* Share */}
           <Button
             variant="ghost"
             className="flex-1 gap-2"
@@ -94,6 +146,13 @@ function PostCard({ post }) {
             Share
           </Button>
         </div>
+
+        {/* Comments */}
+        {showComments && (
+          <CommentSection
+            postId={post._id}
+          />
+        )}
       </CardContent>
     </Card>
   );

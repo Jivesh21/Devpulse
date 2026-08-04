@@ -18,9 +18,9 @@ function FeedList() {
     );
   }
 
-  const posts = data?.data?.docs || data?.data || [];
+  const posts = data?.data?.posts || [];
 
-  if (!posts.length) {
+  if (posts.length === 0) {
     return <EmptyFeed />;
   }
 

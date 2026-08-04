@@ -1,5 +1,7 @@
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { useAuthContext } from "@/context/AuthContext";
 import {
   Home,
   User,
@@ -10,62 +12,70 @@ import {
   Sparkles,
 } from "lucide-react";
 
-const NAV_ITEMS = [
-  {
-    icon: Home,
-    label: "Feed",
-    active: true,
-  },
-  {
-    icon: User,
-    label: "Profile",
-  },
-  {
-    icon: Users,
-    label: "Network",
-  },
-  {
-    icon: Bookmark,
-    label: "Bookmarks",
-  },
-  {
-    icon: Bell,
-    label: "Notifications",
-  },
-  {
-    icon: Settings,
-    label: "Settings",
-  },
-];
-
 function LeftSidebar() {
+  const { user } = useAuthContext();
+  const location = useLocation();
+
+  const NAV_ITEMS = [
+    {
+      icon: Home,
+      label: "Feed",
+      path: "/feed",
+    },
+    {
+      icon: User,
+      label: "Profile",
+      path: user ? `/profile/${user.username}` : "/feed",
+    },
+    {
+      icon: Users,
+      label: "Network",
+      path: "/network",
+    },
+    {
+      icon: Bookmark,
+      label: "Bookmarks",
+      path: "/bookmarks",
+    },
+    {
+      icon: Bell,
+      label: "Notifications",
+      path: "/notifications",
+    },
+    {
+      icon: Settings,
+      label: "Settings",
+      path: "/settings",
+    },
+  ];
+
   return (
     <div className="flex h-full flex-col justify-between">
       {/* Navigation */}
       <nav className="space-y-2">
-        {NAV_ITEMS.map(
-          ({ icon: Icon, label, active }) => (
-            <Button
-              key={label}
-              type="button"
-              variant="ghost"
-              className={`flex h-11 w-full items-center justify-center gap-3 rounded-xl transition-all xl:justify-start xl:px-4 ${
-                active
-                  ? "bg-violet-500/10 text-violet-600 hover:bg-violet-500/15 hover:text-violet-600"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-            >
-              <Icon
-                className="h-5 w-5 shrink-0"
-                strokeWidth={active ? 2.5 : 2}
-              />
+        {NAV_ITEMS.map(({ icon: Icon, label, path }) => {
+          const isActive = location.pathname === path;
+          return (
+            <Link key={label} to={path} className="block w-full">
+              <Button
+                type="button"
+                variant="ghost"
+                className={`flex h-11 w-full items-center justify-center gap-3 rounded-xl transition-all xl:justify-start xl:px-4 ${
+                  isActive
+                    ? "bg-violet-500/10 text-violet-600 hover:bg-violet-500/15 hover:text-violet-600"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                <Icon
+                  className="h-5 w-5 shrink-0"
+                  strokeWidth={isActive ? 2.5 : 2}
+                />
 
-              <span className="hidden xl:block">
-                {label}
-              </span>
-            </Button>
-          )
-        )}
+                <span className="hidden xl:block">{label}</span>
+              </Button>
+            </Link>
+          );
+        })}
       </nav>
 
       {/* Profile Completion */}

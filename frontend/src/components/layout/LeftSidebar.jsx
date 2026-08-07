@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useAuthContext } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import {
   Home,
   User,
@@ -15,7 +16,7 @@ import {
 function LeftSidebar() {
   const { user } = useAuthContext();
   const location = useLocation();
-
+const navigate = useNavigate();
   const NAV_ITEMS = [
     {
       icon: Home,
@@ -48,7 +49,21 @@ function LeftSidebar() {
       path: "/settings",
     },
   ];
+const profileFields = [
+  user?.avatar,
+  user?.coverImage,
+  user?.bio,
+  user?.github,
+  user?.linkedin,
+  user?.website,
+  user?.skills?.length > 0,
+];
 
+const completedFields = profileFields.filter(Boolean).length;
+
+const profileCompletion = Math.round(
+  (completedFields / profileFields.length) * 100
+);
   return (
     <div className="flex h-full flex-col justify-between">
       {/* Navigation */}
@@ -103,16 +118,21 @@ function LeftSidebar() {
             <div className="mb-2 flex items-center justify-between text-xs">
               <span>Progress</span>
               <span className="font-semibold">
-                70%
+             {profileCompletion}%
               </span>
             </div>
 
-            <Progress value={70} />
+           <Progress value={profileCompletion} />
           </div>
 
-          <Button className="mt-5 w-full rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500">
-            Finish Setup
-          </Button>
+        <Button
+  className="mt-5 w-full rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500"
+  onClick={() =>
+    navigate(`/profile/${user.username}`)
+  }
+>
+  Finish Setup
+</Button>
         </div>
       </div>
     </div>

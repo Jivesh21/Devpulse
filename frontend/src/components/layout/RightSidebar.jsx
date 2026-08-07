@@ -14,6 +14,10 @@ import {
 } from "lucide-react";
 
 import { useSuggestedDevelopers } from "@/hooks/useSuggestedDevelopers";
+import {
+  useToggleFollow,
+  useFollowStatus,
+} from "@/hooks/useFollow";
 
 import {
   useTrending,
@@ -116,12 +120,7 @@ const analytics =
                   </div>
                 </div>
 
-                <Button
-                  size="sm"
-                  variant="outline"
-                >
-                  Follow
-                </Button>
+                <FollowButton user={user} />
               </div>
             ))}
           </div>
@@ -173,6 +172,31 @@ const analytics =
         </CardContent>
       </Card>
     </div>
+  );
+}
+function FollowButton({ user }) {
+  const { data: followData } = useFollowStatus(user._id);
+
+  const toggleFollowMutation = useToggleFollow(user._id);
+
+  const isFollowing =
+    followData?.data?.isFollowing || false;
+
+  return (
+    <Button
+      size="sm"
+      variant={isFollowing ? "secondary" : "outline"}
+      disabled={toggleFollowMutation.isPending}
+      onClick={() =>
+        toggleFollowMutation.mutate()
+      }
+    >
+      {toggleFollowMutation.isPending
+        ? "..."
+        : isFollowing
+        ? "Following"
+        : "Follow"}
+    </Button>
   );
 }
 

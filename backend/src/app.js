@@ -18,6 +18,7 @@ import feedRouter from "./routes/feed.routes.js";
 import githubRouter from "./routes/github.routes.js";
 import ApiError from "./utils/ApiError.js";
 import errorHandler from "./middlewares/error.middleware.js";
+import portfolioRouter from "./routes/portfolio.routes.js";
 
 const app = express();
 
@@ -99,6 +100,8 @@ app.use("/api/v1/notifications", notificationRouter);
 app.use("/api/v1/feed", feedRouter);
 app.use("/api/v1/bookmarks", bookmarkRouter);
 app.use("/api/v1/github", githubRouter);
+app.use("/api/v1/portfolio", portfolioRouter);
+
 /**
  * ====================================
  * 404 Route Handler

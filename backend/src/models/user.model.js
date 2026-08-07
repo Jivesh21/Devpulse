@@ -90,7 +90,80 @@ website: {
   trim: true,
   default: "",
 },
+experience: [
+  {
+    company: {
+      type: String,
+      trim: true,
+    },
 
+    position: {
+      type: String,
+      trim: true,
+    },
+
+    employmentType: {
+      type: String,
+      default: "",
+    },
+
+    location: {
+      type: String,
+      default: "",
+    },
+
+    currentlyWorking: {
+      type: Boolean,
+      default: false,
+    },
+
+    startDate: Date,
+
+    endDate: Date,
+
+    description: {
+      type: String,
+      default: "",
+    },
+  },
+],
+
+education: [
+  {
+    institution: String,
+
+    degree: String,
+
+    fieldOfStudy: String,
+
+    startDate: Date,
+
+    endDate: Date,
+
+    grade: String,
+
+    description: String,
+  },
+],
+
+certificates: [
+  {
+    title: String,
+
+    issuer: String,
+
+    issueDate: Date,
+
+    credentialUrl: String,
+
+    image: String,
+  },
+],
+
+resume: {
+  type: String,
+  default: "",
+},
 refreshToken: {
   type: String,
   select: false,

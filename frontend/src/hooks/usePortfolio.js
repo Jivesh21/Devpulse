@@ -28,8 +28,7 @@ export const useMyPortfolio = () => {
 export const useUserPortfolio = (userId) => {
   return useQuery({
     queryKey: ["portfolio", userId],
-    queryFn: () =>
-      getUserPortfolio(userId),
+    queryFn: () => getUserPortfolio(userId),
     enabled: !!userId,
   });
 };
@@ -46,6 +45,10 @@ export const useCreatePortfolio = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["my-portfolio"],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["portfolio"],
       });
     },
   });
@@ -64,6 +67,10 @@ export const useUpdatePortfolio = () => {
       queryClient.invalidateQueries({
         queryKey: ["my-portfolio"],
       });
+
+      queryClient.invalidateQueries({
+        queryKey: ["portfolio"],
+      });
     },
   });
 };
@@ -80,6 +87,10 @@ export const useDeletePortfolio = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["my-portfolio"],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["portfolio"],
       });
     },
   });

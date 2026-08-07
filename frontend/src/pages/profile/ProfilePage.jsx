@@ -8,7 +8,7 @@ import ProfileSkills from "@/components/profile/ProfileSkills";
 import ProfilePosts from "@/components/profile/ProfilePosts";
 import EditProfileDialog from "@/components/profile/EditProfileDialog";
 import FollowListDialog from "@/components/profile/FollowListDialog";
-
+import AddProjectDialog from "@/components/profile/portfolio/AddProjectDialog";
 import { useAuthContext } from "@/context/AuthContext";
 
 import {
@@ -36,7 +36,8 @@ function ProfilePage() {
     useState(false);
   const [followingOpen, setFollowingOpen] =
     useState(false);
-
+const [projectDialogOpen, setProjectDialogOpen] =
+  useState(false);
   const {
     data: profileData,
     isLoading: profileLoading,
@@ -161,14 +162,14 @@ function ProfilePage() {
         <ProfileSkills
           skills={profile.skills}
         />
-<ProfileSkills skills={profile.skills} />
-
-<PortfolioSection userId={profile._id} />
-
-<ProfilePosts
-  posts={posts}
-  isLoading={postsLoading}
+<PortfolioSection
+  userId={profile._id}
+  onAddProject={() =>
+    setProjectDialogOpen(true)
+  }
 />
+
+
         <ProfilePosts
           posts={posts}
           isLoading={postsLoading}
@@ -195,7 +196,10 @@ function ProfilePage() {
         userId={profile._id}
         type="following"
       />
-
+<AddProjectDialog
+  open={projectDialogOpen}
+  onOpenChange={setProjectDialogOpen}
+/>
     </DashboardLayout>
   );
 }

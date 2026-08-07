@@ -4,10 +4,15 @@ import ApiResponse from "../utils/ApiResponse.js";
 const validate = (schema) => {
   return (req, res, next) => {
     try {
+      console.log("BODY:", req.body);
+      console.log("FILE:", req.file);
+
       schema.parse(req.body);
 
       next();
     } catch (error) {
+      console.log("VALIDATION ERROR:", error);
+
       if (error instanceof ZodError) {
         return res.status(400).json(
           new ApiResponse(

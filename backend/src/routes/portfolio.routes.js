@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { upload } from "../middlewares/multer.middleware.js";
 import validate from "../middlewares/validate.middleware.js";
 
 import {
@@ -17,19 +18,15 @@ import {
 
 const router = Router();
 
-/*
-|--------------------------------------------------------------------------
-| Public Routes
-|--------------------------------------------------------------------------
-*/
+// ====================================
+// Public Routes
+// ====================================
 
 router.get("/user/:userId", getUserPortfolio);
 
-/*
-|--------------------------------------------------------------------------
-| Protected Routes
-|--------------------------------------------------------------------------
-*/
+// ====================================
+// Protected Routes
+// ====================================
 
 router.use(verifyJWT);
 
@@ -37,6 +34,7 @@ router
   .route("/")
   .get(getMyPortfolio)
   .post(
+    upload.single("coverImage"),
     validate(createPortfolioSchema),
     createPortfolio
   );
@@ -44,6 +42,7 @@ router
 router
   .route("/:portfolioId")
   .patch(
+    upload.single("coverImage"),
     validate(updatePortfolioSchema),
     updatePortfolio
   )

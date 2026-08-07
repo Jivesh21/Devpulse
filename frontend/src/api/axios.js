@@ -3,19 +3,20 @@ import axios from "axios";
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    const authEndpointPattern = /\/auth\/(login|register|refresh-token)$/;
-    const isAuthRequest = authEndpointPattern.test(
-      originalRequest?.url || ""
-    );
+
+    const authEndpointPattern =
+      /\/auth\/(login|register|refresh-token)$/;
+
+    const isAuthRequest =
+      authEndpointPattern.test(
+        originalRequest?.url || ""
+      );
 
     if (
       error.response?.status === 401 &&
@@ -29,7 +30,9 @@ api.interceptors.response.use(
         await axios.post(
           `${import.meta.env.VITE_API_URL}/auth/refresh-token`,
           {},
-          { withCredentials: true }
+          {
+            withCredentials: true,
+          }
         );
 
         return api(originalRequest);

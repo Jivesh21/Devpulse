@@ -22,7 +22,12 @@ export const getUserPortfolio = async (userId) => {
 export const createPortfolio = async (projectData) => {
   const { data } = await api.post(
     "/portfolio",
-    projectData
+    projectData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
   );
 
   return data;

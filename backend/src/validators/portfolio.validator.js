@@ -11,9 +11,26 @@ export const createPortfolioSchema = z.object({
     .min(10, "Description must be at least 10 characters")
     .max(500),
 
-  coverImage: z.string().optional(),
+  coverImage: z.any().optional(),
 
-  techStack: z.array(z.string()).default([]),
+  techStack: z
+    .union([
+      z.array(z.string()),
+      z.string(),
+    ])
+    .optional()
+    .transform((value) => {
+      if (!value) return [];
+
+      if (Array.isArray(value)) {
+        return value;
+      }
+
+      return value
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }),
 
   githubUrl: z
     .string()
@@ -27,9 +44,31 @@ export const createPortfolioSchema = z.object({
     .optional()
     .or(z.literal("")),
 
-  featured: z.boolean().optional(),
+  featured: z
+    .union([
+      z.boolean(),
+      z.string(),
+    ])
+    .optional()
+    .transform((value) => {
+      if (value === true || value === "true")
+        return true;
 
-  order: z.number().optional(),
+      return false;
+    }),
+
+  order: z
+    .union([
+      z.number(),
+      z.string(),
+    ])
+    .optional()
+    .transform((value) => {
+      if (value === undefined)
+        return 0;
+
+      return Number(value);
+    }),
 });
 
 export const updatePortfolioSchema =

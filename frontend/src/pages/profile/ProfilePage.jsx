@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
-
+import PortfolioSection from "@/components/profile/portfolio/PortfolioSection";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileSkills from "@/components/profile/ProfileSkills";
@@ -161,7 +161,14 @@ function ProfilePage() {
         <ProfileSkills
           skills={profile.skills}
         />
+<ProfileSkills skills={profile.skills} />
 
+<PortfolioSection userId={profile._id} />
+
+<ProfilePosts
+  posts={posts}
+  isLoading={postsLoading}
+/>
         <ProfilePosts
           posts={posts}
           isLoading={postsLoading}

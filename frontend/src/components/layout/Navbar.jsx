@@ -108,17 +108,21 @@ const unreadCount =
         </Button>
 
         {/* Create Post */}
-        <Button className="hidden h-10 gap-2 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 px-5 text-white shadow-md shadow-violet-500/30 hover:from-violet-500 hover:to-indigo-500 sm:flex">
-          <Plus className="h-4 w-4" />
-          Create Post
-        </Button>
+      <Button
+  onClick={() => navigate("/feed")}
+  className="hidden h-10 gap-2 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 px-5 text-white shadow-md shadow-violet-500/30 hover:from-violet-500 hover:to-indigo-500 sm:flex"
+>
+  <Plus className="h-4 w-4" />
+  Create Post
+</Button>
 
-        <Button
-          size="icon"
-          className="rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/30 hover:from-violet-500 hover:to-indigo-500 sm:hidden"
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
+       <Button
+  onClick={() => navigate("/feed")}
+  size="icon"
+  className="rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/30 hover:from-violet-500 hover:to-indigo-500 sm:hidden"
+>
+  <Plus className="h-4 w-4" />
+</Button>
 
         {/* Notifications */}
        <Button

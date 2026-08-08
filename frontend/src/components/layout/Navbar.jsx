@@ -1,8 +1,10 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useUnreadCount } from "@/hooks/useNotification";
+
 import { Button } from "@/components/ui/button";
 import SearchBar from "@/components/search/SearchBar";
 import AppearanceMenu from "@/components/Theme/AppearanceMenu";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +24,6 @@ import {
 import {
   Activity,
   Search,
-  Plus,
   Bell,
   Menu,
   User,
@@ -35,181 +36,376 @@ import { useLogout } from "@/hooks/useAuth";
 
 function Navbar() {
   const { user } = useAuthContext();
+
   const logoutMutation = useLogout();
+
   const navigate = useNavigate();
 
-const { data: unreadData } =
-  useUnreadCount();
+  const { data: unreadData } =
+    useUnreadCount();
 
-const unreadCount =
-  unreadData?.data?.unreadCount || 0;
+  const unreadCount =
+    unreadData?.data?.unreadCount || 0;
 
   const handleLogout = async () => {
     try {
       await logoutMutation.mutateAsync();
     } catch (error) {
-      console.error("Logout failed:", error);
+      console.error(
+        "Logout failed:",
+        error
+      );
     } finally {
-      navigate("/login", { replace: true });
+      navigate("/login", {
+        replace: true,
+      });
     }
   };
 
   return (
-    <nav className="flex h-full items-center gap-4 px-4 sm:px-6">
-      {/* Left Section */}
-      <div className="flex items-center gap-2">
-        {/* Mobile Menu */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="lg:hidden"
-          aria-label="Open Menu"
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
+    <header
+      className="
+        glass
+        sticky
+        top-0
+        z-50
+        w-full
+        rounded-none
+        border-x-0
+        border-t-0
+        px-4
+        py-3
+        md:px-6
+      "
+    >
+      <div
+        className="
+          mx-auto
+          flex
+          h-12
+          max-w-7xl
+          items-center
+          gap-4
+        "
+      >
+        {/* ================================= */}
+        {/* Left Section */}
+        {/* ================================= */}
 
-        {/* Logo */}
-        <Link
-          to="/feed"
-          className="flex items-center gap-2.5"
-        >
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-md shadow-primary/30">
-            <Activity
-              className="h-5 w-5 text-white"
-              strokeWidth={2.5}
-            />
-          </div>
+        <div className="flex items-center gap-3">
+          {/* Mobile Menu */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="
+              rounded-xl
+              transition-all
+              duration-200
+              hover:bg-primary/10
+              hover:text-primary
+              active:scale-95
+              lg:hidden
+            "
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
 
-          <span className="hidden text-lg font-semibold tracking-tight sm:block">
-            Dev
-            <span className="text-primary">
-              Pulse
-            </span>
-          </span>
-        </Link>
-      </div>
-
-      {/* Center Search */}
-      <div className="hidden flex-1 justify-center md:flex">
-  <SearchBar />
-</div>
- 
-
-      {/* Right Section */}
-      <div className="ml-auto flex items-center gap-2">
-        {/* Mobile Search */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="md:hidden"
-        >
-          <Search className="h-5 w-5" />
-        </Button>
-
-        {/* Create Post */}
-      <Button
-  onClick={() => navigate("/feed")}
-  className="hidden h-10 gap-2 rounded-full bg-primary px-5 text-primary-foreground shadow-md shadow-primary/30 hover:bg-primary/90 sm:flex"
->
-  <Plus className="h-4 w-4" />
-  Create Post
-</Button>
-
-       <Button
-  onClick={() => navigate("/feed")}
-  size="icon"
-  className="rounded-full bg-primary text-primary-foreground shadow-md shadow-primary/30 hover:bg-primary/90 sm:hidden"
->
-  <Plus className="h-4 w-4" />
-</Button>
-
-        {/* Notifications */}
-       <Button
-  variant="ghost"
-  size="icon"
-  className="relative"
-  onClick={() =>
-    navigate("/notifications")
-  }
->
-  <Bell className="h-5 w-5" />
-
-  {unreadCount > 0 && (
-    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-      {unreadCount > 99
-        ? "99+"
-        : unreadCount}
-    </span>
-  )}
-</Button>
-
-        {/* Theme */}
-<AppearanceMenu />
-
-        {/* Avatar */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-full"
+          {/* Logo */}
+          <Link
+            to="/feed"
+            className="
+              group
+              flex
+              items-center
+              gap-2.5
+              outline-none
+            "
+          >
+            <div
+              className="
+                flex
+                h-9
+                w-9
+                items-center
+                justify-center
+                rounded-xl
+                bg-primary
+                shadow-lg
+                shadow-primary/25
+                transition-all
+                duration-300
+                group-hover:scale-105
+                group-hover:shadow-primary/40
+              "
             >
-              <Avatar className="h-9 w-9">
-                <AvatarImage src={user?.avatar} />
+              <Activity
+                className="
+                  h-5
+                  w-5
+                  text-primary-foreground
+                "
+                strokeWidth={2.5}
+              />
+            </div>
 
-                <AvatarFallback className="bg-primary text-primary-foreground">
-                  {user?.fullName?.charAt(0) || "U"}
-                </AvatarFallback>
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
+            <span
+              className="
+                hidden
+                text-lg
+                font-bold
+                tracking-tight
+                sm:block
+              "
+            >
+              Dev
+              <span className="text-primary">
+                Pulse
+              </span>
+            </span>
+          </Link>
+        </div>
 
-          <DropdownMenuContent
-  align="end"
-  className="w-56"
->
-  <DropdownMenuGroup>
-    <DropdownMenuLabel>
-      <p className="font-medium">
-        {user?.fullName || "Developer"}
-      </p>
+        {/* ================================= */}
+        {/* Center Search */}
+        {/* ================================= */}
 
-      <p className="text-xs text-muted-foreground">
-        @{user?.username || "username"}
-      </p>
-    </DropdownMenuLabel>
-  </DropdownMenuGroup>
+        <div
+          className="
+            hidden
+            flex-1
+            justify-center
+            px-6
+            md:flex
+          "
+        >
+          <div className="w-full max-w-xl">
+            <SearchBar />
+          </div>
+        </div>
 
-  <DropdownMenuSeparator />
+        {/* ================================= */}
+        {/* Right Section */}
+        {/* ================================= */}
 
-  <DropdownMenuItem asChild>
-    <Link to={`/profile/${user?.username}`}>
-      <User className="mr-2 h-4 w-4" />
-      Profile
-    </Link>
-  </DropdownMenuItem>
+        <div
+          className="
+            ml-auto
+            flex
+            items-center
+            gap-1.5
+            sm:gap-2
+          "
+        >
+          {/* Mobile Search */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="
+              rounded-xl
+              transition-all
+              duration-200
+              hover:bg-primary/10
+              hover:text-primary
+              active:scale-95
+              md:hidden
+            "
+          >
+            <Search className="h-5 w-5" />
+          </Button>
 
-  <DropdownMenuItem>
-    <Settings className="mr-2 h-4 w-4" />
-    Settings
-  </DropdownMenuItem>
+          {/* Notifications */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="
+              relative
+              rounded-xl
+              transition-all
+              duration-200
+              hover:bg-primary/10
+              hover:text-primary
+              active:scale-95
+            "
+            onClick={() =>
+              navigate("/notifications")
+            }
+          >
+            <Bell className="h-5 w-5" />
 
-  <DropdownMenuSeparator />
+            {unreadCount > 0 && (
+              <span
+                className="
+                  absolute
+                  right-0.5
+                  top-0.5
+                  flex
+                  h-4
+                  min-w-4
+                  items-center
+                  justify-center
+                  rounded-full
+                  bg-primary
+                  px-1
+                  text-[9px]
+                  font-bold
+                  text-primary-foreground
+                  shadow-sm
+                  ring-2
+                  ring-background
+                "
+              >
+                {unreadCount > 99
+                  ? "99+"
+                  : unreadCount}
+              </span>
+            )}
+          </Button>
 
-  <DropdownMenuItem
-    onClick={handleLogout}
-    disabled={logoutMutation.isPending}
-    className="cursor-pointer text-red-500 focus:text-red-500"
-  >
-    <LogOut className="mr-2 h-4 w-4" />
-    {logoutMutation.isPending
-      ? "Logging out..."
-      : "Logout"}
-  </DropdownMenuItem>
-</DropdownMenuContent>
-           </DropdownMenu>
+          {/* Theme */}
+          <AppearanceMenu />
+
+          {/* ================================= */}
+          {/* User Dropdown */}
+          {/* ================================= */}
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="
+                  rounded-full
+                  p-0.5
+                  transition-all
+                  duration-200
+                  hover:bg-primary/10
+                  active:scale-95
+                "
+              >
+                <Avatar
+                  className="
+                    h-9
+                    w-9
+                    border
+                    border-primary/20
+                    shadow-sm
+                  "
+                >
+                  <AvatarImage
+                    src={user?.avatar}
+                    alt={
+                      user?.fullName ||
+                      "User"
+                    }
+                  />
+
+                  <AvatarFallback
+                    className="
+                      bg-primary
+                      text-primary-foreground
+                    "
+                  >
+                    {user?.fullName
+                      ?.charAt(0)
+                      ?.toUpperCase() ||
+                      "U"}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent
+              align="end"
+              className="
+                glass
+                w-60
+                rounded-2xl
+                p-2
+              "
+            >
+              {/* IMPORTANT:
+                  Base UI requires MenuGroupLabel
+                  to be inside Menu.Group.
+              */}
+              <DropdownMenuGroup>
+                <DropdownMenuLabel
+                  className="
+                    px-3
+                    py-2
+                  "
+                >
+                  <p className="font-semibold">
+                    {user?.fullName ||
+                      "Developer"}
+                  </p>
+
+                  <p
+                    className="
+                      text-xs
+                      text-muted-foreground
+                    "
+                  >
+                    @{user?.username ||
+                      "username"}
+                  </p>
+                </DropdownMenuLabel>
+
+                <DropdownMenuSeparator />
+
+                <DropdownMenuItem
+                  onClick={() =>
+                    navigate(
+                      `/profile/${user?.username}`
+                    )
+                  }
+                  className="
+                    cursor-pointer
+                    rounded-xl
+                  "
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  Profile
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  onClick={() =>
+                    navigate("/settings")
+                  }
+                  className="
+                    cursor-pointer
+                    rounded-xl
+                  "
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  Settings
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  disabled={
+                    logoutMutation.isPending
+                  }
+                  className="
+                    cursor-pointer
+                    rounded-xl
+                    text-red-500
+                    focus:text-red-500
+                  "
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+
+                  {logoutMutation.isPending
+                    ? "Logging out..."
+                    : "Logout"}
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
-    </nav>
+    </header>
   );
 }
 

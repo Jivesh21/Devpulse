@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar";
+
 import { Button } from "@/components/ui/button";
 
 import {
@@ -54,9 +58,10 @@ function PostCard({ post }) {
   const isOwner =
     user?._id === post.author?._id;
 
-  // ================================
+  // ====================================
   // Like Hooks
-  // ================================
+  // ====================================
+
   const toggleLikeMutation =
     useToggleLike(post._id);
 
@@ -72,9 +77,10 @@ function PostCard({ post }) {
   const isLiked =
     likeStatusData?.data?.isLiked || false;
 
-  // ================================
+  // ====================================
   // Bookmark Hooks
-  // ================================
+  // ====================================
+
   const toggleBookmarkMutation =
     useToggleBookmark();
 
@@ -87,195 +93,390 @@ function PostCard({ post }) {
     false;
 
   return (
-    <Card className="overflow-hidden rounded-2xl border shadow-sm">
-      <CardContent className="p-0">
+    <article
+      className="
+        glass-card
+        glass-hover
+        overflow-hidden
+        transition-all
+        duration-300
+      "
+    >
+      {/* ================================= */}
+      {/* Header */}
+      {/* ================================= */}
 
-        {/* Header */}
-        <div className="flex items-center justify-between p-5">
-          <Link
-            to={`/profile/${post.author?.username}`}
-            className="flex items-center gap-3"
+      <div className="flex items-center justify-between p-5">
+        <Link
+          to={`/profile/${post.author?.username}`}
+          className="
+            group
+            flex
+            min-w-0
+            items-center
+            gap-3
+            rounded-xl
+            outline-none
+            transition-opacity
+            hover:opacity-90
+            focus-visible:ring-2
+            focus-visible:ring-ring
+          "
+        >
+          <Avatar
+            className="
+              h-11
+              w-11
+              border
+              border-primary/10
+              shadow-sm
+              transition-transform
+              duration-200
+              group-hover:scale-105
+            "
           >
-            <Avatar className="h-11 w-11">
-              <AvatarImage
-                src={post.author?.avatar}
-              />
+            <AvatarImage
+              src={post.author?.avatar}
+              alt={
+                post.author?.fullName ||
+                "Developer"
+              }
+            />
 
-              <AvatarFallback className="bg-primary text-primary-foreground">
-                {post.author?.fullName?.charAt(0) ||
-                  "U"}
-              </AvatarFallback>
-            </Avatar>
+            <AvatarFallback
+              className="
+                bg-primary/10
+                font-semibold
+                text-primary
+              "
+            >
+              {post.author?.fullName
+                ?.charAt(0)
+                ?.toUpperCase() || "U"}
+            </AvatarFallback>
+          </Avatar>
 
-            <div>
-              <h3 className="font-semibold hover:text-primary">
-                {post.author?.fullName}
-              </h3>
+          <div className="min-w-0">
+            <h3
+              className="
+                truncate
+                font-semibold
+                transition-colors
+                group-hover:text-primary
+              "
+            >
+              {post.author?.fullName}
+            </h3>
 
-              <p className="text-sm text-muted-foreground">
-                @{post.author?.username}
-              </p>
-            </div>
-          </Link>
-
-          {isOwner && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                >
-                  <MoreHorizontal className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() =>
-                    setEditOpen(true)
-                  }
-                >
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
-
-                <DropdownMenuItem
-                  onClick={() =>
-                    setDeleteOpen(true)
-                  }
-                  className="text-red-500"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-        </div>
-
-        {/* Content */}
-        {post.content && (
-          <div className="px-5 pb-4">
-            <p className="whitespace-pre-wrap leading-7">
-              {post.content}
+            <p className="truncate text-sm text-muted-foreground">
+              @{post.author?.username}
             </p>
           </div>
+        </Link>
+
+        {/* Owner Menu */}
+        {isOwner && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="
+                  h-9
+                  w-9
+                  rounded-xl
+                  text-muted-foreground
+                  transition-all
+                  duration-200
+                  hover:bg-primary/10
+                  hover:text-foreground
+                  active:scale-95
+                "
+              >
+                <MoreHorizontal className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent
+              align="end"
+              className="
+                glass
+                w-40
+                rounded-xl
+                p-1.5
+              "
+            >
+              <DropdownMenuItem
+                onClick={() =>
+                  setEditOpen(true)
+                }
+                className="
+                  cursor-pointer
+                  rounded-lg
+                "
+              >
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                onClick={() =>
+                  setDeleteOpen(true)
+                }
+                className="
+                  cursor-pointer
+                  rounded-lg
+                  text-red-500
+                  focus:text-red-500
+                "
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
+      </div>
 
-        {/* Image */}
-        {post.image && (
-          <div className="border-y bg-muted">
-            <img
-              src={post.image}
-              alt="Post"
-              className="max-h-[550px] w-full object-contain"
-            />
-          </div>
-        )}
+      {/* ================================= */}
+      {/* Content */}
+      {/* ================================= */}
 
-        {/* Actions */}
-        <div className="flex items-center justify-around border-t p-2">
+      {post.content && (
+        <div className="px-5 pb-5">
+          <p
+            className="
+              whitespace-pre-wrap
+              text-[15px]
+              leading-7
+              text-foreground/95
+            "
+          >
+            {post.content}
+          </p>
+        </div>
+      )}
 
-          {/* Like */}
-          <Button
-            variant="ghost"
-            className={`flex-1 gap-2 ${
+      {/* ================================= */}
+      {/* Image */}
+      {/* ================================= */}
+
+      {post.image && (
+        <div
+          className="
+            overflow-hidden
+            border-y
+            border-border/60
+            bg-muted/40
+          "
+        >
+          <img
+            src={post.image}
+            alt="Post"
+            loading="lazy"
+            className="
+              max-h-[550px]
+              w-full
+              object-contain
+              transition-transform
+              duration-500
+              hover:scale-[1.01]
+            "
+          />
+        </div>
+      )}
+
+      {/* ================================= */}
+      {/* Actions */}
+      {/* ================================= */}
+
+      <div
+        className="
+          flex
+          items-center
+          gap-1
+          border-t
+          border-border/60
+          p-2
+        "
+      >
+        {/* Like */}
+        <Button
+          variant="ghost"
+          className={`
+            interactive
+            flex-1
+            gap-2
+            rounded-xl
+            text-muted-foreground
+            transition-colors
+
+            ${
               isLiked
-                ? "text-red-500 hover:text-red-600"
-                : ""
-            }`}
-            onClick={() =>
-              toggleLikeMutation.mutate()
+                ? "text-red-500 hover:bg-red-500/10 hover:text-red-500"
+                : "hover:bg-muted/70 hover:text-foreground"
             }
-            disabled={
-              toggleLikeMutation.isPending
-            }
-          >
-            <Heart
-              className={`h-5 w-5 ${
+          `}
+          onClick={() =>
+            toggleLikeMutation.mutate()
+          }
+          disabled={
+            toggleLikeMutation.isPending
+          }
+        >
+          <Heart
+            className={`
+              h-5
+              w-5
+              transition-transform
+              duration-200
+
+              ${
                 isLiked
-                  ? "fill-current"
+                  ? "fill-current scale-110"
                   : ""
-              }`}
-            />
+              }
+            `}
+          />
+
+          <span className="hidden sm:inline">
             {likeCount}
-          </Button>
+          </span>
 
-          {/* Comment */}
-          <Button
-            variant="ghost"
-            className="flex-1 gap-2"
-            onClick={() =>
-              setShowComments(
-                !showComments
-              )
-            }
-          >
-            <MessageCircle className="h-5 w-5" />
+          <span className="sm:hidden">
+            {likeCount}
+          </span>
+        </Button>
+
+        {/* Comment */}
+        <Button
+          variant="ghost"
+          className={`
+            interactive
+            flex-1
+            gap-2
+            rounded-xl
+            text-muted-foreground
+            hover:bg-muted/70
+            hover:text-foreground
+          `}
+          onClick={() =>
+            setShowComments(
+              (previous) => !previous
+            )
+          }
+        >
+          <MessageCircle className="h-5 w-5" />
+
+          <span className="hidden sm:inline">
             Comment
-          </Button>
+          </span>
+        </Button>
 
-          {/* Bookmark */}
-          <Button
-            variant="ghost"
-            className={`flex-1 gap-2 ${
+        {/* Bookmark */}
+        <Button
+          variant="ghost"
+          className={`
+            interactive
+            flex-1
+            gap-2
+            rounded-xl
+            text-muted-foreground
+
+            ${
               isBookmarked
-                ? "text-primary hover:text-primary/80"
-                : ""
-            }`}
-            onClick={() =>
-              toggleBookmarkMutation.mutate(
-                post._id
-              )
+                ? "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary"
+                : "hover:bg-muted/70 hover:text-foreground"
             }
-            disabled={
-              toggleBookmarkMutation.isPending
-            }
-          >
-            <Bookmark
-              className={`h-5 w-5 ${
-                isBookmarked
-                  ? "fill-current"
-                  : ""
-              }`}
-            />
+          `}
+          onClick={() =>
+            toggleBookmarkMutation.mutate(
+              post._id
+            )
+          }
+          disabled={
+            toggleBookmarkMutation.isPending
+          }
+        >
+          <Bookmark
+            className={`
+              h-5
+              w-5
+              transition-transform
+              duration-200
 
+              ${
+                isBookmarked
+                  ? "fill-current scale-105"
+                  : ""
+              }
+            `}
+          />
+
+          <span className="hidden sm:inline">
             {isBookmarked
               ? "Saved"
               : "Save"}
-          </Button>
+          </span>
+        </Button>
 
-          {/* Share */}
-          <Button
-            variant="ghost"
-            className="flex-1 gap-2"
-          >
-            <Share2 className="h-5 w-5" />
+        {/* Share */}
+        <Button
+          variant="ghost"
+          className="
+            interactive
+            flex-1
+            gap-2
+            rounded-xl
+            text-muted-foreground
+            hover:bg-muted/70
+            hover:text-foreground
+          "
+        >
+          <Share2 className="h-5 w-5" />
+
+          <span className="hidden sm:inline">
             Share
-          </Button>
-        </div>
+          </span>
+        </Button>
+      </div>
 
-        {/* Comments */}
-        {showComments && (
+      {/* ================================= */}
+      {/* Comments */}
+      {/* ================================= */}
+
+      {showComments && (
+        <div
+          className="
+            border-t
+            border-border/60
+            bg-muted/20
+            p-4
+            sm:p-5
+          "
+        >
           <CommentSection
             postId={post._id}
           />
-        )}
+        </div>
+      )}
 
-        <EditPostDialog
-          open={editOpen}
-          onOpenChange={setEditOpen}
-          post={post}
-        />
+      {/* ================================= */}
+      {/* Dialogs */}
+      {/* ================================= */}
 
-        <DeletePostDialog
-          open={deleteOpen}
-          onOpenChange={setDeleteOpen}
-          postId={post._id}
-        />
+      <EditPostDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        post={post}
+      />
 
-      </CardContent>
-    </Card>
+      <DeletePostDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        postId={post._id}
+      />
+    </article>
   );
 }
 

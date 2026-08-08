@@ -4,21 +4,34 @@ function NotificationList({
   notifications = [],
 }) {
   if (notifications.length === 0) {
-    return (
-      <div className="rounded-2xl border bg-card p-10 text-center text-muted-foreground">
-        No notifications yet.
-      </div>
-    );
+    return null;
   }
 
   return (
-    <div className="space-y-4">
-      {notifications.map((notification) => (
-        <NotificationItem
-          key={notification._id}
-          notification={notification}
-        />
-      ))}
+    <div className="divide-y divide-border/50">
+      {notifications.map(
+        (notification, index) => (
+          <div
+            key={notification._id}
+            className="
+              page-enter
+              transition-colors
+              duration-200
+              hover:bg-muted/20
+            "
+            style={{
+              animationDelay: `${Math.min(
+                index * 50,
+                300
+              )}ms`,
+            }}
+          >
+            <NotificationItem
+              notification={notification}
+            />
+          </div>
+        )
+      )}
     </div>
   );
 }

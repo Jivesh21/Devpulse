@@ -2,6 +2,7 @@ import {
   useMutation,
   useQuery,
   useQueryClient,
+  useInfiniteQuery,
 } from "@tanstack/react-query";
 
 import {
@@ -68,5 +69,17 @@ export function useDeletePost() {
         queryKey: ["posts"],
       });
     },
+  });
+}
+
+export function useInfinitePosts() {
+  return useInfiniteQuery({
+    queryKey: ["posts"],
+    queryFn: ({ pageParam = 1 }) => getAllPosts({ page: pageParam }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage?.data?.hasNextPage
+        ? lastPage.data.currentPage + 1
+        : undefined,
   });
 }

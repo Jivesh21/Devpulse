@@ -1,7 +1,6 @@
 import User from "../models/user.model.js";
 import ApiError from "../utils/ApiError.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
-import Follow from "../models/follow.model.js";
 // ====================================
 // Update User Profile
 // ====================================
@@ -15,6 +14,9 @@ export const updateProfileService = async (
     github,
     linkedin,
     website,
+    experience,
+    education,
+    certificates,
   } = profileData;
 
   const updatedUser = await User.findByIdAndUpdate(
@@ -25,6 +27,9 @@ export const updateProfileService = async (
       github,
       linkedin,
       website,
+      experience,
+      education,
+      certificates,
     },
     {
       new: true,
@@ -208,22 +213,11 @@ export const getCurrentUserService =
 // ====================================
 export const getSuggestedDevelopersService =
   async (currentUserId) => {
-    // Get all users the current user already follows
-    const following = await Follow.find({
-      follower: currentUserId,
-    }).select("following");
-
-    const followingIds = following.map(
-      (item) => item.following
-    );
-
-    // Exclude current user + already followed users
+    // Show every other registered developer. The client displays whether
+    // each person is already followed through the follow-status endpoint.
     const users = await User.find({
       _id: {
-        $nin: [
-          currentUserId,
-          ...followingIds,
-        ],
+        $ne: currentUserId,
       },
     })
       .select(

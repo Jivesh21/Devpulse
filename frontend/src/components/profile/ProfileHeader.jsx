@@ -46,7 +46,7 @@ function ProfileHeader({
     <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
 
       {/* Cover */}
-      <div className="relative h-52 bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-500">
+      <div className="relative h-52 bg-primary">
 
         {profile.coverImage && (
           <img
@@ -114,7 +114,7 @@ function ProfileHeader({
       href={profile.website}
       target="_blank"
       rel="noreferrer"
-      className="flex items-center gap-2 text-sm text-violet-600 transition hover:underline"
+      className="flex items-center gap-2 text-sm text-primary transition hover:underline"
     >
       <Globe className="h-4 w-4" />
       {profile.website}
@@ -126,7 +126,7 @@ function ProfileHeader({
       href={profile.github}
       target="_blank"
       rel="noreferrer"
-      className="flex items-center gap-2 text-sm text-violet-600 transition hover:underline"
+      className="flex items-center gap-2 text-sm text-primary transition hover:underline"
     >
       <ExternalLink className="h-4 w-4" />
       GitHub
@@ -138,7 +138,7 @@ function ProfileHeader({
       href={profile.linkedin}
       target="_blank"
       rel="noreferrer"
-      className="flex items-center gap-2 text-sm text-violet-600 transition hover:underline"
+      className="flex items-center gap-2 text-sm text-primary transition hover:underline"
     >
       <ExternalLink className="h-4 w-4" />
       LinkedIn
@@ -178,7 +178,7 @@ function ProfileHeader({
       {followers}
     </p>
 
-    <p className="text-sm text-muted-foreground hover:text-violet-600">
+    <p className="text-sm text-muted-foreground hover:text-primary">
       Followers
     </p>
   </button>
@@ -191,7 +191,7 @@ function ProfileHeader({
       {following}
     </p>
 
-    <p className="text-sm text-muted-foreground hover:text-violet-600">
+    <p className="text-sm text-muted-foreground hover:text-primary">
       Following
     </p>
   </button>

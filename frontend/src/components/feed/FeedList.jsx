@@ -1,10 +1,19 @@
-import { usePosts } from "@/hooks/usePosts";
+import { useInfinitePosts } from "@/hooks/usePosts";
 import FeedSkeleton from "./FeedSkeleton";
 import EmptyFeed from "./EmptyFeed";
 import PostCard from "./PostCard";
+import { Button } from "@/components/ui/button";
 
 function FeedList() {
-  const { data, isLoading, isError } = usePosts();
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfinitePosts();
 
   if (isLoading) {
     return <FeedSkeleton />;
@@ -13,12 +22,15 @@ function FeedList() {
   if (isError) {
     return (
       <div className="rounded-2xl border bg-card p-8 text-center">
-        Failed to load posts.
+        <p>Failed to load posts.</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {error?.response?.data?.message || "Please check your connection and try again."}
+        </p>
       </div>
     );
   }
 
-  const posts = data?.data?.posts || [];
+  const posts = data?.pages.flatMap((page) => page?.data?.posts || []) || [];
 
   if (posts.length === 0) {
     return <EmptyFeed />;
@@ -32,6 +44,18 @@ function FeedList() {
           post={post}
         />
       ))}
+
+      {hasNextPage && (
+        <div className="flex justify-center pt-2">
+          <Button
+            variant="outline"
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+          >
+            {isFetchingNextPage ? "Loading more posts..." : "Load more posts"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

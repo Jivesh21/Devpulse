@@ -77,7 +77,7 @@ const profileCompletion = Math.round(
                 variant="ghost"
                 className={`flex h-11 w-full items-center justify-center gap-3 rounded-xl transition-all xl:justify-start xl:px-4 ${
                   isActive
-                    ? "bg-violet-500/10 text-violet-600 hover:bg-violet-500/15 hover:text-violet-600"
+                    ? "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
@@ -95,12 +95,12 @@ const profileCompletion = Math.round(
 
       {/* Profile Completion */}
       <div className="hidden xl:block">
-        <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-violet-500/10 via-background to-cyan-500/10 p-5 shadow-sm">
-          <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-violet-500/10 blur-3xl" />
+        <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-primary/10 via-background to-primary/5 p-5 shadow-sm">
+          <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-primary/10 blur-3xl" />
 
           <div className="relative flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-cyan-500">
-              <Sparkles className="h-4 w-4 text-white" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
+              <Sparkles className="h-4 w-4 text-primary-foreground" />
             </div>
 
             <div>
@@ -126,7 +126,7 @@ const profileCompletion = Math.round(
           </div>
 
         <Button
-  className="mt-5 w-full rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500"
+  className="mt-5 w-full rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
   onClick={() =>
     navigate(`/profile/${user.username}`)
   }

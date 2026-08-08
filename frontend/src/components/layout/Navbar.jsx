@@ -1,8 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useUnreadCount } from "@/hooks/useNotification";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import SearchBar from "@/components/search/SearchBar";
+import AppearanceMenu from "@/components/Theme/AppearanceMenu";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,7 +24,6 @@ import {
   Search,
   Plus,
   Bell,
-  Sun,
   Menu,
   User,
   Settings,
@@ -74,7 +73,7 @@ const unreadCount =
           to="/feed"
           className="flex items-center gap-2.5"
         >
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-cyan-500 shadow-md shadow-violet-500/30">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-md shadow-primary/30">
             <Activity
               className="h-5 w-5 text-white"
               strokeWidth={2.5}
@@ -83,7 +82,7 @@ const unreadCount =
 
           <span className="hidden text-lg font-semibold tracking-tight sm:block">
             Dev
-            <span className="text-violet-500">
+            <span className="text-primary">
               Pulse
             </span>
           </span>
@@ -110,7 +109,7 @@ const unreadCount =
         {/* Create Post */}
       <Button
   onClick={() => navigate("/feed")}
-  className="hidden h-10 gap-2 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 px-5 text-white shadow-md shadow-violet-500/30 hover:from-violet-500 hover:to-indigo-500 sm:flex"
+  className="hidden h-10 gap-2 rounded-full bg-primary px-5 text-primary-foreground shadow-md shadow-primary/30 hover:bg-primary/90 sm:flex"
 >
   <Plus className="h-4 w-4" />
   Create Post
@@ -119,7 +118,7 @@ const unreadCount =
        <Button
   onClick={() => navigate("/feed")}
   size="icon"
-  className="rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/30 hover:from-violet-500 hover:to-indigo-500 sm:hidden"
+  className="rounded-full bg-primary text-primary-foreground shadow-md shadow-primary/30 hover:bg-primary/90 sm:hidden"
 >
   <Plus className="h-4 w-4" />
 </Button>
@@ -145,12 +144,7 @@ const unreadCount =
 </Button>
 
         {/* Theme */}
-        <Button
-          variant="ghost"
-          size="icon"
-        >
-          <Sun className="h-5 w-5" />
-        </Button>
+<AppearanceMenu />
 
         {/* Avatar */}
         <DropdownMenu>
@@ -163,7 +157,7 @@ const unreadCount =
               <Avatar className="h-9 w-9">
                 <AvatarImage src={user?.avatar} />
 
-                <AvatarFallback className="bg-gradient-to-br from-violet-600 to-cyan-500 text-white">
+                <AvatarFallback className="bg-primary text-primary-foreground">
                   {user?.fullName?.charAt(0) || "U"}
                 </AvatarFallback>
               </Avatar>

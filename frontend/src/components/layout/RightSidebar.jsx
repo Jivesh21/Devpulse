@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Link } from "react-router-dom";
 import {
   Avatar,
   AvatarFallback,
@@ -10,7 +11,6 @@ import {
   TrendingUp,
   Users,
   Activity,
-  ArrowUpRight,
 } from "lucide-react";
 
 import { useSuggestedDevelopers } from "@/hooks/useSuggestedDevelopers";
@@ -44,7 +44,7 @@ const analytics =
       <Card className="rounded-2xl">
         <CardContent className="p-5">
           <div className="mb-4 flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-violet-600" />
+            <TrendingUp className="h-5 w-5 text-primary" />
 
             <h2 className="font-semibold">
               Trending Technologies
@@ -63,7 +63,7 @@ const analytics =
         #{item.name}
       </span>
 
-      <span className="text-xs font-semibold text-violet-600">
+      <span className="text-xs font-semibold text-primary">
         {item.count}
       </span>
     </button>
@@ -81,7 +81,7 @@ const analytics =
       <Card className="rounded-2xl">
         <CardContent className="p-5">
           <div className="mb-4 flex items-center gap-2">
-            <Users className="h-5 w-5 text-violet-600" />
+            <Users className="h-5 w-5 text-primary" />
 
             <h2 className="font-semibold">
               Suggested Developers
@@ -94,13 +94,17 @@ const analytics =
                 key={user._id}
                 className="flex items-center justify-between"
               >
-                <div className="flex items-center gap-3">
+                <Link
+                  to={`/profile/${user.username}`}
+                  className="flex min-w-0 items-center gap-3 rounded-lg outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label={`View ${user.fullName}'s profile`}
+                >
                   <Avatar>
                     <AvatarImage
                       src={user.avatar}
                     />
 
-                    <AvatarFallback className="bg-gradient-to-br from-violet-600 to-cyan-500 text-white">
+                    <AvatarFallback className="bg-primary text-primary-foreground">
                       {user.fullName
                         ?.split(" ")
                         .map((n) => n[0])
@@ -109,16 +113,16 @@ const analytics =
                     </AvatarFallback>
                   </Avatar>
 
-                  <div>
-                    <p className="text-sm font-semibold">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">
                       {user.fullName}
                     </p>
 
-                    <p className="text-xs text-muted-foreground">
+                    <p className="truncate text-xs text-muted-foreground">
                       @{user.username}
                     </p>
                   </div>
-                </div>
+                </Link>
 
                 <FollowButton user={user} />
               </div>
@@ -131,7 +135,7 @@ const analytics =
       <Card className="rounded-2xl">
         <CardContent className="p-5">
           <div className="mb-4 flex items-center gap-2">
-            <Activity className="h-5 w-5 text-violet-600" />
+            <Activity className="h-5 w-5 text-primary" />
 
             <h2 className="font-semibold">
               Community Activity

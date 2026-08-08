@@ -3,12 +3,12 @@ import { Activity, GitBranch, Sparkles } from "lucide-react";
 function DevPulseLogo({ className = "" }) {
   return (
     <div className={`flex items-center gap-3 ${className}`}>
-      <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-cyan-500 shadow-lg shadow-violet-500/30">
+      <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/30">
         <Activity className="h-5 w-5 text-white" strokeWidth={2.5} />
       </div>
 
       <span className="text-xl font-bold tracking-tight text-white">
-        Dev<span className="text-violet-400">Pulse</span>
+        Dev<span className="text-primary">Pulse</span>
       </span>
     </div>
   );
@@ -18,8 +18,8 @@ function PulseGraphic() {
   return (
     <div className="relative mx-auto w-full max-w-md">
       {/* Background Glow */}
-      <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-violet-600/30 blur-3xl" />
-      <div className="absolute -bottom-20 -right-16 h-72 w-72 rounded-full bg-cyan-500/20 blur-3xl" />
+      <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-primary/30 blur-3xl" />
+      <div className="absolute -bottom-20 -right-16 h-72 w-72 rounded-full bg-primary/20 blur-3xl" />
 
       {/* Main Card */}
       <div className="relative rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl shadow-2xl">
@@ -37,8 +37,8 @@ function PulseGraphic() {
         <svg viewBox="0 0 300 80" className="h-24 w-full">
           <defs>
             <linearGradient id="pulseLine" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#8b5cf6" />
-              <stop offset="100%" stopColor="#22d3ee" />
+              <stop offset="0%" stopColor="var(--primary)" />
+              <stop offset="100%" stopColor="var(--primary)" />
             </linearGradient>
           </defs>
 
@@ -65,7 +65,7 @@ function PulseGraphic() {
 
       {/* Floating Card */}
       <div className="absolute -bottom-8 -left-8 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/10 px-4 py-3 backdrop-blur-xl shadow-xl">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-violet-600">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
           <GitBranch className="h-5 w-5 text-white" />
         </div>
 
@@ -97,7 +97,7 @@ function LeftHero() {
       />
 
       {/* Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-violet-950/40 via-transparent to-cyan-950/30" />
+      <div className="absolute inset-0 bg-gradient-to-b from-primary/40 via-transparent to-primary/30" />
 
       {/* Logo */}
       <div className="relative z-10 p-12">

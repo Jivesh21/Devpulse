@@ -16,7 +16,7 @@ function BookmarksPage() {
       <div className="space-y-6">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold">
-            <Bookmark className="h-6 w-6 text-violet-600" />
+            <Bookmark className="h-6 w-6 text-primary" />
             Bookmarks
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">

@@ -5,6 +5,7 @@ import PortfolioSection from "@/components/profile/portfolio/PortfolioSection";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileSkills from "@/components/profile/ProfileSkills";
+import ProfileCareer from "@/components/profile/ProfileCareer";
 import ProfilePosts from "@/components/profile/ProfilePosts";
 import EditProfileDialog from "@/components/profile/EditProfileDialog";
 import FollowListDialog from "@/components/profile/FollowListDialog";
@@ -100,7 +101,7 @@ const [projectDialogOpen, setProjectDialogOpen] =
     return (
       <DashboardLayout>
         <div className="flex h-[60vh] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </DashboardLayout>
     );
@@ -162,6 +163,7 @@ const [projectDialogOpen, setProjectDialogOpen] =
         <ProfileSkills
           skills={profile.skills}
         />
+        <ProfileCareer profile={profile} />
 <PortfolioSection
   userId={profile._id}
   onAddProject={() =>

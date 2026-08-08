@@ -101,14 +101,14 @@ function PostCard({ post }) {
                 src={post.author?.avatar}
               />
 
-              <AvatarFallback className="bg-violet-600 text-white">
+              <AvatarFallback className="bg-primary text-primary-foreground">
                 {post.author?.fullName?.charAt(0) ||
                   "U"}
               </AvatarFallback>
             </Avatar>
 
             <div>
-              <h3 className="font-semibold hover:text-violet-600">
+              <h3 className="font-semibold hover:text-primary">
                 {post.author?.fullName}
               </h3>
 
@@ -220,7 +220,7 @@ function PostCard({ post }) {
             variant="ghost"
             className={`flex-1 gap-2 ${
               isBookmarked
-                ? "text-violet-600 hover:text-violet-700"
+                ? "text-primary hover:text-primary/80"
                 : ""
             }`}
             onClick={() =>

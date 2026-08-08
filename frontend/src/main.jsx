@@ -5,38 +5,37 @@ import { Toaster } from "sonner";
 
 import App from "./App.jsx";
 import queryClient from "./lib/queryClient.js";
+
 import { AuthProvider } from "./context/AuthContext.jsx";
+import { ThemeProvider } from "./components/providers/theme-provider.jsx";
+import { ThemeContextProvider } from "./context/ThemeContext.jsx";
 
 import "./index.css";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <App />
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
+        <ThemeContextProvider>
+          <AuthProvider>
+            <App />
 
-        <Toaster
-          position="top-right"
-          theme="dark"
-          richColors
-          expand
-          closeButton
-          duration={3500}
-          visibleToasts={4}
-          toastOptions={{
-            className: "devpulse-toast",
-            style: {
-              background: "#09090B",
-              color: "#FFFFFF",
-              border: "1px solid rgba(124, 58, 237, 0.45)",
-              borderRadius: "18px",
-              padding: "16px",
-              boxShadow:
-                "0 15px 40px rgba(124, 58, 237, 0.35)",
-            },
-          }}
-        />
-      </AuthProvider>
+            <Toaster
+              position="top-right"
+              richColors
+              expand
+              closeButton
+              duration={3500}
+              visibleToasts={4}
+            />
+          </AuthProvider>
+        </ThemeContextProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   </StrictMode>
 );

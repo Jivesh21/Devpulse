@@ -9,6 +9,7 @@ import FeedPage from "../pages/feed/FeedPage";
 import ProfilePage from "../pages/profile/ProfilePage";
 import SettingsPage from "../pages/settings/SettingsPage";
 import BookmarksPage from "../pages/BookmarksPage";
+import NetworkPage from "../pages/NetworkPage";
 import ProtectedRoute from "./ProtectedRoute";
 import DashboardLayout from "../layouts/DashboardLayout";
 
@@ -56,7 +57,7 @@ const router = createBrowserRouter([
     path: "/network",
     element: (
       <ProtectedRoute>
-        <PlaceholderPage title="Network" />
+        <NetworkPage />
       </ProtectedRoute>
     ),
   },

@@ -73,8 +73,8 @@ function PortfolioCard({
                 className="h-full w-full object-cover transition-transform duration-300 hover:scale-110"
               />
             ) : (
-              <div className="flex h-full flex-col items-center justify-center bg-gradient-to-br from-violet-50 via-background to-cyan-50 text-muted-foreground">
-                <FolderGit2 className="mb-3 h-12 w-12 text-violet-500" />
+              <div className="flex h-full flex-col items-center justify-center bg-gradient-to-br from-primary/10 via-background to-primary/5 text-muted-foreground">
+                <FolderGit2 className="mb-3 h-12 w-12 text-primary" />
 
                 <p className="font-medium">
                   No Preview Available
@@ -111,7 +111,7 @@ function PortfolioCard({
                   (tech) => (
                     <span
                       key={tech}
-                      className="rounded-full bg-violet-100 px-3 py-1 text-xs font-medium text-violet-700"
+                      className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
                     >
                       {tech}
                     </span>

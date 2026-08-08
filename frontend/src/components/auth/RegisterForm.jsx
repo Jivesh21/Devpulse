@@ -45,7 +45,8 @@ function RegisterForm() {
 
   const onSubmit = async (data) => {
     try {
-      const { confirmPassword, ...userData } = data;
+      const userData = { ...data };
+      delete userData.confirmPassword;
 
       const response = await registerMutation.mutateAsync(userData);
 
@@ -227,7 +228,7 @@ function RegisterForm() {
         <Button
           type="submit"
           disabled={isSubmitting || registerMutation.isPending}
-          className="h-11 w-full gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500"
+          className="h-11 w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
         >
           {registerMutation.isPending
             ? "Creating Account..."
@@ -244,7 +245,7 @@ function RegisterForm() {
         Already have an account?{" "}
         <Link
           to="/login"
-          className="font-medium text-violet-600 transition-colors hover:text-violet-500"
+          className="font-medium text-primary transition-colors hover:text-primary/80"
         >
           Sign In
         </Link>

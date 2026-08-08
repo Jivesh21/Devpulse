@@ -138,7 +138,7 @@ function LoginForm() {
         <Button
           type="submit"
           disabled={isSubmitting || loginMutation.isPending}
-          className="h-11 w-full gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500"
+          className="h-11 w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
         >
           {loginMutation.isPending
             ? "Signing In..."
@@ -155,7 +155,7 @@ function LoginForm() {
         Don't have an account?{" "}
         <Link
           to="/register"
-          className="font-medium text-violet-600 transition-colors hover:text-violet-500"
+          className="font-medium text-primary transition-colors hover:text-primary/80"
         >
           Sign Up
         </Link>

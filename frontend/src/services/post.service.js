@@ -16,8 +16,8 @@ export const createPost = async (formData) => {
 // ================================
 // Get All Posts
 // ================================
-export const getAllPosts = async () => {
-  const { data } = await api.get("/posts");
+export const getAllPosts = async ({ page = 1, limit = 10 } = {}) => {
+  const { data } = await api.get(`/posts?page=${page}&limit=${limit}`);
 
   return data;
 };

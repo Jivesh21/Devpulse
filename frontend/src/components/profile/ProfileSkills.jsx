@@ -17,7 +17,7 @@ function ProfileSkills({ skills = [] }) {
             {skills.map((skill) => (
               <span
                 key={skill}
-                className="rounded-full bg-violet-100 px-4 py-2 text-sm font-medium text-violet-700 dark:bg-violet-500/20 dark:text-violet-300"
+                className="rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary"
               >
                 {skill}
               </span>

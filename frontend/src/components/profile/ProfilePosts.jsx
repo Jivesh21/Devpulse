@@ -12,7 +12,7 @@ function ProfilePosts({
     return (
       <Card className="rounded-2xl shadow-sm">
         <CardContent className="flex flex-col items-center justify-center gap-4 p-10">
-          <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-muted-foreground">
             Loading posts...
           </p>
@@ -26,8 +26,8 @@ function ProfilePosts({
       <Card className="rounded-2xl shadow-sm">
         <CardContent className="flex flex-col items-center justify-center gap-4 p-12 text-center">
 
-          <div className="rounded-full bg-violet-100 p-5 dark:bg-violet-500/20">
-            <PenSquare className="h-8 w-8 text-violet-600" />
+          <div className="rounded-full bg-primary/10 p-5">
+            <PenSquare className="h-8 w-8 text-primary" />
           </div>
 
           <h2 className="text-2xl font-bold">

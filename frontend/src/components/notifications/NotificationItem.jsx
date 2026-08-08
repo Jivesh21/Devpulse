@@ -35,7 +35,7 @@ function NotificationItem({ notification }) {
       className={`flex items-start justify-between rounded-xl border p-4 transition ${
         notification.isRead
           ? "bg-background"
-          : "bg-violet-50 dark:bg-violet-950/20"
+          : "bg-primary/10"
       }`}
     >
       <div

@@ -208,7 +208,7 @@ function SettingsPage() {
                 <Button
                   type="submit"
                   disabled={updateProfileMutation.isPending}
-                  className="rounded-xl gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white"
+                  className="rounded-xl gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
                 >
                   {updateProfileMutation.isPending ? (
                     <>

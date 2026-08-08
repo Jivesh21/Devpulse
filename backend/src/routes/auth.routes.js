@@ -2,9 +2,12 @@ import { Router } from "express";
 import {
   register,
   login,
+  googleLogin,
+  verifyEmail,
+  forgotPassword,
+  resetPassword,
   logout,
   refreshAccessToken,
-  googleLogin,
   getCurrentUser,
 } from "../controllers/auth.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -75,6 +78,10 @@ router.post(
   validate(loginSchema),
   login
 );
+router.get(
+  "/verify-email/:token",
+  verifyEmail
+);
 // ======================
 // Google Login
 // ======================
@@ -137,5 +144,15 @@ router.post(
   verifyJWT,
   logout
 );
+router.post(
+  "/forgot-password",
+  authLimiter,
+  forgotPassword
+);
 
+router.post(
+  "/reset-password/:token",
+  authLimiter,
+  resetPassword
+);
 export default router;

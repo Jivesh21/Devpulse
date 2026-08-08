@@ -23,17 +23,22 @@ import {
 } from "@/hooks/useAuth";
 
 function LoginForm() {
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] =
+    useState(false);
 
   const navigate = useNavigate();
 
   const loginMutation = useLogin();
-  const googleLoginMutation = useGoogleLogin();
+  const googleLoginMutation =
+    useGoogleLogin();
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: {
+      errors,
+      isSubmitting,
+    },
   } = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -112,8 +117,8 @@ function LoginForm() {
   return (
     <div className="w-full">
       {/* Heading */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">
           Welcome Back
         </h1>
 
@@ -124,7 +129,7 @@ function LoginForm() {
       </div>
 
       {/* Google Login */}
-      <div className="space-y-4">
+      <div className="mt-8 space-y-4">
         <div className="relative flex items-center">
           <div className="flex-1 border-t border-border" />
 
@@ -193,9 +198,19 @@ function LoginForm() {
 
         {/* Password */}
         <div className="space-y-2">
-          <Label htmlFor="password">
-            Password
-          </Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password">
+              Password
+            </Label>
+
+            {/* Forgot Password */}
+            <Link
+              to="/forgot-password"
+              className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
+            >
+              Forgot Password?
+            </Link>
+          </div>
 
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

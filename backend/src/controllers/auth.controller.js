@@ -1,12 +1,16 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import cookieOptions from "../utils/cookieOptions.js";
+
 import {
   registerUser,
   loginUser,
   logoutUser,
   refreshAccessTokenService,
+    verifyEmailService,
     googleLoginUser,
+     forgotPasswordService,
+      resetPasswordService,
 } from "../services/auth.service.js";
 
 // ======================
@@ -97,6 +101,68 @@ export const logout = asyncHandler(async (req, res) => {
       )
     );
 });
+// ====================================
+// Forgot Password
+// ====================================
+export const forgotPassword = asyncHandler(
+  async (req, res) => {
+    const { email } = req.body;
+
+    const result =
+      await forgotPasswordService(email);
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        result,
+        "If an account exists with this email, a password reset link has been sent."
+      )
+    );
+  }
+);
+
+// ====================================
+// Reset Password
+// ====================================
+export const resetPassword = asyncHandler(
+  async (req, res) => {
+    const { token } = req.params;
+    const { newPassword } = req.body;
+
+    const result =
+      await resetPasswordService(
+        token,
+        newPassword
+      );
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        result,
+        "Password reset successfully"
+      )
+    );
+  }
+);
+// ====================================
+// Verify Email
+// ====================================
+export const verifyEmail = asyncHandler(
+  async (req, res) => {
+    const { token } = req.params;
+
+    const result =
+      await verifyEmailService(token);
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        result,
+        "Email verified successfully"
+      )
+    );
+  }
+);
 // ======================
 // Refresh Access Token
 // ======================

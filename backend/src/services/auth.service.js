@@ -1,10 +1,11 @@
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
 import ApiError from "../utils/ApiError.js";
-
+import { OAuth2Client } from "google-auth-library";
 // ====================================
 // Generate Access & Refresh Tokens
 // ====================================
+const googleClient = new OAuth2Client();
 const generateAccessAndRefreshTokens = async (userId) => {
   const user = await User.findById(userId).select("+refreshToken");
 
@@ -100,7 +101,157 @@ export const loginUser = async (userData) => {
     refreshToken,
   };
 };
+// ====================================
+// Google Login
+// ====================================
+export const googleLoginUser = async (credential) => {
+  if (!credential) {
+    throw new ApiError(
+      400,
+      "Google credential is required"
+    );
+  }
 
+  if (!process.env.GOOGLE_CLIENT_ID) {
+    throw new ApiError(
+      500,
+      "Google authentication is not configured"
+    );
+  }
+
+  let payload;
+
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    payload = ticket.getPayload();
+  } catch (error) {
+    console.error("Google token verification failed:", error);
+
+    throw new ApiError(
+      401,
+      "Invalid Google credential"
+    );
+  }
+
+  if (!payload) {
+    throw new ApiError(
+      401,
+      "Invalid Google credential"
+    );
+  }
+
+  const {
+    sub: googleId,
+    email,
+    name,
+    picture,
+    email_verified: emailVerified,
+  } = payload;
+
+  if (!googleId || !email) {
+    throw new ApiError(
+      401,
+      "Google account information is incomplete"
+    );
+  }
+
+  if (!emailVerified) {
+    throw new ApiError(
+      401,
+      "Google email is not verified"
+    );
+  }
+
+  // ------------------------------------
+  // Check existing Google account
+  // ------------------------------------
+  let user = await User.findOne({
+    googleId,
+  }).select("+refreshToken");
+
+  // ------------------------------------
+  // Check existing DevPulse account
+  // ------------------------------------
+  if (!user) {
+    user = await User.findOne({
+      email: email.toLowerCase(),
+    }).select("+refreshToken");
+  }
+
+  // ------------------------------------
+  // Create new user
+  // ------------------------------------
+  if (!user) {
+    const baseUsername =
+      email
+        .split("@")[0]
+        .toLowerCase()
+        .replace(/[^a-z0-9_]/g, "_")
+        .slice(0, 20) || "user";
+
+    let username = baseUsername;
+    let counter = 1;
+
+    while (await User.exists({ username })) {
+      const suffix = String(counter);
+
+      username =
+        `${baseUsername.slice(
+          0,
+          20 - suffix.length
+        )}${suffix}`;
+
+      counter++;
+    }
+
+    user = await User.create({
+      fullName: name?.trim() || "Google User",
+      username,
+      email: email.toLowerCase(),
+      googleId,
+      avatar: picture || "",
+    });
+
+    user = await User.findById(user._id).select(
+      "+refreshToken"
+    );
+  } else {
+    // ------------------------------------
+    // Link Google account to existing user
+    // ------------------------------------
+    if (!user.googleId) {
+      user.googleId = googleId;
+
+      if (!user.avatar && picture) {
+        user.avatar = picture;
+      }
+
+      await user.save({
+        validateBeforeSave: false,
+      });
+    }
+  }
+
+  const {
+    accessToken,
+    refreshToken,
+  } = await generateAccessAndRefreshTokens(
+    user._id
+  );
+
+  user.password = undefined;
+  user.refreshToken = undefined;
+
+  return {
+    user,
+    accessToken,
+    refreshToken,
+  };
+};
 // ====================================
 // Logout User
 // ====================================

@@ -6,6 +6,7 @@ import {
   loginUser,
   logoutUser,
   refreshAccessTokenService,
+    googleLoginUser,
 } from "../services/auth.service.js";
 
 // ======================
@@ -43,7 +44,28 @@ export const login = asyncHandler(async (req, res) => {
       )
     );
 });
+// ======================
+// Google Login
+// ======================
+export const googleLogin = asyncHandler(async (req, res) => {
+  const { credential } = req.body;
 
+  const result = await googleLoginUser(credential);
+
+  return res
+    .status(200)
+    .cookie("accessToken", result.accessToken, cookieOptions)
+    .cookie("refreshToken", result.refreshToken, cookieOptions)
+    .json(
+      new ApiResponse(
+        200,
+        {
+          user: result.user,
+        },
+        "Google login successful"
+      )
+    );
+});
 // ======================
 // Get Current User
 // ======================

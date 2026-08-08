@@ -1,6 +1,12 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+
 import {
   login,
+  googleLogin,
   register,
   logout,
   getCurrentUser,
@@ -11,14 +17,40 @@ export const useLogin = () => {
 
   return useMutation({
     mutationFn: login,
+
     onSuccess: (response) => {
       const user = response?.data?.user;
 
       if (user) {
-        queryClient.setQueryData(["current-user"], {
-          ...response,
-          data: user,
-        });
+        queryClient.setQueryData(
+          ["current-user"],
+          {
+            ...response,
+            data: user,
+          }
+        );
+      }
+    },
+  });
+};
+
+export const useGoogleLogin = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: googleLogin,
+
+    onSuccess: (response) => {
+      const user = response?.data?.user;
+
+      if (user) {
+        queryClient.setQueryData(
+          ["current-user"],
+          {
+            ...response,
+            data: user,
+          }
+        );
       }
     },
   });
@@ -35,6 +67,7 @@ export const useLogout = () => {
 
   return useMutation({
     mutationFn: logout,
+
     onSettled: () => {
       queryClient.removeQueries({
         queryKey: ["current-user"],

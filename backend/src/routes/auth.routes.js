@@ -4,6 +4,7 @@ import {
   login,
   logout,
   refreshAccessToken,
+  googleLogin,
   getCurrentUser,
 } from "../controllers/auth.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -74,7 +75,14 @@ router.post(
   validate(loginSchema),
   login
 );
-
+// ======================
+// Google Login
+// ======================
+router.post(
+  "/google",
+  authLimiter,
+  googleLogin
+);
 /**
  * @swagger
  * /auth/refresh-token:

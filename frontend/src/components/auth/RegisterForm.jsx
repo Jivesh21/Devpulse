@@ -1,3 +1,5 @@
+// RegisterForm.jsx
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -21,8 +23,13 @@ import { registerSchema } from "@/validators/auth.validator";
 import { useRegister } from "@/hooks/useAuth";
 
 function RegisterForm() {
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showPassword, setShowPassword] =
+    useState(false);
+
+  const [
+    showConfirmPassword,
+    setShowConfirmPassword,
+  ] = useState(false);
 
   const navigate = useNavigate();
 
@@ -31,7 +38,10 @@ function RegisterForm() {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: {
+      errors,
+      isSubmitting,
+    },
   } = useForm({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -43,47 +53,79 @@ function RegisterForm() {
     },
   });
 
+  // ====================================
+  // Register
+  // ====================================
+
   const onSubmit = async (data) => {
     try {
       const userData = { ...data };
+
       delete userData.confirmPassword;
 
-      const response = await registerMutation.mutateAsync(userData);
+      const response =
+        await registerMutation.mutateAsync(
+          userData
+        );
 
-      toast.success(response.message || "Account created successfully!");
+      toast.success(
+        response.message ||
+          "Account created successfully!"
+      );
 
       navigate("/login");
     } catch (error) {
       toast.error(
-        error.response?.data?.message || "Registration failed"
+        error.response?.data?.message ||
+          "Registration failed"
       );
     }
   };
 
   return (
-    <div className="mx-auto w-full max-w-md">
+    <div className="w-full">
+      {/* ================================= */}
       {/* Heading */}
-      <div className="mb-8 space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">
-          Create your account
-        </h1>
+      {/* ================================= */}
 
-        <p className="text-sm text-muted-foreground">
-          Join DevPulse and connect with developers around the world.
+      <div className="text-center lg:text-left">
+        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+          Create your account
+        </h2>
+
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          Join DevPulse and connect with developers
+          around the world.
         </p>
       </div>
 
+      {/* ================================= */}
       {/* Form */}
+      {/* ================================= */}
+
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="space-y-5"
+        className="mt-6 space-y-4 sm:mt-8 sm:space-y-5"
       >
         {/* Full Name */}
+
         <div className="space-y-2">
-          <Label htmlFor="fullName">Full Name</Label>
+          <Label htmlFor="fullName">
+            Full Name
+          </Label>
 
           <div className="relative">
-            <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <User
+              className="
+                absolute
+                left-3
+                top-1/2
+                h-4
+                w-4
+                -translate-y-1/2
+                text-muted-foreground
+              "
+            />
 
             <Input
               id="fullName"
@@ -102,11 +144,24 @@ function RegisterForm() {
         </div>
 
         {/* Username */}
+
         <div className="space-y-2">
-          <Label htmlFor="username">Username</Label>
+          <Label htmlFor="username">
+            Username
+          </Label>
 
           <div className="relative">
-            <AtSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <AtSign
+              className="
+                absolute
+                left-3
+                top-1/2
+                h-4
+                w-4
+                -translate-y-1/2
+                text-muted-foreground
+              "
+            />
 
             <Input
               id="username"
@@ -125,11 +180,24 @@ function RegisterForm() {
         </div>
 
         {/* Email */}
+
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">
+            Email
+          </Label>
 
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Mail
+              className="
+                absolute
+                left-3
+                top-1/2
+                h-4
+                w-4
+                -translate-y-1/2
+                text-muted-foreground
+              "
+            />
 
             <Input
               id="email"
@@ -149,15 +217,32 @@ function RegisterForm() {
         </div>
 
         {/* Password */}
+
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">
+            Password
+          </Label>
 
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Lock
+              className="
+                absolute
+                left-3
+                top-1/2
+                h-4
+                w-4
+                -translate-y-1/2
+                text-muted-foreground
+              "
+            />
 
             <Input
               id="password"
-              type={showPassword ? "text" : "password"}
+              type={
+                showPassword
+                  ? "text"
+                  : "password"
+              }
               placeholder="Create a password"
               autoComplete="new-password"
               className="h-11 pl-10 pr-10"
@@ -166,8 +251,24 @@ function RegisterForm() {
 
             <button
               type="button"
-              onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              onClick={() =>
+                setShowPassword(
+                  (prev) => !prev
+                )
+              }
+              className="
+                absolute
+                right-3
+                top-1/2
+                -translate-y-1/2
+                text-muted-foreground
+                hover:text-foreground
+              "
+              aria-label={
+                showPassword
+                  ? "Hide password"
+                  : "Show password"
+              }
             >
               {showPassword ? (
                 <EyeOff className="h-4 w-4" />
@@ -185,17 +286,32 @@ function RegisterForm() {
         </div>
 
         {/* Confirm Password */}
+
         <div className="space-y-2">
           <Label htmlFor="confirmPassword">
             Confirm Password
           </Label>
 
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Lock
+              className="
+                absolute
+                left-3
+                top-1/2
+                h-4
+                w-4
+                -translate-y-1/2
+                text-muted-foreground
+              "
+            />
 
             <Input
               id="confirmPassword"
-              type={showConfirmPassword ? "text" : "password"}
+              type={
+                showConfirmPassword
+                  ? "text"
+                  : "password"
+              }
               placeholder="Confirm your password"
               autoComplete="new-password"
               className="h-11 pl-10 pr-10"
@@ -205,9 +321,23 @@ function RegisterForm() {
             <button
               type="button"
               onClick={() =>
-                setShowConfirmPassword((prev) => !prev)
+                setShowConfirmPassword(
+                  (prev) => !prev
+                )
               }
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="
+                absolute
+                right-3
+                top-1/2
+                -translate-y-1/2
+                text-muted-foreground
+                hover:text-foreground
+              "
+              aria-label={
+                showConfirmPassword
+                  ? "Hide password"
+                  : "Show password"
+              }
             >
               {showConfirmPassword ? (
                 <EyeOff className="h-4 w-4" />
@@ -225,10 +355,21 @@ function RegisterForm() {
         </div>
 
         {/* Submit Button */}
+
         <Button
           type="submit"
-          disabled={isSubmitting || registerMutation.isPending}
-          className="h-11 w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+          disabled={
+            isSubmitting ||
+            registerMutation.isPending
+          }
+          className="
+            h-11
+            w-full
+            gap-2
+            bg-primary
+            text-primary-foreground
+            hover:bg-primary/90
+          "
         >
           {registerMutation.isPending
             ? "Creating Account..."
@@ -240,12 +381,20 @@ function RegisterForm() {
         </Button>
       </form>
 
+      {/* ================================= */}
       {/* Login Link */}
-      <p className="mt-8 text-center text-sm text-muted-foreground">
+      {/* ================================= */}
+
+      <p className="mt-6 text-center text-sm text-muted-foreground sm:mt-8">
         Already have an account?{" "}
         <Link
           to="/login"
-          className="font-medium text-primary transition-colors hover:text-primary/80"
+          className="
+            font-medium
+            text-primary
+            transition-colors
+            hover:text-primary/80
+          "
         >
           Sign In
         </Link>

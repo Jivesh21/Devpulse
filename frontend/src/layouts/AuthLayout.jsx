@@ -1,13 +1,16 @@
 import LeftHero from "../components/auth/LeftHero";
+import { Activity } from "lucide-react";
 
 function AuthLayout({ children }) {
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="flex min-h-screen w-full bg-background">
       {/* ================================= */}
-      {/* Left Hero */}
+      {/* Desktop Hero */}
       {/* ================================= */}
 
-      <LeftHero />
+      <div className="hidden lg:flex lg:w-1/2">
+        <LeftHero />
+      </div>
 
       {/* ================================= */}
       {/* Auth Content */}
@@ -18,19 +21,67 @@ function AuthLayout({ children }) {
           flex
           min-h-screen
           w-full
-          items-start
-          justify-center
+          flex-col
+          items-center
+          justify-start
           px-5
-          pt-10
-          pb-8
+          py-8
           sm:px-6
-          sm:pt-12
+          sm:py-10
           lg:w-1/2
-          lg:items-center
+          lg:justify-center
+          lg:px-8
           lg:py-12
         "
       >
-        {children}
+        {/* ================================= */}
+        {/* Mobile Branding */}
+        {/* ================================= */}
+
+        <div
+          className="
+            mb-8
+            flex
+            flex-col
+            items-center
+            lg:hidden
+          "
+        >
+          <div
+            className="
+              flex
+              h-11
+              w-11
+              items-center
+              justify-center
+              rounded-xl
+              bg-primary
+              shadow-lg
+              shadow-primary/20
+            "
+          >
+            <Activity
+              className="h-6 w-6 text-primary-foreground"
+              strokeWidth={2.5}
+            />
+          </div>
+
+          <h1 className="mt-3 text-xl font-bold tracking-tight">
+            Dev<span className="text-primary">Pulse</span>
+          </h1>
+
+          <p className="mt-1 text-xs text-muted-foreground">
+            Build • Share • Grow
+          </p>
+        </div>
+
+        {/* ================================= */}
+        {/* Form */}
+        {/* ================================= */}
+
+        <div className="w-full max-w-md">
+          {children}
+        </div>
       </main>
     </div>
   );

@@ -1,3 +1,5 @@
+// LoginForm.jsx
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -50,6 +52,7 @@ function LoginForm() {
   // ====================================
   // Email / Password Login
   // ====================================
+
   const onSubmit = async (data) => {
     try {
       const response =
@@ -69,6 +72,7 @@ function LoginForm() {
   // ====================================
   // Google Login
   // ====================================
+
   const handleGoogleSuccess = async (
     credentialResponse
   ) => {
@@ -116,20 +120,26 @@ function LoginForm() {
 
   return (
     <div className="w-full">
+      {/* ================================= */}
       {/* Heading */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Welcome Back
-        </h1>
+      {/* ================================= */}
 
-        <p className="mt-2 text-sm text-muted-foreground">
+      <div className="text-center lg:text-left">
+        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+          Welcome Back
+        </h2>
+
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
           Sign in to continue building with your
           developer community.
         </p>
       </div>
 
+      {/* ================================= */}
       {/* Google Login */}
-      <div className="mt-8 space-y-4">
+      {/* ================================= */}
+
+      <div className="mt-6 space-y-4 sm:mt-8">
         <div className="relative flex items-center">
           <div className="flex-1 border-t border-border" />
 
@@ -154,8 +164,11 @@ function LoginForm() {
         </div>
       </div>
 
+      {/* ================================= */}
       {/* Divider */}
-      <div className="my-6 flex items-center gap-3">
+      {/* ================================= */}
+
+      <div className="my-5 flex items-center gap-3 sm:my-6">
         <div className="h-px flex-1 bg-border" />
 
         <span className="text-xs text-muted-foreground">
@@ -165,19 +178,33 @@ function LoginForm() {
         <div className="h-px flex-1 bg-border" />
       </div>
 
+      {/* ================================= */}
       {/* Email / Password Form */}
+      {/* ================================= */}
+
       <form
         onSubmit={handleSubmit(onSubmit)}
         className="space-y-5"
       >
         {/* Email */}
+
         <div className="space-y-2">
           <Label htmlFor="email">
             Email
           </Label>
 
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Mail
+              className="
+                absolute
+                left-3
+                top-1/2
+                h-4
+                w-4
+                -translate-y-1/2
+                text-muted-foreground
+              "
+            />
 
             <Input
               id="email"
@@ -197,23 +224,39 @@ function LoginForm() {
         </div>
 
         {/* Password */}
+
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <Label htmlFor="password">
               Password
             </Label>
 
-            {/* Forgot Password */}
             <Link
               to="/forgot-password"
-              className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
+              className="
+                text-sm
+                font-medium
+                text-primary
+                transition-colors
+                hover:text-primary/80
+              "
             >
               Forgot Password?
             </Link>
           </div>
 
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Lock
+              className="
+                absolute
+                left-3
+                top-1/2
+                h-4
+                w-4
+                -translate-y-1/2
+                text-muted-foreground
+              "
+            />
 
             <Input
               id="password"
@@ -235,7 +278,15 @@ function LoginForm() {
                   (prev) => !prev
                 )
               }
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+              className="
+                absolute
+                right-3
+                top-1/2
+                -translate-y-1/2
+                text-muted-foreground
+                transition-colors
+                hover:text-foreground
+              "
               aria-label={
                 showPassword
                   ? "Hide password"
@@ -258,12 +309,20 @@ function LoginForm() {
         </div>
 
         {/* Submit */}
+
         <Button
           type="submit"
           disabled={
             isSubmitting || isLoggingIn
           }
-          className="h-11 w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+          className="
+            h-11
+            w-full
+            gap-2
+            bg-primary
+            text-primary-foreground
+            hover:bg-primary/90
+          "
         >
           {loginMutation.isPending
             ? "Signing In..."
@@ -275,12 +334,20 @@ function LoginForm() {
         </Button>
       </form>
 
+      {/* ================================= */}
       {/* Register */}
-      <p className="mt-8 text-center text-sm text-muted-foreground">
+      {/* ================================= */}
+
+      <p className="mt-6 text-center text-sm text-muted-foreground sm:mt-8">
         Don't have an account?{" "}
         <Link
           to="/register"
-          className="font-medium text-primary transition-colors hover:text-primary/80"
+          className="
+            font-medium
+            text-primary
+            transition-colors
+            hover:text-primary/80
+          "
         >
           Sign Up
         </Link>

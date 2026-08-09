@@ -35,7 +35,6 @@ app.use(
     credentials: true,
   })
 );
-
 /**
  * ====================================
  * Logging

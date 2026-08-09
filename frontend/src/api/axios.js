@@ -13,10 +13,9 @@ api.interceptors.response.use(
     const authEndpointPattern =
       /\/auth\/(login|register|refresh-token)$/;
 
-    const isAuthRequest =
-      authEndpointPattern.test(
-        originalRequest?.url || ""
-      );
+    const isAuthRequest = authEndpointPattern.test(
+      originalRequest?.url || ""
+    );
 
     if (
       error.response?.status === 401 &&

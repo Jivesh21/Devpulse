@@ -46,8 +46,18 @@ function Section({
   children,
 }) {
   return (
-    <section className="p-5 sm:p-6">
-      {/* Section Header */}
+    <section
+      className="
+        rounded-2xl
+        border
+        border-border/60
+        bg-background/70
+        p-5
+        shadow-sm
+        backdrop-blur-xl
+        sm:p-6
+      "
+    >
       <div className="mb-6 flex items-center gap-3">
         <div
           className="
@@ -80,7 +90,6 @@ function TimelineItem({
 }) {
   return (
     <div className="relative flex gap-4">
-      {/* Timeline */}
       <div className="flex w-3 shrink-0 justify-center">
         <div
           className="
@@ -111,7 +120,6 @@ function TimelineItem({
         )}
       </div>
 
-      {/* Content */}
       <div
         className={`
           min-w-0
@@ -146,10 +154,7 @@ export default function ProfileCareer({
   }
 
   return (
-    <div>
-      {/* ================================= */}
-      {/* Experience */}
-      {/* ================================= */}
+    <div className="space-y-5">
 
       {experience.length > 0 && (
         <Section
@@ -179,12 +184,8 @@ export default function ProfileCareer({
                     )}
 
                   <DateRange
-                    startDate={
-                      item.startDate
-                    }
-                    endDate={
-                      item.endDate
-                    }
+                    startDate={item.startDate}
+                    endDate={item.endDate}
                     currentlyWorking={
                       item.currentlyWorking
                     }
@@ -201,8 +202,10 @@ export default function ProfileCareer({
                       className="
                         mt-3
                         inline-flex
-                        rounded-full
-                        bg-muted
+                        rounded-lg
+                        border
+                        border-border/60
+                        bg-muted/40
                         px-2.5
                         py-1
                         text-xs
@@ -225,10 +228,6 @@ export default function ProfileCareer({
           </div>
         </Section>
       )}
-
-      {/* ================================= */}
-      {/* Education */}
-      {/* ================================= */}
 
       {education.length > 0 && (
         <Section
@@ -264,12 +263,8 @@ export default function ProfileCareer({
                   )}
 
                   <DateRange
-                    startDate={
-                      item.startDate
-                    }
-                    endDate={
-                      item.endDate
-                    }
+                    startDate={item.startDate}
+                    endDate={item.endDate}
                   />
 
                   {item.grade && (
@@ -277,8 +272,10 @@ export default function ProfileCareer({
                       className="
                         mt-3
                         inline-flex
-                        rounded-full
-                        bg-muted
+                        rounded-lg
+                        border
+                        border-border/60
+                        bg-muted/40
                         px-2.5
                         py-1
                         text-xs
@@ -302,10 +299,6 @@ export default function ProfileCareer({
         </Section>
       )}
 
-      {/* ================================= */}
-      {/* Certifications */}
-      {/* ================================= */}
-
       {certificates.length > 0 && (
         <Section
           icon={Award}
@@ -317,8 +310,7 @@ export default function ProfileCareer({
                 <div
                   key={`${item.title}-${item.issuer}-${index}`}
                   className="
-                    group
-                    rounded-2xl
+                    rounded-xl
                     border
                     border-border/60
                     bg-muted/20
@@ -339,7 +331,7 @@ export default function ProfileCareer({
                         shrink-0
                         items-center
                         justify-center
-                        rounded-xl
+                        rounded-lg
                         bg-primary/10
                         text-primary
                       "
@@ -360,19 +352,13 @@ export default function ProfileCareer({
 
                       {item.issueDate && (
                         <p className="mt-1 text-xs text-muted-foreground">
-                          <Year
-                            value={
-                              item.issueDate
-                            }
-                          />
+                          <Year value={item.issueDate} />
                         </p>
                       )}
 
                       {item.credentialUrl && (
                         <a
-                          href={
-                            item.credentialUrl
-                          }
+                          href={item.credentialUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="
@@ -383,8 +369,7 @@ export default function ProfileCareer({
                             text-xs
                             font-medium
                             text-primary
-                            transition-colors
-                            hover:text-primary/70
+                            hover:underline
                           "
                         >
                           View credential

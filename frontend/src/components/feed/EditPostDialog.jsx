@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import {
   Dialog,
@@ -13,22 +13,12 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { useUpdatePost } from "@/hooks/usePosts";
 
-function EditPostDialog({
-  open,
-  onOpenChange,
-  post,
-}) {
-  const updatePostMutation =
-    useUpdatePost();
+function EditPostForm({ post, onOpenChange }) {
+  const updatePostMutation = useUpdatePost();
 
-  const [content, setContent] =
-    useState("");
-
-  useEffect(() => {
-    if (post) {
-      setContent(post.content || "");
-    }
-  }, [post]);
+  const [content, setContent] = useState(
+    () => post.content || ""
+  );
 
   function handleSubmit() {
     const formData = new FormData();
@@ -48,6 +38,41 @@ function EditPostDialog({
     );
   }
 
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>Edit Post</DialogTitle>
+      </DialogHeader>
+
+      <Textarea
+        rows={6}
+        value={content}
+        onChange={(e) =>
+          setContent(e.target.value)
+        }
+      />
+
+      <DialogFooter>
+        <Button
+          onClick={handleSubmit}
+          disabled={
+            updatePostMutation.isPending
+          }
+        >
+          {updatePostMutation.isPending
+            ? "Saving..."
+            : "Save Changes"}
+        </Button>
+      </DialogFooter>
+    </>
+  );
+}
+
+function EditPostDialog({
+  open,
+  onOpenChange,
+  post,
+}) {
   if (!post) return null;
 
   return (
@@ -56,32 +81,13 @@ function EditPostDialog({
       onOpenChange={onOpenChange}
     >
       <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>
-            Edit Post
-          </DialogTitle>
-        </DialogHeader>
-
-        <Textarea
-          rows={6}
-          value={content}
-          onChange={(e) =>
-            setContent(e.target.value)
-          }
-        />
-
-        <DialogFooter>
-          <Button
-            onClick={handleSubmit}
-            disabled={
-              updatePostMutation.isPending
-            }
-          >
-            {updatePostMutation.isPending
-              ? "Saving..."
-              : "Save Changes"}
-          </Button>
-        </DialogFooter>
+        {open ? (
+          <EditPostForm
+            key={post._id}
+            post={post}
+            onOpenChange={onOpenChange}
+          />
+        ) : null}
       </DialogContent>
     </Dialog>
   );

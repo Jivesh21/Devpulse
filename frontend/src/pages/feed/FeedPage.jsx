@@ -6,25 +6,33 @@ import FeedList from "@/components/feed/FeedList";
 function FeedPage() {
   return (
     <DashboardLayout>
-      <main className="page-enter space-y-6">
+      <main className="space-y-6">
+        {/* ================================= */}
         {/* Feed Header */}
-        <div className="px-1">
-          <h1 className="text-2xl font-bold tracking-tight">
+        {/* ================================= */}
+
+        <header>
+          <h1 className="text-2xl font-bold sm:text-3xl">
             Your Feed
           </h1>
 
-          <p className="mt-1 text-sm text-muted-foreground">
-            Discover what developers in your
-            community are building.
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            Discover what developers in your community are building.
           </p>
-        </div>
+        </header>
 
+        {/* ================================= */}
         {/* Create Post */}
+        {/* ================================= */}
+
         <section>
           <CreatePostCard />
         </section>
 
-        {/* Posts */}
+        {/* ================================= */}
+        {/* Feed Posts */}
+        {/* ================================= */}
+
         <section>
           <FeedList />
         </section>

@@ -1,66 +1,138 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
-  Loader2,
   ImagePlus,
+  Loader2,
   Send,
   X,
-  Sparkles,
+  PenLine,
 } from "lucide-react";
+
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
+import { useAuthContext } from "@/context/AuthContext";
 import { useCreatePost } from "@/hooks/usePosts";
 
 function CreatePostCard() {
+  const { user } = useAuthContext();
+
   const [content, setContent] = useState("");
   const [image, setImage] = useState(null);
+  const [preview, setPreview] = useState(null);
 
   const imageInputRef = useRef(null);
 
-  const createPostMutation =
-    useCreatePost();
+  const createPostMutation = useCreatePost();
+
+  const isPosting = createPostMutation.isPending;
+
+  const isEmpty =
+    !content.trim() && !image;
+
+  // ====================================
+  // Cleanup image preview
+  // ====================================
+
+  useEffect(() => {
+    return () => {
+      if (preview) {
+        URL.revokeObjectURL(preview);
+      }
+    };
+  }, [preview]);
+
+  // ====================================
+  // Image Selection
+  // ====================================
 
   function handleImageChange(e) {
     const file = e.target.files?.[0];
 
-    if (!file) return;
-
-    // Basic client-side validation
-    if (!file.type.startsWith("image/")) {
-      toast.error(
-        "Please select a valid image"
-      );
+    if (!file) {
       return;
     }
 
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file.");
+
+      e.target.value = "";
+
+      return;
+    }
+
+    // 5 MB limit
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(
+        "Image must be smaller than 5MB."
+      );
+
+      e.target.value = "";
+
+      return;
+    }
+
+    // Revoke previous preview
+    if (preview) {
+      URL.revokeObjectURL(preview);
+    }
+
     setImage(file);
+    setPreview(URL.createObjectURL(file));
   }
 
-  const removeImage = () => {
+  // ====================================
+  // Remove Image
+  // ====================================
+
+  function removeImage() {
+    if (preview) {
+      URL.revokeObjectURL(preview);
+    }
+
     setImage(null);
+    setPreview(null);
 
     if (imageInputRef.current) {
       imageInputRef.current.value = "";
     }
-  };
+  }
+
+  // ====================================
+  // Submit
+  // ====================================
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (isPosting) {
+      return;
+    }
+
     if (!content.trim() && !image) {
-      toast.error("Post cannot be empty");
+      toast.error(
+        "Write something or add an image."
+      );
+
       return;
     }
 
     try {
       const formData = new FormData();
 
-      formData.append(
-        "content",
-        content.trim()
-      );
+      if (content.trim()) {
+        formData.append(
+          "content",
+          content.trim()
+        );
+      }
 
       if (image) {
         formData.append("image", image);
@@ -71,148 +143,176 @@ function CreatePostCard() {
       );
 
       toast.success(
-        "Post created successfully"
+        "Post published successfully!"
       );
 
       setContent("");
-      setImage(null);
 
-      if (imageInputRef.current) {
-        imageInputRef.current.value = "";
-      }
+      removeImage();
     } catch (error) {
-      toast.error(
-        error.response?.data?.message ||
-          "Failed to create post"
+      console.error(
+        "Create post error:",
+        error
       );
+
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        "Failed to create post.";
+
+      toast.error(message);
     }
   };
 
   return (
-    <section
+    <article
       className="
-        glass-card
-        glass-hover
         overflow-hidden
+        rounded-2xl
+        border
+        border-border/60
+        bg-card
+        shadow-sm
       "
     >
-      <form
-        onSubmit={handleSubmit}
-        className="p-5 sm:p-6"
-      >
-        {/* ================================= */}
-        {/* Header */}
-        {/* ================================= */}
+      {/* ================================= */}
+      {/* Header */}
+      {/* ================================= */}
 
-        <div className="mb-5 flex items-center gap-3">
-          <div
+      <div
+        className="
+          flex
+          items-center
+          gap-3
+          px-5
+          pt-5
+        "
+      >
+        <Avatar
+          className="
+            h-10
+            w-10
+            border
+            border-border/60
+          "
+        >
+          <AvatarImage
+            src={user?.avatar}
+            alt={
+              user?.fullName || "You"
+            }
+          />
+
+          <AvatarFallback
             className="
-              flex
-              h-10
-              w-10
-              items-center
-              justify-center
-              rounded-xl
               bg-primary/10
+              font-semibold
               text-primary
             "
           >
-            <Sparkles className="h-5 w-5" />
-          </div>
+            {user?.fullName
+              ?.charAt(0)
+              ?.toUpperCase() || "U"}
+          </AvatarFallback>
+        </Avatar>
 
-          <div>
-            <h2 className="font-semibold">
-              Create a post
-            </h2>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold">
+            {user?.fullName ||
+              "Create a post"}
+          </p>
 
-            <p className="text-xs text-muted-foreground">
-              Share something with the developer
-              community.
-            </p>
-          </div>
+          <p className="text-xs text-muted-foreground">
+            Share something with the community
+          </p>
         </div>
 
-        {/* ================================= */}
-        {/* Textarea */}
-        {/* ================================= */}
-
-        <div className="relative">
-          <Textarea
-            rows={4}
-            placeholder="What's on your mind?"
-            value={content}
-            onChange={(e) =>
-              setContent(e.target.value)
-            }
-            className="
-              resize-none
-              rounded-2xl
-              border-border/60
-              bg-background/40
-              px-4
-              py-3
-              text-[15px]
-              leading-6
-              shadow-none
-              transition-all
-              duration-200
-              placeholder:text-muted-foreground/70
-              focus:border-primary/40
-              focus:bg-background/60
-              focus:ring-2
-              focus:ring-primary/10
-            "
-          />
-
-          {/* Character count */}
-          <span
-            className="
-              pointer-events-none
-              absolute
-              bottom-3
-              right-3
-              text-[11px]
-              text-muted-foreground/60
-            "
-          >
-            {content.length}
-          </span>
+        <div
+          className="
+            ml-auto
+            hidden
+            h-8
+            w-8
+            items-center
+            justify-center
+            rounded-lg
+            bg-primary/10
+            text-primary
+            sm:flex
+          "
+        >
+          <PenLine className="h-4 w-4" />
         </div>
+      </div>
+
+      {/* ================================= */}
+      {/* Form */}
+      {/* ================================= */}
+
+      <form
+        onSubmit={handleSubmit}
+        className="px-5 pb-4 pt-4"
+      >
+        <Textarea
+          rows={4}
+          value={content}
+          onChange={(e) =>
+            setContent(e.target.value)
+          }
+          placeholder="What's on your mind?"
+          disabled={isPosting}
+          className="
+            min-h-[110px]
+            resize-none
+            rounded-xl
+            border-border/50
+            bg-muted/20
+            px-4
+            py-3
+            text-sm
+            leading-6
+            shadow-none
+            transition-all
+            placeholder:text-muted-foreground/70
+            focus-visible:border-primary/30
+            focus-visible:ring-2
+            focus-visible:ring-primary/10
+          "
+        />
 
         {/* ================================= */}
         {/* Image Preview */}
         {/* ================================= */}
 
-        {image && (
+        {preview && (
           <div
             className="
+              group
               relative
               mt-4
               overflow-hidden
-              rounded-2xl
+              rounded-xl
               border
               border-border/60
               bg-muted/30
             "
           >
             <img
-              src={URL.createObjectURL(image)}
-              alt="Selected preview"
+              src={preview}
+              alt="Post preview"
               className="
-                max-h-72
+                max-h-[320px]
                 w-full
-                object-cover
-                transition-transform
-                duration-500
+                object-contain
               "
             />
 
-            {/* Remove Image */}
             <Button
               type="button"
-              size="icon"
               variant="secondary"
+              size="icon"
               onClick={removeImage}
+              disabled={isPosting}
               className="
                 absolute
                 right-3
@@ -220,13 +320,11 @@ function CreatePostCard() {
                 h-8
                 w-8
                 rounded-full
-                bg-background/80
-                shadow-lg
+                bg-background/90
+                shadow-md
                 backdrop-blur-md
                 transition-transform
                 hover:scale-105
-                hover:bg-background
-                active:scale-95
               "
               aria-label="Remove image"
             >
@@ -235,90 +333,97 @@ function CreatePostCard() {
           </div>
         )}
 
-        {/* Hidden File Input */}
+        {/* ================================= */}
+        {/* Hidden Image Input */}
+        {/* ================================= */}
+
         <input
           ref={imageInputRef}
           type="file"
           accept="image/*"
           className="hidden"
           onChange={handleImageChange}
+          disabled={isPosting}
         />
 
         {/* ================================= */}
-        {/* Footer */}
+        {/* Actions */}
         {/* ================================= */}
 
         <div
           className="
-            mt-5
+            mt-4
             flex
-            flex-col
-            gap-3
+            items-center
+            justify-between
             border-t
             border-border/50
-            pt-4
-            sm:flex-row
-            sm:items-center
-            sm:justify-between
+            pt-3
           "
         >
-          {/* Image Button */}
           <Button
             type="button"
             variant="ghost"
-            className="
-              interactive
-              w-full
-              gap-2
-              rounded-xl
-              text-muted-foreground
-              hover:bg-primary/10
-              hover:text-primary
-              sm:w-auto
-            "
+            disabled={isPosting}
             onClick={() =>
               imageInputRef.current?.click()
             }
+            className="
+              h-9
+              gap-2
+              rounded-xl
+              px-3
+              text-sm
+              text-muted-foreground
+              hover:bg-primary/5
+              hover:text-primary
+            "
           >
             <ImagePlus className="h-4 w-4" />
 
-            {image
-              ? "Change Image"
-              : "Add Image"}
+            <span>Image</span>
           </Button>
 
-          {/* Post Button */}
           <Button
             type="submit"
             disabled={
-              createPostMutation.isPending
+              isPosting || isEmpty
             }
             className="
-              interactive
-              w-full
+              h-9
               gap-2
               rounded-xl
-              px-5
-              shadow-md
-              shadow-primary/15
-              sm:w-auto
+              px-4
+              text-sm
+              shadow-sm
+              transition-all
+              hover:shadow-md
+              active:scale-[0.98]
             "
           >
-            {createPostMutation.isPending ? (
+            {isPosting ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2
+                  className="
+                    h-4
+                    w-4
+                    animate-spin
+                  "
+                />
+
                 Posting...
               </>
             ) : (
               <>
                 <Send className="h-4 w-4" />
+
                 Post
               </>
             )}
           </Button>
         </div>
       </form>
-    </section>
+    </article>
   );
 }
 

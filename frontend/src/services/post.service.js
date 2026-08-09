@@ -50,3 +50,14 @@ export const deletePost = async (postId) => {
 
   return data;
 };
+// ================================
+// Toggle Like
+// ================================
+
+export const toggleLike = async (postId) => {
+  const { data } = await api.post(
+    `/posts/${postId}/like`
+  );
+
+  return data;
+};

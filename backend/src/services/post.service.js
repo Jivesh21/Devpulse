@@ -235,6 +235,44 @@ export const getUserPostsService = async (username) => {
     .sort({
       createdAt: -1,
     });
+    
 
   return posts;
+};
+// ====================================
+// Toggle Like
+// ====================================
+
+export const toggleLikePostService = async (
+  postId,
+  userId
+) => {
+  const post = await Post.findById(postId);
+
+  if (!post) {
+    throw new ApiError(404, "Post not found");
+  }
+
+  const userIdString = userId.toString();
+
+  const alreadyLiked = post.likes.some(
+    (id) => id.toString() === userIdString
+  );
+
+  if (alreadyLiked) {
+    // Unlike
+    post.likes = post.likes.filter(
+      (id) => id.toString() !== userIdString
+    );
+  } else {
+    // Like
+    post.likes.push(userId);
+  }
+
+  await post.save();
+
+  return {
+    isLiked: !alreadyLiked,
+    likesCount: post.likes.length,
+  };
 };

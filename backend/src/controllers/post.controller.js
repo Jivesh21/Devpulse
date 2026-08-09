@@ -7,6 +7,7 @@ import {
   updatePostService,
   deletePostService,
   getUserPostsService,
+  toggleLikePostService,
 } from "../services/post.service.js";
 
 // ====================================
@@ -120,3 +121,25 @@ export const getUserPosts = asyncHandler(async (req, res) => {
     )
   );
 });
+// ====================================
+// Toggle Like
+// ====================================
+
+export const toggleLikePost = asyncHandler(
+  async (req, res) => {
+    const result = await toggleLikePostService(
+      req.params.postId,
+      req.user._id
+    );
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        result,
+        result.isLiked
+          ? "Post liked successfully"
+          : "Post unliked successfully"
+      )
+    );
+  }
+);

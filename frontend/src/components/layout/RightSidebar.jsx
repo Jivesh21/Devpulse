@@ -366,32 +366,41 @@ function FollowButton({ user }) {
     useToggleFollow(user._id);
 
   const isFollowing =
-    followData?.data?.isFollowing ||
-    false;
+    followData?.data?.isFollowing || false;
 
   return (
     <Button
       size="sm"
-      variant={
-        isFollowing
-          ? "secondary"
-          : "outline"
-      }
-      disabled={
-        toggleFollowMutation.isPending
-      }
+      variant="outline"
+      disabled={toggleFollowMutation.isPending}
       onClick={() =>
         toggleFollowMutation.mutate()
       }
-      className="
+      className={`
         shrink-0
         rounded-full
+        border-primary/30
         transition-all
         duration-200
         hover:-translate-y-0.5
         hover:shadow-sm
         active:scale-95
-      "
+
+        ${
+          isFollowing
+            ? `
+              bg-primary/10
+              text-primary
+              hover:bg-primary/15
+            `
+            : `
+              bg-background
+              hover:border-primary/50
+              hover:bg-primary/5
+              hover:text-primary
+            `
+        }
+      `}
     >
       {toggleFollowMutation.isPending
         ? "..."

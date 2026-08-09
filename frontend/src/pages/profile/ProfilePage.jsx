@@ -11,7 +11,6 @@ import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileSkills from "@/components/profile/ProfileSkills";
 import ProfileCareer from "@/components/profile/ProfileCareer";
 import ProfilePosts from "@/components/profile/ProfilePosts";
-
 import PortfolioSection from "@/components/profile/portfolio/PortfolioSection";
 
 import EditProfileDialog from "@/components/profile/EditProfileDialog";
@@ -93,12 +92,10 @@ function ProfilePage() {
   );
 
   const followers =
-    followersData?.data
-      ?.followersCount || 0;
+    followersData?.data?.followersCount || 0;
 
   const following =
-    followingData?.data
-      ?.followingCount || 0;
+    followingData?.data?.followingCount || 0;
 
   // ====================================
   // Profile Updates
@@ -114,7 +111,7 @@ function ProfilePage() {
     currentUser?._id === profile?._id;
 
   // ====================================
-  // Avatar Upload
+  // Avatar
   // ====================================
 
   function handleAvatarChange(e) {
@@ -133,13 +130,11 @@ function ProfilePage() {
 
     updateAvatar.mutate(formData);
 
-    // Allow selecting the same
-    // file again later.
     e.target.value = "";
   }
 
   // ====================================
-  // Cover Upload
+  // Cover
   // ====================================
 
   function handleCoverChange(e) {
@@ -168,24 +163,21 @@ function ProfilePage() {
   if (profileLoading) {
     return (
       <DashboardLayout>
-        <div
-          className="
-            flex
-            min-h-[60vh]
-            items-center
-            justify-center
-          "
-        >
+        <div className="flex min-h-[60vh] items-center justify-center">
           <div
             className="
-              glass-card
               flex
               flex-col
               items-center
               gap-3
               rounded-2xl
+              border
+              border-border/60
+              bg-background/80
               px-8
               py-10
+              shadow-sm
+              backdrop-blur-xl
             "
           >
             <div
@@ -200,13 +192,7 @@ function ProfilePage() {
                 text-primary
               "
             >
-              <Loader2
-                className="
-                  h-6
-                  w-6
-                  animate-spin
-                "
-              />
+              <Loader2 className="h-6 w-6 animate-spin" />
             </div>
 
             <div className="text-center">
@@ -225,30 +211,27 @@ function ProfilePage() {
   }
 
   // ====================================
-  // Profile Not Found
+  // Not Found
   // ====================================
 
   if (!profile) {
     return (
       <DashboardLayout>
-        <div
-          className="
-            flex
-            min-h-[60vh]
-            items-center
-            justify-center
-          "
-        >
+        <div className="flex min-h-[60vh] items-center justify-center">
           <div
             className="
-              glass-card
               flex
               max-w-md
               flex-col
               items-center
               rounded-2xl
+              border
+              border-border/60
+              bg-background/80
               p-10
               text-center
+              shadow-sm
+              backdrop-blur-xl
             "
           >
             <div
@@ -288,39 +271,30 @@ function ProfilePage() {
         {/* Profile Header */}
         {/* ================================= */}
 
-        <section
-          className="
-            overflow-hidden
-            rounded-3xl
-          "
-        >
-          <ProfileHeader
-            profile={profile}
-            isOwner={isOwner}
-            postsCount={posts.length}
-            followers={followers}
-            following={following}
-            onFollowersClick={() =>
-              setFollowersOpen(true)
-            }
-            onFollowingClick={() =>
-              setFollowingOpen(true)
-            }
-            onAvatarClick={() =>
-              avatarInputRef.current?.click()
-            }
-            onCoverClick={() =>
-              coverInputRef.current?.click()
-            }
-            onEditClick={() =>
-              setEditOpen(true)
-            }
-          />
-        </section>
+        <ProfileHeader
+          profile={profile}
+          isOwner={isOwner}
+          postsCount={posts.length}
+          followers={followers}
+          following={following}
+          onFollowersClick={() =>
+            setFollowersOpen(true)
+          }
+          onFollowingClick={() =>
+            setFollowingOpen(true)
+          }
+          onAvatarClick={() =>
+            avatarInputRef.current?.click()
+          }
+          onCoverClick={() =>
+            coverInputRef.current?.click()
+          }
+          onEditClick={() =>
+            setEditOpen(true)
+          }
+        />
 
-        {/* ================================= */}
-        {/* Hidden Upload Inputs */}
-        {/* ================================= */}
+        {/* Upload Inputs */}
 
         <input
           ref={avatarInputRef}
@@ -339,87 +313,41 @@ function ProfilePage() {
         />
 
         {/* ================================= */}
-        {/* Profile Information */}
+        {/* Profile Sections */}
         {/* ================================= */}
 
         <div className="space-y-5">
 
-          {/* Skills */}
-          <section
-            className="
-              glass-card
-              glass-hover
-              overflow-hidden
-            "
-          >
-            <ProfileSkills
-              skills={
-                profile.skills || []
-              }
-            />
-          </section>
+          <ProfileSkills
+            skills={profile.skills || []}
+          />
 
-          {/* Career */}
-          <section
-            className="
-              glass-card
-              glass-hover
-              overflow-hidden
-            "
-          >
-            <ProfileCareer
-              profile={profile}
-            />
-          </section>
+          <ProfileCareer
+            profile={profile}
+          />
 
-          {/* Portfolio */}
-          <section
-            className="
-              glass-card
-              glass-hover
-              overflow-hidden
-            "
-          >
-            <PortfolioSection
-              userId={profile._id}
-              onAddProject={() =>
-                setProjectDialogOpen(
-                  true
-                )
-              }
-            />
-          </section>
+          <PortfolioSection
+            userId={profile._id}
+            onAddProject={() =>
+              setProjectDialogOpen(true)
+            }
+          />
 
-          {/* Posts */}
-          <section
-            className="
-              glass-card
-              glass-hover
-              overflow-hidden
-            "
-          >
-            <ProfilePosts
-              posts={posts}
-              isLoading={postsLoading}
-            />
-          </section>
+          <ProfilePosts
+            posts={posts}
+            isLoading={postsLoading}
+          />
 
         </div>
       </main>
 
-      {/* ================================= */}
-      {/* Edit Profile */}
-      {/* ================================= */}
+      {/* Dialogs */}
 
       <EditProfileDialog
         open={editOpen}
         onOpenChange={setEditOpen}
         profile={profile}
       />
-
-      {/* ================================= */}
-      {/* Followers */}
-      {/* ================================= */}
 
       <FollowListDialog
         open={followersOpen}
@@ -428,10 +356,6 @@ function ProfilePage() {
         type="followers"
       />
 
-      {/* ================================= */}
-      {/* Following */}
-      {/* ================================= */}
-
       <FollowListDialog
         open={followingOpen}
         onOpenChange={setFollowingOpen}
@@ -439,15 +363,9 @@ function ProfilePage() {
         type="following"
       />
 
-      {/* ================================= */}
-      {/* Add Project */}
-      {/* ================================= */}
-
       <AddProjectDialog
         open={projectDialogOpen}
-        onOpenChange={
-          setProjectDialogOpen
-        }
+        onOpenChange={setProjectDialogOpen}
         userId={profile._id}
       />
     </DashboardLayout>

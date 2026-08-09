@@ -10,6 +10,7 @@ import {
   updatePost,
   deletePost,
   getUserPosts,
+   toggleLikePost,
 } from "../controllers/post.controller.js";
 
 const router = Router();
@@ -54,6 +55,15 @@ router.delete(
   "/:postId",
   verifyJWT,
   deletePost
+);
+// ====================================
+// Like / Unlike Post
+// ====================================
+
+router.post(
+  "/:postId/like",
+  verifyJWT,
+  toggleLikePost
 );
 
 export default router;

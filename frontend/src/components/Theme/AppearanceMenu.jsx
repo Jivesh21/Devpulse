@@ -1,5 +1,12 @@
-import { Sun, Moon, Laptop } from "lucide-react";
+import { useSyncExternalStore } from "react";
+import {
+  Sun,
+  Moon,
+  Laptop,
+  Check,
+} from "lucide-react";
 import { useTheme } from "next-themes";
+
 import { useAccentTheme } from "@/context/ThemeContext";
 
 import {
@@ -16,67 +23,96 @@ const accentColors = [
   {
     name: "Violet",
     value: "violet",
-    color: "bg-violet-500",
+    className: "bg-violet-500",
   },
   {
     name: "Blue",
     value: "blue",
-    color: "bg-blue-500",
+    className: "bg-blue-500",
   },
   {
     name: "Emerald",
     value: "emerald",
-    color: "bg-emerald-500",
+    className: "bg-emerald-500",
   },
   {
     name: "Rose",
     value: "rose",
-    color: "bg-rose-500",
+    className: "bg-rose-500",
   },
   {
     name: "Orange",
     value: "orange",
-    color: "bg-orange-500",
+    className: "bg-orange-500",
   },
 ];
 
-export default function AppearanceMenu() {
-  const { resolvedTheme, setTheme } = useTheme();
+function AppearanceMenu() {
+  const { theme, setTheme } = useTheme();
   const { accent, setAccent } = useAccentTheme();
 
-  function renderThemeIcon() {
-    switch (resolvedTheme) {
-      case "dark":
-        return <Moon className="h-5 w-5" />;
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 
-      default:
-        return <Sun className="h-5 w-5" />;
-    }
-  }
+  const currentTheme =
+    mounted ? theme : "system";
+
+  const ThemeIcon =
+    currentTheme === "dark"
+      ? Moon
+      : currentTheme === "light"
+        ? Sun
+        : Laptop;
 
   return (
     <DropdownMenu>
+      {/* IMPORTANT:
+          No asChild here.
+          Base UI owns the trigger button.
+      */}
       <DropdownMenuTrigger
-        aria-label="Change appearance"
-        className="flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:bg-muted"
+        type="button"
+        aria-label="Appearance settings"
+        className="
+          inline-flex
+          h-8
+          w-8
+          shrink-0
+          items-center
+          justify-center
+          rounded-lg
+          border
+          border-transparent
+          bg-transparent
+          text-sm
+          transition-colors
+          outline-none
+          hover:bg-muted
+          hover:text-foreground
+          focus-visible:border-ring
+          focus-visible:ring-3
+          focus-visible:ring-ring/50
+        "
       >
-        {renderThemeIcon()}
+        <ThemeIcon className="h-5 w-5" />
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
         align="end"
         className="w-72"
       >
+        {/* Theme */}
         <DropdownMenuGroup>
           <DropdownMenuLabel>
             Appearance
           </DropdownMenuLabel>
-        </DropdownMenuGroup>
 
-        <DropdownMenuSeparator />
+          <DropdownMenuSeparator />
 
-        <DropdownMenuGroup>
-          <DropdownMenuLabel>
+          <DropdownMenuLabel className="text-xs text-muted-foreground">
             Theme
           </DropdownMenuLabel>
 
@@ -84,45 +120,74 @@ export default function AppearanceMenu() {
             onClick={() => setTheme("light")}
           >
             <Sun className="mr-2 h-4 w-4" />
-            Light
+
+            <span>Light</span>
+
+            {currentTheme === "light" && (
+              <Check className="ml-auto h-4 w-4" />
+            )}
           </DropdownMenuItem>
 
           <DropdownMenuItem
             onClick={() => setTheme("dark")}
           >
             <Moon className="mr-2 h-4 w-4" />
-            Dark
+
+            <span>Dark</span>
+
+            {currentTheme === "dark" && (
+              <Check className="ml-auto h-4 w-4" />
+            )}
           </DropdownMenuItem>
 
           <DropdownMenuItem
             onClick={() => setTheme("system")}
           >
             <Laptop className="mr-2 h-4 w-4" />
-            System
+
+            <span>System</span>
+
+            {currentTheme === "system" && (
+              <Check className="ml-auto h-4 w-4" />
+            )}
           </DropdownMenuItem>
         </DropdownMenuGroup>
 
         <DropdownMenuSeparator />
 
+        {/* Accent */}
         <DropdownMenuGroup>
-          <DropdownMenuLabel>
+          <DropdownMenuLabel className="text-xs text-muted-foreground">
             Accent Color
           </DropdownMenuLabel>
 
-          <div className="grid grid-cols-5 gap-2 p-2">
+          <div className="grid grid-cols-5 gap-3 p-2">
             {accentColors.map((item) => (
               <button
                 key={item.value}
                 type="button"
                 title={item.name}
-                onClick={() => setAccent(item.value)}
-                className={`h-8 w-8 rounded-full transition-all ${
-                  item.color
-                } ${
-                  accent === item.value
-                    ? "ring-2 ring-primary ring-offset-2"
-                    : ""
-                }`}
+                aria-label={`Use ${item.name} accent`}
+                onClick={() =>
+                  setAccent(item.value)
+                }
+                className={`
+                  h-8
+                  w-8
+                  rounded-full
+                  ${item.className}
+                  transition-transform
+                  hover:scale-110
+                  focus:outline-none
+                  focus-visible:ring-2
+                  focus-visible:ring-ring
+                  focus-visible:ring-offset-2
+                  ${
+                    accent === item.value
+                      ? "ring-2 ring-ring ring-offset-2"
+                      : ""
+                  }
+                `}
               />
             ))}
           </div>
@@ -131,3 +196,5 @@ export default function AppearanceMenu() {
     </DropdownMenu>
   );
 }
+
+export default AppearanceMenu;

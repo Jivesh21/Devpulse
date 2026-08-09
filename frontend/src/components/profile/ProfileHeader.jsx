@@ -4,6 +4,8 @@ import {
   Globe,
   Calendar,
   ExternalLink,
+  GitBranch,
+  Link as LinkIcon,
 } from "lucide-react";
 
 import {
@@ -31,55 +33,47 @@ function ProfileHeader({
   onCoverClick,
   onEditClick,
 }) {
-  const {
-    data: followStatusData,
-  } = useFollowStatus(profile._id);
+  const { data: followStatusData } =
+    useFollowStatus(profile._id);
 
   const toggleFollowMutation =
     useToggleFollow(profile._id);
 
   const isFollowing =
-    followStatusData?.data?.isFollowing ||
-    false;
+    followStatusData?.data?.isFollowing || false;
 
   return (
     <section
       className="
-        glass-card
-        glass-hover
         overflow-hidden
         rounded-3xl
+        border
+        border-border/60
+        bg-background
+        shadow-sm
       "
     >
       {/* ================================= */}
-      {/* Cover Image */}
+      {/* Cover */}
       {/* ================================= */}
 
       <div
         className="
           relative
-          h-48
+          h-40
           overflow-hidden
           bg-gradient-to-br
           from-primary
           via-primary/80
-          to-primary/50
-          sm:h-56
-          md:h-64
+          to-violet-400
+          sm:h-44
         "
       >
         {profile.coverImage ? (
           <img
             src={profile.coverImage}
             alt={`${profile.fullName}'s cover`}
-            className="
-              h-full
-              w-full
-              object-cover
-              transition-transform
-              duration-700
-              hover:scale-[1.01]
-            "
+            className="h-full w-full object-cover"
           />
         ) : (
           <>
@@ -87,17 +81,16 @@ function ProfileHeader({
               className="
                 absolute
                 inset-0
-                bg-gradient-to-br
-                from-primary
-                via-primary/80
-                to-primary/40
+                opacity-20
+                [background-image:radial-gradient(circle_at_1px_1px,white_1px,transparent_0)]
+                [background-size:24px_24px]
               "
             />
 
             <div
               className="
                 absolute
-                -right-20
+                -right-24
                 -top-24
                 h-72
                 w-72
@@ -111,7 +104,7 @@ function ProfileHeader({
               className="
                 absolute
                 -bottom-32
-                -left-20
+                left-1/3
                 h-72
                 w-72
                 rounded-full
@@ -122,20 +115,8 @@ function ProfileHeader({
           </>
         )}
 
-        {/* Cover Overlay */}
-        <div
-          className="
-            pointer-events-none
-            absolute
-            inset-0
-            bg-gradient-to-t
-            from-black/20
-            via-transparent
-            to-transparent
-          "
-        />
-
         {/* Change Cover */}
+
         {isOwner && (
           <Button
             size="icon"
@@ -150,15 +131,11 @@ function ProfileHeader({
               rounded-xl
               border
               border-white/20
-              bg-black/30
+              bg-black/25
               text-white
-              shadow-lg
+              shadow-md
               backdrop-blur-md
-              transition-all
-              duration-200
-              hover:scale-105
-              hover:bg-black/45
-              active:scale-95
+              hover:bg-black/40
             "
             aria-label="Change cover image"
           >
@@ -168,30 +145,14 @@ function ProfileHeader({
       </div>
 
       {/* ================================= */}
-      {/* Profile Information */}
+      {/* Main Content */}
       {/* ================================= */}
 
-      <div
-        className="
-          relative
-          px-5
-          pb-6
-          sm:px-7
-          md:px-8
-        "
-      >
-        {/* ================================= */}
-        {/* Avatar */}
-        {/* ================================= */}
+      <div className="px-5 pb-5 sm:px-7 sm:pb-6">
 
-        <div
-          className="
-            relative
-            -mt-14
-            w-fit
-            sm:-mt-16
-          "
-        >
+        {/* Avatar */}
+
+        <div className="relative -mt-14 w-fit sm:-mt-16">
           <Avatar
             className="
               h-28
@@ -199,7 +160,7 @@ function ProfileHeader({
               border-4
               border-background
               bg-background
-              shadow-xl
+              shadow-lg
               sm:h-32
               sm:w-32
             "
@@ -224,28 +185,21 @@ function ProfileHeader({
           </Avatar>
 
           {/* Change Avatar */}
+
           {isOwner && (
             <Button
               size="icon"
-              variant="secondary"
               onClick={onAvatarClick}
               className="
                 absolute
-                bottom-1
-                right-1
+                bottom-0
+                right-0
                 h-9
                 w-9
                 rounded-full
                 border-2
                 border-background
-                bg-primary
-                text-primary-foreground
-                shadow-lg
-                transition-all
-                duration-200
-                hover:scale-105
-                hover:bg-primary/90
-                active:scale-95
+                shadow-md
               "
               aria-label="Change profile picture"
             >
@@ -255,22 +209,24 @@ function ProfileHeader({
         </div>
 
         {/* ================================= */}
-        {/* Main Profile Row */}
+        {/* Identity + Action */}
         {/* ================================= */}
 
         <div
           className="
-            mt-5
+            mt-4
             flex
             flex-col
-            gap-5
-            lg:flex-row
-            lg:items-start
-            lg:justify-between
+            gap-4
+            sm:flex-row
+            sm:items-start
+            sm:justify-between
           "
         >
-          {/* Profile Info */}
-          <div className="min-w-0 flex-1">
+          {/* Identity */}
+
+          <div className="min-w-0">
+
             <h1
               className="
                 text-2xl
@@ -287,29 +243,30 @@ function ProfileHeader({
             </p>
 
             {/* Bio */}
+
             {profile.bio && (
               <p
                 className="
-                  mt-4
+                  mt-3
                   max-w-2xl
-                  whitespace-pre-wrap
-                  text-[15px]
-                  leading-7
-                  text-foreground/90
+                  text-sm
+                  leading-6
+                  text-foreground/80
                 "
               >
                 {profile.bio}
               </p>
             )}
 
-            {/* ================================= */}
-            {/* Social / External Links */}
-            {/* ================================= */}
+            {/* Links */}
 
             {(profile.website ||
               profile.github ||
               profile.linkedin) && (
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-2">
+
+                {/* Website */}
+
                 {profile.website && (
                   <ProfileLink
                     href={profile.website}
@@ -320,36 +277,42 @@ function ProfileHeader({
                   />
                 )}
 
+                {/* GitHub */}
+
                 {profile.github && (
                   <ProfileLink
                     href={profile.github}
                     icon={
-                      <ExternalLink className="h-3.5 w-3.5" />
+                      <GitBranch className="h-3.5 w-3.5" />
                     }
                     label="GitHub"
                   />
                 )}
 
+                {/* LinkedIn */}
+
                 {profile.linkedin && (
                   <ProfileLink
                     href={profile.linkedin}
                     icon={
-                      <ExternalLink className="h-3.5 w-3.5" />
+                      <LinkIcon className="h-3.5 w-3.5" />
                     }
                     label="LinkedIn"
                   />
                 )}
+
               </div>
             )}
 
-            {/* Joined Date */}
+            {/* Joined */}
+
             {profile.createdAt && (
               <div
                 className="
-                  mt-4
+                  mt-3
                   flex
                   items-center
-                  gap-2
+                  gap-1.5
                   text-xs
                   text-muted-foreground
                 "
@@ -373,7 +336,7 @@ function ProfileHeader({
           </div>
 
           {/* ================================= */}
-          {/* Action Button */}
+          {/* Action */}
           {/* ================================= */}
 
           <div className="shrink-0">
@@ -381,13 +344,11 @@ function ProfileHeader({
               <Button
                 onClick={onEditClick}
                 className="
-                  interactive
                   h-10
                   gap-2
                   rounded-xl
                   px-5
-                  shadow-md
-                  shadow-primary/15
+                  shadow-sm
                 "
               >
                 <Edit3 className="h-4 w-4" />
@@ -407,11 +368,9 @@ function ProfileHeader({
                     : "default"
                 }
                 className="
-                  interactive
                   h-10
                   min-w-28
                   rounded-xl
-                  px-5
                 "
               >
                 {toggleFollowMutation.isPending
@@ -430,10 +389,9 @@ function ProfileHeader({
 
         <div
           className="
-            mt-7
+            mt-6
             grid
             grid-cols-3
-            divide-x
             overflow-hidden
             rounded-2xl
             border
@@ -441,18 +399,18 @@ function ProfileHeader({
             bg-muted/20
           "
         >
-          <StatButton
+          <Stat
             value={postsCount}
             label="Posts"
           />
 
-          <StatButton
+          <Stat
             value={followers}
             label="Followers"
             onClick={onFollowersClick}
           />
 
-          <StatButton
+          <Stat
             value={following}
             label="Following"
             onClick={onFollowingClick}
@@ -484,83 +442,49 @@ function ProfileLink({
       target="_blank"
       rel="noopener noreferrer"
       className="
-        group
         inline-flex
         items-center
         gap-1.5
-        rounded-full
+        rounded-lg
         border
         border-border/60
-        bg-background/40
-        px-3
+        bg-muted/30
+        px-2.5
         py-1.5
         text-xs
         font-medium
         text-muted-foreground
-        backdrop-blur-sm
-        transition-all
-        duration-200
-        hover:-translate-y-0.5
+        transition-colors
         hover:border-primary/30
-        hover:bg-primary/10
+        hover:bg-primary/5
         hover:text-primary
       "
     >
       {icon}
 
-      <span>{label}</span>
+      {label}
 
-      <ExternalLink
-        className="
-          h-3
-          w-3
-          opacity-50
-          transition-transform
-          duration-200
-          group-hover:translate-x-0.5
-          group-hover:-translate-y-0.5
-        "
-      />
+      <ExternalLink className="h-3 w-3 opacity-50" />
     </a>
   );
 }
 
 /* ====================================
-   Stats
+   Stat
 ==================================== */
 
-function StatButton({
+function Stat({
   value,
   label,
   onClick,
 }) {
   const content = (
     <>
-      <p
-        className="
-          text-xl
-          font-bold
-          tracking-tight
-          transition-colors
-          duration-200
-          group-hover:text-primary
-          sm:text-2xl
-        "
-      >
+      <p className="text-xl font-bold sm:text-2xl">
         {value}
       </p>
 
-      <p
-        className="
-          mt-0.5
-          text-xs
-          text-muted-foreground
-          transition-colors
-          duration-200
-          group-hover:text-primary
-          sm:text-sm
-        "
-      >
+      <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
         {label}
       </p>
     </>
@@ -572,18 +496,16 @@ function StatButton({
         type="button"
         onClick={onClick}
         className="
-          group
           flex
-          min-h-20
+          min-h-[72px]
           flex-col
           items-center
           justify-center
-          px-3
+          border-r
+          border-border/60
           transition-colors
-          duration-200
+          last:border-r-0
           hover:bg-primary/5
-          focus-visible:bg-primary/5
-          focus-visible:outline-none
         "
       >
         {content}
@@ -594,13 +516,14 @@ function StatButton({
   return (
     <div
       className="
-        group
         flex
-        min-h-20
+        min-h-[72px]
         flex-col
         items-center
         justify-center
-        px-3
+        border-r
+        border-border/60
+        last:border-r-0
       "
     >
       {content}

@@ -10,6 +10,7 @@ import {
   getAllPosts,
   updatePost,
   deletePost,
+  toggleLike,
 } from "@/services/post.service";
 
 // ================================
@@ -81,5 +82,22 @@ export function useInfinitePosts() {
       lastPage?.data?.hasNextPage
         ? lastPage.data.currentPage + 1
         : undefined,
+  });
+}
+// ================================
+// Like / Unlike Post
+// ================================
+
+export function useToggleLike() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: toggleLike,
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["posts"],
+      });
+    },
   });
 }

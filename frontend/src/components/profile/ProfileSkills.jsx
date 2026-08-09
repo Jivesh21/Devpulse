@@ -1,9 +1,24 @@
-import { Code2, Sparkles } from "lucide-react";
+import {
+  Code2,
+  Sparkles,
+} from "lucide-react";
 
-function ProfileSkills({ skills = [] }) {
+function ProfileSkills({
+  skills = [],
+}) {
   return (
-    <section className="p-5 sm:p-6">
-      {/* Header */}
+    <section
+      className="
+        rounded-2xl
+        border
+        border-border/60
+        bg-background/70
+        p-5
+        shadow-sm
+        backdrop-blur-xl
+        sm:p-6
+      "
+    >
       <div className="mb-5 flex items-center gap-3">
         <div
           className="
@@ -31,19 +46,18 @@ function ProfileSkills({ skills = [] }) {
         </div>
       </div>
 
-      {/* Skills */}
       {skills.length === 0 ? (
         <div
           className="
             flex
             items-center
             gap-3
-            rounded-2xl
+            rounded-xl
             border
             border-dashed
-            border-border/70
+            border-border
             bg-muted/20
-            p-5
+            p-4
           "
         >
           <Sparkles className="h-5 w-5 text-muted-foreground" />
@@ -53,27 +67,26 @@ function ProfileSkills({ skills = [] }) {
           </p>
         </div>
       ) : (
-        <div className="flex flex-wrap gap-2.5">
+        <div className="flex flex-wrap gap-2">
           {skills.map((skill, index) => (
             <span
               key={`${skill}-${index}`}
               className="
-                group
-                rounded-full
+                rounded-lg
                 border
-                border-primary/15
-                bg-primary/10
-                px-3.5
+                border-border/60
+                bg-muted/40
+                px-3
                 py-1.5
                 text-sm
                 font-medium
-                text-primary
+                text-foreground
                 transition-all
                 duration-200
                 hover:-translate-y-0.5
                 hover:border-primary/30
-                hover:bg-primary/15
-                hover:shadow-sm
+                hover:bg-primary/5
+                hover:text-primary
               "
             >
               {skill}

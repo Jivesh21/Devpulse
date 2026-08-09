@@ -1,16 +1,27 @@
-import { useInfinitePosts } from "@/hooks/usePosts";
-
-import FeedSkeleton from "./FeedSkeleton";
-import EmptyFeed from "./EmptyFeed";
-import PostCard from "./PostCard";
-
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 import {
-  AlertCircle,
-  RefreshCw,
-  Sparkles,
+  Loader2,
+  MessageCircle,
+  Heart,
 } from "lucide-react";
+
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar";
+
+import { Card } from "@/components/ui/card";
+
+import {
+  usePosts,
+  useToggleLike,
+} from "@/hooks/usePosts";
+
+import { useAuthContext } from "@/context/AuthContext";
+
+import CommentSection from "@/components/feed/CommentSection";
 
 function FeedList() {
   const {
@@ -18,10 +29,41 @@ function FeedList() {
     isLoading,
     isError,
     error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfinitePosts();
+  } = usePosts();
+
+  const toggleLikeMutation =
+    useToggleLike();
+
+  const { user } = useAuthContext();
+
+  // ====================================
+  // Comment State
+  // ====================================
+
+  const [openComments, setOpenComments] =
+    useState(null);
+
+  // ====================================
+  // Extract posts from API response
+  // ====================================
+
+  let posts = [];
+
+  if (Array.isArray(data?.data)) {
+    posts = data.data;
+  } else if (
+    Array.isArray(data?.data?.posts)
+  ) {
+    posts = data.data.posts;
+  } else if (
+    Array.isArray(data?.data?.docs)
+  ) {
+    posts = data.data.docs;
+  } else if (
+    Array.isArray(data?.posts)
+  ) {
+    posts = data.posts;
+  }
 
   // ====================================
   // Loading
@@ -29,10 +71,15 @@ function FeedList() {
 
   if (isLoading) {
     return (
-      <div className="space-y-5">
-        <FeedSkeleton />
-        <FeedSkeleton />
-        <FeedSkeleton />
+      <div className="flex justify-center py-12">
+        <Loader2
+          className="
+            h-6
+            w-6
+            animate-spin
+            text-primary
+          "
+        />
       </div>
     );
   }
@@ -43,71 +90,27 @@ function FeedList() {
 
   if (isError) {
     return (
-      <div
+      <Card
         className="
-          glass-card
-          flex
-          flex-col
-          items-center
-          justify-center
           rounded-2xl
+          border-destructive/20
+          bg-card
           p-8
           text-center
         "
       >
-        <div
-          className="
-            mb-4
-            flex
-            h-12
-            w-12
-            items-center
-            justify-center
-            rounded-2xl
-            bg-destructive/10
-            text-destructive
-          "
-        >
-          <AlertCircle className="h-6 w-6" />
-        </div>
-
-        <h3 className="font-semibold">
-          Couldn't load your feed
+        <h3 className="text-lg font-semibold">
+          Unable to load posts
         </h3>
 
-        <p className="mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           {error?.response?.data?.message ||
-            "Please check your connection and try again."}
+            error?.message ||
+            "Something went wrong while loading the feed."}
         </p>
-
-        <Button
-          variant="outline"
-          className="
-            interactive
-            mt-5
-            gap-2
-            rounded-xl
-          "
-          onClick={() =>
-            window.location.reload()
-          }
-        >
-          <RefreshCw className="h-4 w-4" />
-          Try Again
-        </Button>
-      </div>
+      </Card>
     );
   }
-
-  // ====================================
-  // Flatten Infinite Query Pages
-  // ====================================
-
-  const posts =
-    data?.pages.flatMap(
-      (page) =>
-        page?.data?.posts || []
-    ) || [];
 
   // ====================================
   // Empty Feed
@@ -115,9 +118,42 @@ function FeedList() {
 
   if (posts.length === 0) {
     return (
-      <div className="page-enter">
-        <EmptyFeed />
-      </div>
+      <Card
+        className="
+          rounded-2xl
+          border-border/60
+          bg-card
+          p-8
+          text-center
+        "
+      >
+        <div className="mx-auto max-w-md">
+          <div
+            className="
+              mx-auto
+              flex
+              h-12
+              w-12
+              items-center
+              justify-center
+              rounded-full
+              bg-primary/10
+              text-primary
+            "
+          >
+            <MessageCircle className="h-5 w-5" />
+          </div>
+
+          <h3 className="mt-4 text-lg font-semibold">
+            No posts yet
+          </h3>
+
+          <p className="mt-1 text-sm text-muted-foreground">
+            Be the first developer to share
+            something with the community.
+          </p>
+        </div>
+      </Card>
     );
   }
 
@@ -126,100 +162,310 @@ function FeedList() {
   // ====================================
 
   return (
-    <div className="space-y-5">
-      {/* Feed indicator */}
-      <div className="flex items-center gap-2 px-1">
-        <div
-          className="
-            flex
-            h-7
-            w-7
-            items-center
-            justify-center
-            rounded-lg
-            bg-primary/10
-            text-primary
-          "
-        >
-          <Sparkles className="h-3.5 w-3.5" />
-        </div>
+    <div className="space-y-4">
+      {posts.map((post) => {
+        const postId =
+          post?._id || post?.id;
 
-        <span className="text-sm font-medium text-muted-foreground">
-          Latest from the community
-        </span>
-      </div>
+        const author =
+          post?.author || post?.user;
 
-      {/* Posts */}
-      <div className="space-y-5">
-        {posts.map((post, index) => (
-          <div
-            key={post._id}
-            className="page-enter"
-            style={{
-              animationDelay: `${Math.min(
-                index * 60,
-                300
-              )}ms`,
-            }}
-          >
-            <PostCard post={post} />
-          </div>
-        ))}
-      </div>
+        const authorName =
+          author?.fullName ||
+          author?.name ||
+          "Developer";
 
-      {/* ================================= */}
-      {/* Load More */}
-      {/* ================================= */}
+        const authorUsername =
+          author?.username ||
+          "user";
 
-      {hasNextPage && (
-        <div className="flex justify-center pt-2">
-          <Button
-            variant="outline"
-            onClick={() =>
-              fetchNextPage()
-            }
-            disabled={
-              isFetchingNextPage
-            }
+        const authorAvatar =
+          author?.avatar ||
+          author?.profileImage ||
+          "";
+
+        // ====================================
+        // Likes
+        // ====================================
+
+        const likes = Array.isArray(
+          post?.likes
+        )
+          ? post.likes
+          : [];
+
+        const likesCount =
+          likes.length;
+
+        const currentUserId =
+          user?._id || user?.id;
+
+        const isLiked = likes.some(
+          (like) => {
+            const likeUserId =
+              like?._id ||
+              like?.id ||
+              like;
+
+            return (
+              String(likeUserId) ===
+              String(currentUserId)
+            );
+          }
+        );
+
+        const isLiking =
+          toggleLikeMutation.isPending &&
+          toggleLikeMutation.variables ===
+            postId;
+
+        const isCommentsOpen =
+          openComments === postId;
+
+        return (
+          <Card
+            key={postId}
             className="
-              interactive
-              min-w-44
-              gap-2
-              rounded-xl
-              border-primary/20
-              bg-background/50
-              backdrop-blur-sm
-              hover:border-primary/40
-              hover:bg-primary/5
-              hover:text-primary
+              overflow-hidden
+              rounded-2xl
+              border-border/60
+              bg-card
+              shadow-sm
             "
           >
-            {isFetchingNextPage ? (
-              <>
-                <RefreshCw className="h-4 w-4 animate-spin" />
-                Loading...
-              </>
-            ) : (
-              <>
-                Load more posts
-              </>
+            {/* ================================= */}
+            {/* Post Content */}
+            {/* ================================= */}
+
+            <div className="p-5">
+              {/* Post Header */}
+
+              <div className="flex items-center gap-3">
+                <Avatar
+                  className="
+                    h-10
+                    w-10
+                    border
+                    border-border/60
+                  "
+                >
+                  <AvatarImage
+                    src={authorAvatar}
+                    alt={authorName}
+                  />
+
+                  <AvatarFallback
+                    className="
+                      bg-primary/10
+                      text-primary
+                    "
+                  >
+                    {authorName
+                      ?.charAt(0)
+                      ?.toUpperCase() || "U"}
+                  </AvatarFallback>
+                </Avatar>
+
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold">
+                    {authorName}
+                  </p>
+
+                  <p className="truncate text-xs text-muted-foreground">
+                    @{authorUsername}
+                  </p>
+                </div>
+              </div>
+
+              {/* Post Text */}
+
+              {post?.content && (
+                <p
+                  className="
+                    mt-4
+                    whitespace-pre-wrap
+                    text-sm
+                    leading-6
+                  "
+                >
+                  {post.content}
+                </p>
+              )}
+
+              {/* Post Image */}
+
+              {post?.image && (
+                <div
+                  className="
+                    mt-4
+                    overflow-hidden
+                    rounded-xl
+                    border
+                    border-border/40
+                    bg-muted/20
+                  "
+                >
+                  <img
+                    src={post.image}
+                    alt="Post"
+                    className="
+                      max-h-[500px]
+                      w-full
+                      object-contain
+                    "
+                    loading="lazy"
+                  />
+                </div>
+              )}
+
+              {/* ================================= */}
+              {/* Actions */}
+              {/* ================================= */}
+
+              <div
+                className="
+                  mt-4
+                  flex
+                  items-center
+                  gap-2
+                  border-t
+                  border-border/50
+                  pt-3
+                "
+              >
+                {/* Like */}
+
+                <button
+                  type="button"
+                  disabled={isLiking}
+                  onClick={() =>
+                    toggleLikeMutation.mutate(
+                      postId
+                    )
+                  }
+                  className={`
+                    flex
+                    items-center
+                    gap-2
+                    rounded-lg
+                    px-3
+                    py-2
+                    text-sm
+                    transition-colors
+                    disabled:pointer-events-none
+                    disabled:opacity-50
+
+                    ${
+                      isLiked
+                        ? `
+                          bg-primary/10
+                          text-primary
+                          hover:bg-primary/15
+                        `
+                        : `
+                          text-muted-foreground
+                          hover:bg-primary/5
+                          hover:text-primary
+                        `
+                    }
+                  `}
+                >
+                  {isLiking ? (
+                    <Loader2
+                      className="
+                        h-4
+                        w-4
+                        animate-spin
+                      "
+                    />
+                  ) : (
+                    <Heart
+                      className="h-4 w-4"
+                      fill={
+                        isLiked
+                          ? "currentColor"
+                          : "none"
+                      }
+                    />
+                  )}
+
+                  <span>
+                    {isLiked
+                      ? "Liked"
+                      : "Like"}
+
+                    {likesCount > 0
+                      ? ` ${likesCount}`
+                      : ""}
+                  </span>
+                </button>
+
+                {/* Comment */}
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setOpenComments(
+                      isCommentsOpen
+                        ? null
+                        : postId
+                    )
+                  }
+                  className={`
+                    flex
+                    items-center
+                    gap-2
+                    rounded-lg
+                    px-3
+                    py-2
+                    text-sm
+                    transition-colors
+
+                    ${
+                      isCommentsOpen
+                        ? `
+                          bg-primary/10
+                          text-primary
+                        `
+                        : `
+                          text-muted-foreground
+                          hover:bg-primary/5
+                          hover:text-primary
+                        `
+                    }
+                  `}
+                >
+                  <MessageCircle className="h-4 w-4" />
+
+                  <span>
+                    {isCommentsOpen
+                      ? "Hide comments"
+                      : "Comment"}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* ================================= */}
+            {/* Comments */}
+            {/* ================================= */}
+
+            {isCommentsOpen && (
+              <div
+                className="
+                  border-t
+                  border-border/50
+                  bg-muted/10
+                "
+              >
+                <CommentSection
+                  postId={postId}
+                />
+              </div>
             )}
-          </Button>
-        </div>
-      )}
-
-      {/* End of feed */}
-      {!hasNextPage && posts.length > 0 && (
-        <div className="flex items-center justify-center gap-2 py-5 text-xs text-muted-foreground">
-          <div className="h-px w-8 bg-border" />
-
-          <span>
-            You're all caught up
-          </span>
-
-          <div className="h-px w-8 bg-border" />
-        </div>
-      )}
+          </Card>
+        );
+      })}
     </div>
   );
 }

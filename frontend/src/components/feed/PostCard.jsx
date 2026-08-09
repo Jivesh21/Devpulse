@@ -59,7 +59,7 @@ function PostCard({ post }) {
     user?._id === post.author?._id;
 
   // ====================================
-  // Like Hooks
+  // Like
   // ====================================
 
   const toggleLikeMutation =
@@ -78,7 +78,7 @@ function PostCard({ post }) {
     likeStatusData?.data?.isLiked || false;
 
   // ====================================
-  // Bookmark Hooks
+  // Bookmark
   // ====================================
 
   const toggleBookmarkMutation =
@@ -92,47 +92,63 @@ function PostCard({ post }) {
     bookmarkStatusData?.data?.bookmarked ||
     false;
 
+  // ====================================
+  // Render
+  // ====================================
+
   return (
     <article
       className="
-        glass-card
-        glass-hover
+        group
         overflow-hidden
+        rounded-2xl
+        border
+        border-border/60
+        bg-background/80
+        shadow-sm
+        backdrop-blur-xl
         transition-all
         duration-300
+        hover:border-primary/15
+        hover:shadow-md
       "
     >
       {/* ================================= */}
       {/* Header */}
       {/* ================================= */}
 
-      <div className="flex items-center justify-between p-5">
+      <div
+        className="
+          flex
+          items-center
+          justify-between
+          px-5
+          py-4
+        "
+      >
         <Link
           to={`/profile/${post.author?.username}`}
           className="
-            group
+            group/author
             flex
             min-w-0
             items-center
             gap-3
             rounded-xl
             outline-none
-            transition-opacity
-            hover:opacity-90
             focus-visible:ring-2
             focus-visible:ring-ring
           "
         >
           <Avatar
             className="
-              h-11
-              w-11
+              h-10
+              w-10
               border
-              border-primary/10
-              shadow-sm
+              border-border/60
               transition-transform
               duration-200
-              group-hover:scale-105
+              group-hover/author:scale-105
             "
           >
             <AvatarImage
@@ -160,21 +176,29 @@ function PostCard({ post }) {
             <h3
               className="
                 truncate
+                text-sm
                 font-semibold
                 transition-colors
-                group-hover:text-primary
+                group-hover/author:text-primary
               "
             >
               {post.author?.fullName}
             </h3>
 
-            <p className="truncate text-sm text-muted-foreground">
+            <p
+              className="
+                truncate
+                text-xs
+                text-muted-foreground
+              "
+            >
               @{post.author?.username}
             </p>
           </div>
         </Link>
 
         {/* Owner Menu */}
+
         {isOwner && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -182,38 +206,27 @@ function PostCard({ post }) {
                 variant="ghost"
                 size="icon"
                 className="
-                  h-9
-                  w-9
-                  rounded-xl
+                  h-8
+                  w-8
+                  rounded-lg
                   text-muted-foreground
-                  transition-all
-                  duration-200
-                  hover:bg-primary/10
+                  hover:bg-muted
                   hover:text-foreground
-                  active:scale-95
                 "
               >
-                <MoreHorizontal className="h-5 w-5" />
+                <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
 
             <DropdownMenuContent
               align="end"
-              className="
-                glass
-                w-40
-                rounded-xl
-                p-1.5
-              "
+              className="w-40 rounded-xl"
             >
               <DropdownMenuItem
                 onClick={() =>
                   setEditOpen(true)
                 }
-                className="
-                  cursor-pointer
-                  rounded-lg
-                "
+                className="cursor-pointer rounded-lg"
               >
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit
@@ -243,7 +256,7 @@ function PostCard({ post }) {
       {/* ================================= */}
 
       {post.content && (
-        <div className="px-5 pb-5">
+        <div className="px-5 pb-4">
           <p
             className="
               whitespace-pre-wrap
@@ -267,7 +280,7 @@ function PostCard({ post }) {
             overflow-hidden
             border-y
             border-border/60
-            bg-muted/40
+            bg-muted/30
           "
         >
           <img
@@ -275,12 +288,12 @@ function PostCard({ post }) {
             alt="Post"
             loading="lazy"
             className="
-              max-h-[550px]
+              max-h-[560px]
               w-full
               object-contain
               transition-transform
               duration-500
-              hover:scale-[1.01]
+              group-hover:scale-[1.005]
             "
           />
         </div>
@@ -292,29 +305,30 @@ function PostCard({ post }) {
 
       <div
         className="
-          flex
-          items-center
+          grid
+          grid-cols-4
           gap-1
           border-t
           border-border/60
-          p-2
+          p-1.5
         "
       >
         {/* Like */}
+
         <Button
           variant="ghost"
           className={`
-            interactive
-            flex-1
-            gap-2
+            h-10
+            gap-1.5
             rounded-xl
-            text-muted-foreground
-            transition-colors
+            text-xs
+            font-medium
+            transition-all
 
             ${
               isLiked
-                ? "text-red-500 hover:bg-red-500/10 hover:text-red-500"
-                : "hover:bg-muted/70 hover:text-foreground"
+                ? "bg-red-500/10 text-red-500 hover:bg-red-500/15 hover:text-red-500"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
             }
           `}
           onClick={() =>
@@ -326,47 +340,42 @@ function PostCard({ post }) {
         >
           <Heart
             className={`
-              h-5
-              w-5
+              h-4
+              w-4
               transition-transform
               duration-200
-
               ${
                 isLiked
-                  ? "fill-current scale-110"
+                  ? "scale-110 fill-current"
                   : ""
               }
             `}
           />
 
-          <span className="hidden sm:inline">
-            {likeCount}
-          </span>
-
-          <span className="sm:hidden">
-            {likeCount}
-          </span>
+          <span>{likeCount}</span>
         </Button>
 
         {/* Comment */}
+
         <Button
           variant="ghost"
-          className={`
-            interactive
-            flex-1
-            gap-2
+          className="
+            h-10
+            gap-1.5
             rounded-xl
+            text-xs
+            font-medium
             text-muted-foreground
-            hover:bg-muted/70
+            hover:bg-muted
             hover:text-foreground
-          `}
+          "
           onClick={() =>
             setShowComments(
               (previous) => !previous
             )
           }
         >
-          <MessageCircle className="h-5 w-5" />
+          <MessageCircle className="h-4 w-4" />
 
           <span className="hidden sm:inline">
             Comment
@@ -374,19 +383,21 @@ function PostCard({ post }) {
         </Button>
 
         {/* Bookmark */}
+
         <Button
           variant="ghost"
           className={`
-            interactive
-            flex-1
-            gap-2
+            h-10
+            gap-1.5
             rounded-xl
-            text-muted-foreground
+            text-xs
+            font-medium
+            transition-all
 
             ${
               isBookmarked
                 ? "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary"
-                : "hover:bg-muted/70 hover:text-foreground"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
             }
           `}
           onClick={() =>
@@ -400,14 +411,11 @@ function PostCard({ post }) {
         >
           <Bookmark
             className={`
-              h-5
-              w-5
-              transition-transform
-              duration-200
-
+              h-4
+              w-4
               ${
                 isBookmarked
-                  ? "fill-current scale-105"
+                  ? "fill-current"
                   : ""
               }
             `}
@@ -421,19 +429,21 @@ function PostCard({ post }) {
         </Button>
 
         {/* Share */}
+
         <Button
           variant="ghost"
           className="
-            interactive
-            flex-1
-            gap-2
+            h-10
+            gap-1.5
             rounded-xl
+            text-xs
+            font-medium
             text-muted-foreground
-            hover:bg-muted/70
+            hover:bg-muted
             hover:text-foreground
           "
         >
-          <Share2 className="h-5 w-5" />
+          <Share2 className="h-4 w-4" />
 
           <span className="hidden sm:inline">
             Share

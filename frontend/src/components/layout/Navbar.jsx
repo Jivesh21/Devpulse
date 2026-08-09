@@ -3,17 +3,7 @@ import { useUnreadCount } from "@/hooks/useNotification";
 
 import { Button } from "@/components/ui/button";
 import SearchBar from "@/components/search/SearchBar";
-import AppearanceMenu from "@/components/Theme/AppearanceMenu";
-
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import AppearanceMenu from "@/components/theme/AppearanceMenu";
 
 import {
   Avatar,
@@ -26,23 +16,31 @@ import {
   Search,
   Bell,
   Menu,
+  Plus,
   User,
   Settings,
   LogOut,
 } from "lucide-react";
+
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 import { useAuthContext } from "@/context/AuthContext";
 import { useLogout } from "@/hooks/useAuth";
 
 function Navbar() {
   const { user } = useAuthContext();
-
   const logoutMutation = useLogout();
-
   const navigate = useNavigate();
 
-  const { data: unreadData } =
-    useUnreadCount();
+  const { data: unreadData } = useUnreadCount();
 
   const unreadCount =
     unreadData?.data?.unreadCount || 0;
@@ -51,15 +49,22 @@ function Navbar() {
     try {
       await logoutMutation.mutateAsync();
     } catch (error) {
-      console.error(
-        "Logout failed:",
-        error
-      );
+      console.error("Logout failed:", error);
     } finally {
       navigate("/login", {
         replace: true,
       });
     }
+  };
+
+  const handleProfile = () => {
+    if (user?.username) {
+      navigate(`/profile/${user.username}`);
+    }
+  };
+
+  const handleSettings = () => {
+    navigate("/settings");
   };
 
   return (
@@ -213,7 +218,54 @@ function Navbar() {
             <Search className="h-5 w-5" />
           </Button>
 
+          {/* Create Post */}
+          <Button
+            onClick={() => navigate("/feed")}
+            className="
+              hidden
+              h-10
+              gap-2
+              rounded-full
+              bg-primary
+              px-5
+              text-primary-foreground
+              shadow-md
+              shadow-primary/25
+              transition-all
+              hover:bg-primary/90
+              hover:shadow-lg
+              hover:shadow-primary/30
+              active:scale-95
+              sm:flex
+            "
+          >
+            <Plus className="h-4 w-4" />
+            Create Post
+          </Button>
+
+          {/* Mobile Create Post */}
+          <Button
+            onClick={() => navigate("/feed")}
+            size="icon"
+            className="
+              rounded-full
+              bg-primary
+              text-primary-foreground
+              shadow-md
+              shadow-primary/25
+              transition-all
+              hover:bg-primary/90
+              active:scale-95
+              sm:hidden
+            "
+          >
+            <Plus className="h-5 w-5" />
+          </Button>
+
+          {/* ================================= */}
           {/* Notifications */}
+          {/* ================================= */}
+
           <Button
             variant="ghost"
             size="icon"
@@ -261,146 +313,143 @@ function Navbar() {
             )}
           </Button>
 
-          {/* Theme */}
+          {/* ================================= */}
+          {/* Appearance */}
+          {/* ================================= */}
+
           <AppearanceMenu />
 
           {/* ================================= */}
-          {/* User Dropdown */}
+          {/* Profile Dropdown */}
           {/* ================================= */}
 
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
+            {/*
+              IMPORTANT:
+              We are NOT using asChild here.
+
+              Base UI creates the trigger button itself.
+              Avatar is placed INSIDE that button.
+
+              This avoids:
+              <button>
+                <button>
+              </button>
+            */}
+
+            <DropdownMenuTrigger
+              type="button"
+              aria-label="Open profile menu"
+              className="
+                flex
+                h-10
+                w-10
+                items-center
+                justify-center
+                rounded-full
+                border-0
+                bg-transparent
+                p-0
+                outline-none
+                transition-all
+                duration-200
+                hover:bg-primary/10
+                focus-visible:ring-2
+                focus-visible:ring-ring
+                focus-visible:ring-offset-2
+                active:scale-95
+              "
+            >
+              <Avatar
                 className="
-                  rounded-full
-                  p-0.5
-                  transition-all
-                  duration-200
-                  hover:bg-primary/10
-                  active:scale-95
+                  h-9
+                  w-9
+                  border
+                  border-primary/20
+                  shadow-sm
                 "
               >
-                <Avatar
+                <AvatarImage
+                  src={user?.avatar}
+                  alt={
+                    user?.fullName || "User"
+                  }
+                />
+
+                <AvatarFallback
                   className="
-                    h-9
-                    w-9
-                    border
-                    border-primary/20
-                    shadow-sm
+                    bg-primary
+                    text-primary-foreground
                   "
                 >
-                  <AvatarImage
-                    src={user?.avatar}
-                    alt={
-                      user?.fullName ||
-                      "User"
-                    }
-                  />
-
-                  <AvatarFallback
-                    className="
-                      bg-primary
-                      text-primary-foreground
-                    "
-                  >
-                    {user?.fullName
-                      ?.charAt(0)
-                      ?.toUpperCase() ||
-                      "U"}
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
+                  {user?.fullName
+                    ?.charAt(0)
+                    ?.toUpperCase() || "U"}
+                </AvatarFallback>
+              </Avatar>
             </DropdownMenuTrigger>
 
             <DropdownMenuContent
               align="end"
-              className="
-                glass
-                w-60
-                rounded-2xl
-                p-2
-              "
+              className="w-64"
             >
-              {/* IMPORTANT:
-                  Base UI requires MenuGroupLabel
-                  to be inside Menu.Group.
-              */}
+              {/* User Information */}
               <DropdownMenuGroup>
-                <DropdownMenuLabel
-                  className="
-                    px-3
-                    py-2
-                  "
-                >
-                  <p className="font-semibold">
-                    {user?.fullName ||
-                      "Developer"}
-                  </p>
+                <DropdownMenuLabel>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-sm font-semibold text-foreground">
+                      {user?.fullName ||
+                        "User"}
+                    </span>
 
-                  <p
-                    className="
-                      text-xs
-                      text-muted-foreground
-                    "
-                  >
-                    @{user?.username ||
-                      "username"}
-                  </p>
+                    <span className="text-xs font-normal text-muted-foreground">
+                      @{user?.username ||
+                        "username"}
+                    </span>
+                  </div>
                 </DropdownMenuLabel>
-
-                <DropdownMenuSeparator />
-
-                <DropdownMenuItem
-                  onClick={() =>
-                    navigate(
-                      `/profile/${user?.username}`
-                    )
-                  }
-                  className="
-                    cursor-pointer
-                    rounded-xl
-                  "
-                >
-                  <User className="mr-2 h-4 w-4" />
-                  Profile
-                </DropdownMenuItem>
-
-                <DropdownMenuItem
-                  onClick={() =>
-                    navigate("/settings")
-                  }
-                  className="
-                    cursor-pointer
-                    rounded-xl
-                  "
-                >
-                  <Settings className="mr-2 h-4 w-4" />
-                  Settings
-                </DropdownMenuItem>
-
-                <DropdownMenuSeparator />
-
-                <DropdownMenuItem
-                  onClick={handleLogout}
-                  disabled={
-                    logoutMutation.isPending
-                  }
-                  className="
-                    cursor-pointer
-                    rounded-xl
-                    text-red-500
-                    focus:text-red-500
-                  "
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-
-                  {logoutMutation.isPending
-                    ? "Logging out..."
-                    : "Logout"}
-                </DropdownMenuItem>
               </DropdownMenuGroup>
+
+              <DropdownMenuSeparator />
+
+              {/* Profile */}
+              <DropdownMenuItem
+                onClick={handleProfile}
+                className="cursor-pointer"
+              >
+                <User className="mr-2 h-4 w-4" />
+                Profile
+              </DropdownMenuItem>
+
+              {/* Settings */}
+              <DropdownMenuItem
+                onClick={handleSettings}
+                className="cursor-pointer"
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              {/* Logout */}
+              <DropdownMenuItem
+                onClick={handleLogout}
+                disabled={
+                  logoutMutation.isPending
+                }
+                className="
+                  cursor-pointer
+                  text-red-500
+                  focus:text-red-500
+                "
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+
+                {logoutMutation.isPending
+                  ? "Logging out..."
+                  : "Logout"}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

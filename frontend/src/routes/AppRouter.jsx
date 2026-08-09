@@ -14,7 +14,7 @@ import NetworkPage from "../pages/NetworkPage";
 import ResetPasswordPage from "@/pages/auth/ResetPasswordPage";
 import ProtectedRoute from "./ProtectedRoute";
 import DashboardLayout from "../layouts/DashboardLayout";
-
+import VerifyTwoFactorPage from "@/pages/auth/VerifyTwoFactorPage";
 import VerifyEmailPage from "@/pages/VerifyEmailPage";
 
 function PlaceholderPage({ title }) {
@@ -60,6 +60,10 @@ const router = createBrowserRouter([
     path: "/register",
     element: <RegisterPage />,
   },
+  {
+  path: "/verify-2fa",
+  element: <VerifyTwoFactorPage />,
+},
 
   {
     path: "/verify-email/:token",

@@ -7,11 +7,15 @@ import {
 import {
   login,
   googleLogin,
+  verifyTwoFactor,
   register,
   logout,
   getCurrentUser,
 } from "@/services/auth.service";
 
+// ====================================
+// Login
+// ====================================
 export const useLogin = () => {
   const queryClient = useQueryClient();
 
@@ -19,7 +23,17 @@ export const useLogin = () => {
     mutationFn: login,
 
     onSuccess: (response) => {
-      const user = response?.data?.user;
+      const requiresTwoFactor =
+        response?.data?.requiresTwoFactor;
+
+      // Do not authenticate the user yet.
+      // JWT cookies are only issued after OTP verification.
+      if (requiresTwoFactor) {
+        return;
+      }
+
+      const user =
+        response?.data?.user;
 
       if (user) {
         queryClient.setQueryData(
@@ -34,6 +48,9 @@ export const useLogin = () => {
   });
 };
 
+// ====================================
+// Google Login
+// ====================================
 export const useGoogleLogin = () => {
   const queryClient = useQueryClient();
 
@@ -41,7 +58,17 @@ export const useGoogleLogin = () => {
     mutationFn: googleLogin,
 
     onSuccess: (response) => {
-      const user = response?.data?.user;
+      const requiresTwoFactor =
+        response?.data?.requiresTwoFactor;
+
+      // Do not authenticate the user yet.
+      // JWT cookies are only issued after OTP verification.
+      if (requiresTwoFactor) {
+        return;
+      }
+
+      const user =
+        response?.data?.user;
 
       if (user) {
         queryClient.setQueryData(
@@ -56,12 +83,44 @@ export const useGoogleLogin = () => {
   });
 };
 
+// ====================================
+// Verify Two-Factor Code
+// ====================================
+export const useVerifyTwoFactor = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: verifyTwoFactor,
+
+    onSuccess: (response) => {
+      const user =
+        response?.data?.user;
+
+      if (user) {
+        queryClient.setQueryData(
+          ["current-user"],
+          {
+            ...response,
+            data: user,
+          }
+        );
+      }
+    },
+  });
+};
+
+// ====================================
+// Register
+// ====================================
 export const useRegister = () => {
   return useMutation({
     mutationFn: register,
   });
 };
 
+// ====================================
+// Logout
+// ====================================
 export const useLogout = () => {
   const queryClient = useQueryClient();
 
@@ -76,6 +135,9 @@ export const useLogout = () => {
   });
 };
 
+// ====================================
+// Current User
+// ====================================
 export const useCurrentUser = () => {
   return useQuery({
     queryKey: ["current-user"],

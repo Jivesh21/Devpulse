@@ -1,5 +1,3 @@
-// LoginForm.jsx
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -31,6 +29,7 @@ function LoginForm() {
   const navigate = useNavigate();
 
   const loginMutation = useLogin();
+
   const googleLoginMutation =
     useGoogleLogin();
 
@@ -50,20 +49,70 @@ function LoginForm() {
   });
 
   // ====================================
+  // Handle Two-Factor Redirect
+  // ====================================
+  const handleTwoFactorRequired = (
+    response
+  ) => {
+    const requiresTwoFactor =
+      response?.data?.requiresTwoFactor;
+
+    const challengeId =
+      response?.data?.challengeId;
+
+    if (
+      requiresTwoFactor &&
+      challengeId
+    ) {
+      navigate("/verify-2fa", {
+        state: {
+          challengeId,
+        },
+      });
+
+      return true;
+    }
+
+    return false;
+  };
+
+  // ====================================
   // Email / Password Login
   // ====================================
-
   const onSubmit = async (data) => {
     try {
       const response =
-        await loginMutation.mutateAsync(data);
+        await loginMutation.mutateAsync(
+          data
+        );
 
-      toast.success(response.message);
+      // ====================================
+      // 2FA Required
+      // ====================================
+      if (
+        handleTwoFactorRequired(
+          response
+        )
+      ) {
+        toast.info(
+          "We've sent a verification code to your email."
+        );
+
+        return;
+      }
+
+      // ====================================
+      // Normal Login
+      // ====================================
+      toast.success(
+        response.message ||
+          "Login successful"
+      );
 
       navigate("/feed");
     } catch (error) {
       toast.error(
-        error.response?.data?.message ||
+        error?.response?.data?.message ||
           "Login failed"
       );
     }
@@ -72,15 +121,17 @@ function LoginForm() {
   // ====================================
   // Google Login
   // ====================================
-
   const handleGoogleSuccess = async (
     credentialResponse
   ) => {
     try {
-      if (!credentialResponse?.credential) {
+      if (
+        !credentialResponse?.credential
+      ) {
         toast.error(
           "Google credential was not received"
         );
+
         return;
       }
 
@@ -89,6 +140,24 @@ function LoginForm() {
           credentialResponse.credential
         );
 
+      // ====================================
+      // 2FA Required
+      // ====================================
+      if (
+        handleTwoFactorRequired(
+          response
+        )
+      ) {
+        toast.info(
+          "We've sent a verification code to your email."
+        );
+
+        return;
+      }
+
+      // ====================================
+      // Normal Google Login
+      // ====================================
       toast.success(
         response.message ||
           "Google login successful"
@@ -102,7 +171,7 @@ function LoginForm() {
       );
 
       toast.error(
-        error.response?.data?.message ||
+        error?.response?.data?.message ||
           "Google login failed"
       );
     }
@@ -130,8 +199,8 @@ function LoginForm() {
         </h2>
 
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Sign in to continue building with your
-          developer community.
+          Sign in to continue building with
+          your developer community.
         </p>
       </div>
 
@@ -152,7 +221,9 @@ function LoginForm() {
 
         <div className="flex justify-center">
           <GoogleLogin
-            onSuccess={handleGoogleSuccess}
+            onSuccess={
+              handleGoogleSuccess
+            }
             onError={handleGoogleError}
             useOneTap={false}
             theme="outline"
@@ -313,7 +384,8 @@ function LoginForm() {
         <Button
           type="submit"
           disabled={
-            isSubmitting || isLoggingIn
+            isSubmitting ||
+            isLoggingIn
           }
           className="
             h-11
@@ -340,6 +412,7 @@ function LoginForm() {
 
       <p className="mt-6 text-center text-sm text-muted-foreground sm:mt-8">
         Don't have an account?{" "}
+
         <Link
           to="/register"
           className="

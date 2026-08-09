@@ -1,5 +1,8 @@
 import api from "@/api/axios";
 
+// ====================================
+// Login
+// ====================================
 export const login = async (credentials) => {
   const { data } = await api.post(
     "/auth/login",
@@ -9,7 +12,12 @@ export const login = async (credentials) => {
   return data;
 };
 
-export const googleLogin = async (credential) => {
+// ====================================
+// Google Login
+// ====================================
+export const googleLogin = async (
+  credential
+) => {
   const { data } = await api.post(
     "/auth/google",
     {
@@ -20,7 +28,30 @@ export const googleLogin = async (credential) => {
   return data;
 };
 
-export const register = async (userData) => {
+// ====================================
+// Verify Two-Factor Code
+// ====================================
+export const verifyTwoFactor = async ({
+  challengeId,
+  code,
+}) => {
+  const { data } = await api.post(
+    "/auth/2fa/verify",
+    {
+      challengeId,
+      code,
+    }
+  );
+
+  return data;
+};
+
+// ====================================
+// Register
+// ====================================
+export const register = async (
+  userData
+) => {
   const { data } = await api.post(
     "/auth/register",
     userData
@@ -29,6 +60,9 @@ export const register = async (userData) => {
   return data;
 };
 
+// ====================================
+// Logout
+// ====================================
 export const logout = async () => {
   const { data } = await api.post(
     "/auth/logout"
@@ -37,6 +71,9 @@ export const logout = async () => {
   return data;
 };
 
+// ====================================
+// Get Current User
+// ====================================
 export const getCurrentUser = async () => {
   const { data } = await api.get(
     "/auth/me"

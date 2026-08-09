@@ -8,8 +8,7 @@ function DashboardLayout({
   hideRightSidebar = false,
 }) {
   return (
-    <div className="min-h-screen bg-background">
-
+    <>
       {/* ================================= */}
       {/* Navbar */}
       {/* ================================= */}
@@ -24,9 +23,10 @@ function DashboardLayout({
         className="
           flex
           min-h-[calc(100vh-4rem)]
+          w-full
+          min-w-0
         "
       >
-
         {/* ================================= */}
         {/* Left Sidebar */}
         {/* ================================= */}
@@ -72,6 +72,7 @@ function DashboardLayout({
             className={`
               mx-auto
               w-full
+              min-w-0
               px-4
               py-6
               sm:px-6
@@ -114,7 +115,7 @@ function DashboardLayout({
           </aside>
         )}
       </div>
-    </div>
+    </>
   );
 }
 

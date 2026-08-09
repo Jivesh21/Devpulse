@@ -52,45 +52,34 @@ export function useUpdatePost() {
     onSuccess: (response) => {
       const updatedPost = response?.data;
 
-      // --------------------------------
-      // Safety check
-      // --------------------------------
       if (!updatedPost?._id) {
         queryClient.invalidateQueries({
           queryKey: ["posts"],
         });
 
+        queryClient.invalidateQueries({
+          queryKey: ["user-posts"],
+        });
+
         return;
       }
 
-      // --------------------------------
-      // Update normal feed cache
-      // --------------------------------
+      // ====================================
+      // Update Feed Cache
+      // ====================================
+
       queryClient.setQueryData(
         ["posts"],
         (oldData) => {
-          if (!oldData) {
-            return oldData;
-          }
-
-          // API response:
-          // {
-          //   data: {
-          //     posts: [...]
-          //   }
-          // }
+          if (!oldData) return oldData;
 
           if (
-            Array.isArray(
-              oldData?.data?.posts
-            )
+            Array.isArray(oldData?.data?.posts)
           ) {
             return {
               ...oldData,
-
               data: {
                 ...oldData.data,
-
                 posts: oldData.data.posts.map(
                   (post) =>
                     post._id === updatedPost._id
@@ -101,15 +90,9 @@ export function useUpdatePost() {
             };
           }
 
-          // --------------------------------
-          // If API directly returns an array
-          // --------------------------------
-          if (
-            Array.isArray(oldData?.data)
-          ) {
+          if (Array.isArray(oldData?.data)) {
             return {
               ...oldData,
-
               data: oldData.data.map(
                 (post) =>
                   post._id === updatedPost._id
@@ -123,12 +106,57 @@ export function useUpdatePost() {
         }
       );
 
-      // --------------------------------
-      // Also invalidate so server remains
-      // the source of truth
-      // --------------------------------
+      // ====================================
+      // Update Profile Post Caches
+      // ====================================
+
+      queryClient.setQueriesData(
+        {
+          queryKey: ["user-posts"],
+        },
+        (oldData) => {
+          if (!oldData) return oldData;
+
+          if (Array.isArray(oldData?.data)) {
+            return {
+              ...oldData,
+              data: oldData.data.map(
+                (post) =>
+                  post._id === updatedPost._id
+                    ? updatedPost
+                    : post
+              ),
+            };
+          }
+
+          if (
+            Array.isArray(oldData?.data?.posts)
+          ) {
+            return {
+              ...oldData,
+              data: {
+                ...oldData.data,
+                posts: oldData.data.posts.map(
+                  (post) =>
+                    post._id === updatedPost._id
+                      ? updatedPost
+                      : post
+                ),
+              },
+            };
+          }
+
+          return oldData;
+        }
+      );
+
+      // Background synchronization
       queryClient.invalidateQueries({
         queryKey: ["posts"],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["user-posts"],
       });
     },
   });
@@ -143,9 +171,92 @@ export function useDeletePost() {
   return useMutation({
     mutationFn: deletePost,
 
-    onSuccess: () => {
+    onSuccess: (_response, deletedPostId) => {
+      // ====================================
+      // Remove From Feed
+      // ====================================
+
+      queryClient.setQueryData(
+        ["posts"],
+        (oldData) => {
+          if (!oldData) return oldData;
+
+          if (
+            Array.isArray(oldData?.data?.posts)
+          ) {
+            return {
+              ...oldData,
+              data: {
+                ...oldData.data,
+                posts: oldData.data.posts.filter(
+                  (post) =>
+                    post._id !== deletedPostId
+                ),
+              },
+            };
+          }
+
+          if (Array.isArray(oldData?.data)) {
+            return {
+              ...oldData,
+              data: oldData.data.filter(
+                (post) =>
+                  post._id !== deletedPostId
+              ),
+            };
+          }
+
+          return oldData;
+        }
+      );
+
+      // ====================================
+      // Remove From Profile Caches
+      // ====================================
+
+      queryClient.setQueriesData(
+        {
+          queryKey: ["user-posts"],
+        },
+        (oldData) => {
+          if (!oldData) return oldData;
+
+          if (Array.isArray(oldData?.data)) {
+            return {
+              ...oldData,
+              data: oldData.data.filter(
+                (post) =>
+                  post._id !== deletedPostId
+              ),
+            };
+          }
+
+          if (
+            Array.isArray(oldData?.data?.posts)
+          ) {
+            return {
+              ...oldData,
+              data: {
+                ...oldData.data,
+                posts: oldData.data.posts.filter(
+                  (post) =>
+                    post._id !== deletedPostId
+                ),
+              },
+            };
+          }
+
+          return oldData;
+        }
+      );
+
+      // Background synchronization
       queryClient.invalidateQueries({
         queryKey: ["posts"],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["user-posts"],
       });
     },
   });
@@ -184,6 +295,10 @@ export function useToggleLike() {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["posts"],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["user-posts"],
       });
     },
   });

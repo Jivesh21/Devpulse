@@ -75,9 +75,7 @@ export const useUpdateProfile = () => {
 // ====================================
 // Update Avatar
 // ====================================
-export const useUpdateAvatar = (
-  username
-) => {
+export const useUpdateAvatar = (username) => {
   const queryClient = useQueryClient();
 
   return useMutation({

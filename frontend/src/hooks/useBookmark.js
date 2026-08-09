@@ -19,14 +19,63 @@ export const useToggleBookmark = () => {
   return useMutation({
     mutationFn: toggleBookmark,
 
-    onSuccess: (_response, postId) => {
-      queryClient.invalidateQueries({
-        queryKey: ["posts"],
-      });
+    onSuccess: (response, postId) => {
+      // ====================================
+      // Get new bookmark state from response
+      // ====================================
+
+      const isBookmarked =
+        response?.data?.isBookmarked ??
+        response?.data?.bookmarked;
+
+      // ====================================
+      // Immediately update bookmark status
+      // ====================================
+
+      if (typeof isBookmarked === "boolean") {
+        queryClient.setQueryData(
+          ["bookmark-status", postId],
+          (oldData) => {
+            if (!oldData) {
+              return {
+                statusCode: 200,
+                success: true,
+                data: {
+                  isBookmarked,
+                },
+              };
+            }
+
+            return {
+              ...oldData,
+              data: {
+                ...oldData.data,
+                isBookmarked,
+              },
+            };
+          }
+        );
+      }
+
+      // ====================================
+      // Refresh bookmarked posts
+      // ====================================
 
       queryClient.invalidateQueries({
         queryKey: ["bookmarks"],
       });
+
+      // ====================================
+      // Refresh feed
+      // ====================================
+
+      queryClient.invalidateQueries({
+        queryKey: ["posts"],
+      });
+
+      // ====================================
+      // Confirm status from backend
+      // ====================================
 
       queryClient.invalidateQueries({
         queryKey: ["bookmark-status", postId],
@@ -38,16 +87,10 @@ export const useToggleBookmark = () => {
 // ================================
 // Bookmark Status
 // ================================
-export const useBookmarkStatus = (
-  postId
-) => {
+export const useBookmarkStatus = (postId) => {
   return useQuery({
-    queryKey: [
-      "bookmark-status",
-      postId,
-    ],
-    queryFn: () =>
-      getBookmarkStatus(postId),
+    queryKey: ["bookmark-status", postId],
+    queryFn: () => getBookmarkStatus(postId),
     enabled: !!postId,
   });
 };
@@ -55,10 +98,9 @@ export const useBookmarkStatus = (
 // ================================
 // Bookmarked Posts
 // ================================
-export const useBookmarkedPosts =
-  () => {
-    return useQuery({
-      queryKey: ["bookmarks"],
-      queryFn: getBookmarkedPosts,
-    });
-  };
+export const useBookmarkedPosts = () => {
+  return useQuery({
+    queryKey: ["bookmarks"],
+    queryFn: getBookmarkedPosts,
+  });
+};

@@ -65,7 +65,7 @@ function ProfileHeader({
           bg-gradient-to-br
           from-primary
           via-primary/80
-          to-violet-400
+          to-primary/40
           sm:h-44
         "
       >
@@ -265,8 +265,6 @@ function ProfileHeader({
               profile.linkedin) && (
               <div className="mt-3 flex flex-wrap gap-2">
 
-                {/* Website */}
-
                 {profile.website && (
                   <ProfileLink
                     href={profile.website}
@@ -277,8 +275,6 @@ function ProfileHeader({
                   />
                 )}
 
-                {/* GitHub */}
-
                 {profile.github && (
                   <ProfileLink
                     href={profile.github}
@@ -288,8 +284,6 @@ function ProfileHeader({
                     label="GitHub"
                   />
                 )}
-
-                {/* LinkedIn */}
 
                 {profile.linkedin && (
                   <ProfileLink

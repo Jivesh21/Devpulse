@@ -46,7 +46,80 @@ export function useCreateComment(postId) {
         content,
       }),
 
-    onSuccess: () => {
+    onSuccess: (response) => {
+      const newComment = response?.data;
+
+      // --------------------------------
+      // Immediately add new comment
+      // --------------------------------
+
+      if (newComment?._id) {
+        queryClient.setQueryData(
+          ["comments", postId],
+          (oldData) => {
+            if (!oldData) {
+              return oldData;
+            }
+
+            if (
+              Array.isArray(
+                oldData?.data?.comments
+              )
+            ) {
+              return {
+                ...oldData,
+
+                data: {
+                  ...oldData.data,
+
+                  comments: [
+                    newComment,
+                    ...oldData.data.comments,
+                  ],
+
+                  totalComments:
+                    (oldData.data.totalComments ||
+                      0) + 1,
+                },
+              };
+            }
+
+            return oldData;
+          }
+        );
+      }
+
+      // --------------------------------
+      // Update comment count immediately
+      // --------------------------------
+
+      queryClient.setQueryData(
+        ["comment-count", postId],
+        (oldData) => {
+          if (!oldData) {
+            return oldData;
+          }
+
+          const currentCount =
+            oldData?.data?.commentCount || 0;
+
+          return {
+            ...oldData,
+
+            data: {
+              ...oldData.data,
+
+              commentCount:
+                currentCount + 1,
+            },
+          };
+        }
+      );
+
+      // --------------------------------
+      // Background sync
+      // --------------------------------
+
       queryClient.invalidateQueries({
         queryKey: ["comments", postId],
       });
@@ -67,7 +140,87 @@ export function useDeleteComment(postId) {
   return useMutation({
     mutationFn: deleteComment,
 
-    onSuccess: () => {
+    onSuccess: (_response, deletedCommentId) => {
+      // --------------------------------
+      // Immediately remove comment
+      // --------------------------------
+
+      queryClient.setQueryData(
+        ["comments", postId],
+        (oldData) => {
+          if (!oldData) {
+            return oldData;
+          }
+
+          if (
+            Array.isArray(
+              oldData?.data?.comments
+            )
+          ) {
+            const oldComments =
+              oldData.data.comments;
+
+            const updatedComments =
+              oldComments.filter(
+                (comment) =>
+                  comment._id !==
+                  deletedCommentId
+              );
+
+            return {
+              ...oldData,
+
+              data: {
+                ...oldData.data,
+
+                comments: updatedComments,
+
+                totalComments: Math.max(
+                  0,
+                  (oldData.data.totalComments ||
+                    oldComments.length) - 1
+                ),
+              },
+            };
+          }
+
+          return oldData;
+        }
+      );
+
+      // --------------------------------
+      // Immediately update count
+      // --------------------------------
+
+      queryClient.setQueryData(
+        ["comment-count", postId],
+        (oldData) => {
+          if (!oldData) {
+            return oldData;
+          }
+
+          const currentCount =
+            oldData?.data?.commentCount || 0;
+
+          return {
+            ...oldData,
+
+            data: {
+              ...oldData.data,
+
+              commentCount: Math.max(
+                0,
+                currentCount - 1
+              ),
+            },
+          };
+        }
+      );
+
+      // --------------------------------
+      // Background sync
+      // --------------------------------
+
       queryClient.invalidateQueries({
         queryKey: ["comments", postId],
       });

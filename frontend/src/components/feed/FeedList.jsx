@@ -4,7 +4,7 @@ import {
   Loader2,
   MessageCircle,
   Heart,
-  MoreHorizontal,
+  Bookmark,
   Pencil,
   Trash2,
   Check,
@@ -25,6 +25,11 @@ import {
   useUpdatePost,
   useDeletePost,
 } from "@/hooks/usePosts";
+
+import {
+  useToggleBookmark,
+  useBookmarkStatus,
+} from "@/hooks/useBookmark";
 
 import { useAuthContext } from "@/context/AuthContext";
 
@@ -53,18 +58,14 @@ function FeedList() {
   // Comment State
   // ====================================
 
-  const [openComments, setOpenComments] =
-    useState(null);
+const [openComments, setOpenComments] =
+  useState(null);
 
-  // ====================================
-  // Edit State
-  // ====================================
+const [editingPostId, setEditingPostId] =
+  useState(null);
 
-  const [editingPostId, setEditingPostId] =
-    useState(null);
-
-  const [editContent, setEditContent] =
-    useState("");
+const [editContent, setEditContent] =
+  useState("");
 
   // ====================================
   // Extract Posts
@@ -411,9 +412,7 @@ function FeedList() {
                   </p>
                 </div>
 
-                {/* ================================= */}
-                {/* Owner Menu */}
-                {/* ================================= */}
+                {/* Owner Actions */}
 
                 {isOwner && !isEditing && (
                   <div className="flex items-center gap-1">
@@ -483,7 +482,7 @@ function FeedList() {
               </div>
 
               {/* ================================= */}
-              {/* Editing UI */}
+              {/* Editing */}
               {/* ================================= */}
 
               {isEditing ? (
@@ -596,9 +595,7 @@ function FeedList() {
                 </div>
               ) : (
                 <>
-                  {/* ================================= */}
-                  {/* Post Text */}
-                  {/* ================================= */}
+                  {/* Post Content */}
 
                   {post?.content && (
                     <p
@@ -612,10 +609,6 @@ function FeedList() {
                       {post.content}
                     </p>
                   )}
-
-                  {/* ================================= */}
-                  {/* Edited Label */}
-                  {/* ================================= */}
 
                   {post?.isEdited && (
                     <span
@@ -668,6 +661,7 @@ function FeedList() {
                 className="
                   mt-4
                   flex
+                  flex-wrap
                   items-center
                   gap-2
                   border-t
@@ -703,16 +697,8 @@ function FeedList() {
 
                     ${
                       isLiked
-                        ? `
-                          bg-primary/10
-                          text-primary
-                          hover:bg-primary/15
-                        `
-                        : `
-                          text-muted-foreground
-                          hover:bg-primary/5
-                          hover:text-primary
-                        `
+                        ? "bg-primary/10 text-primary hover:bg-primary/15"
+                        : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
                     }
                   `}
                 >
@@ -772,15 +758,8 @@ function FeedList() {
 
                     ${
                       isCommentsOpen
-                        ? `
-                          bg-primary/10
-                          text-primary
-                        `
-                        : `
-                          text-muted-foreground
-                          hover:bg-primary/5
-                          hover:text-primary
-                        `
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
                     }
                   `}
                 >
@@ -792,6 +771,14 @@ function FeedList() {
                       : "Comment"}
                   </span>
                 </button>
+
+                {/* Bookmark */}
+
+                <BookmarkButton
+                  postId={postId}
+                  isEditing={isEditing}
+                />
+
               </div>
             </div>
 
@@ -816,6 +803,88 @@ function FeedList() {
         );
       })}
     </div>
+  );
+}
+
+// ====================================
+// Bookmark Button
+// ====================================
+
+function BookmarkButton({
+  postId,
+  isEditing = false,
+}) {
+  const {
+    data: bookmarkData,
+  } = useBookmarkStatus(postId);
+
+  const toggleBookmarkMutation =
+    useToggleBookmark();
+
+  const isBookmarked =
+    bookmarkData?.data?.isBookmarked ??
+    bookmarkData?.data?.bookmarked ??
+    false;
+
+  const isBookmarking =
+    toggleBookmarkMutation.isPending;
+
+  return (
+    <button
+      type="button"
+      disabled={
+        isBookmarking ||
+        isEditing
+      }
+      onClick={() =>
+        toggleBookmarkMutation.mutate(
+          postId
+        )
+      }
+      className={`
+        flex
+        items-center
+        gap-2
+        rounded-lg
+        px-3
+        py-2
+        text-sm
+        transition-colors
+        disabled:pointer-events-none
+        disabled:opacity-50
+
+        ${
+          isBookmarked
+            ? "bg-primary/10 text-primary hover:bg-primary/15"
+            : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
+        }
+      `}
+    >
+      {isBookmarking ? (
+        <Loader2
+          className="
+            h-4
+            w-4
+            animate-spin
+          "
+        />
+      ) : (
+        <Bookmark
+          className="h-4 w-4"
+          fill={
+            isBookmarked
+              ? "currentColor"
+              : "none"
+          }
+        />
+      )}
+
+      <span>
+        {isBookmarked
+          ? "Saved"
+          : "Save"}
+      </span>
+    </button>
   );
 }
 

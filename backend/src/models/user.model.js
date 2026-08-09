@@ -75,15 +75,17 @@ const userSchema = new Schema(
       type: Date,
       select: false,
     },
-passwordResetToken: {
-  type: String,
-  select: false,
-},
 
-passwordResetExpires: {
-  type: Date,
-  select: false,
-},
+    passwordResetToken: {
+      type: String,
+      select: false,
+    },
+
+    passwordResetExpires: {
+      type: Date,
+      select: false,
+    },
+
     // ====================================
     // Authentication
     // ====================================
@@ -103,6 +105,14 @@ passwordResetExpires: {
       type: String,
       unique: true,
       sparse: true,
+    },
+
+    // ====================================
+    // Two-Factor Authentication
+    // ====================================
+    twoFactorEnabled: {
+      type: Boolean,
+      default: false,
     },
 
     // ====================================
@@ -271,7 +281,10 @@ userSchema.pre("save", async function () {
 userSchema.methods.isPasswordCorrect = async function (
   password
 ) {
-  return bcrypt.compare(password, this.password);
+  return bcrypt.compare(
+    password,
+    this.password
+  );
 };
 
 // ====================================
@@ -286,7 +299,8 @@ userSchema.methods.generateAccessToken = function () {
     },
     process.env.JWT_SECRET,
     {
-      expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+      expiresIn:
+        process.env.ACCESS_TOKEN_EXPIRY,
     }
   );
 };
@@ -301,7 +315,8 @@ userSchema.methods.generateRefreshToken = function () {
     },
     process.env.JWT_REFRESH_SECRET,
     {
-      expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
+      expiresIn:
+        process.env.REFRESH_TOKEN_EXPIRY,
     }
   );
 };

@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
+import TwoFactorChallenge from "../models/twoFactorChallenge.model.js";
 import ApiError from "../utils/ApiError.js";
 import { OAuth2Client } from "google-auth-library";
 import crypto from "crypto";
@@ -8,12 +9,19 @@ import {
   sendVerificationEmail,
   sendPasswordResetEmail,
   sendPasswordChangedEmail,
+  sendTwoFactorCodeEmail,
 } from "./email.service.js";
 
 // ====================================
 // Google OAuth Client
 // ====================================
 const googleClient = new OAuth2Client();
+
+// ====================================
+// Two-Factor Configuration
+// ====================================
+const TWO_FACTOR_CODE_EXPIRY = 10 * 60 * 1000;
+const TWO_FACTOR_MAX_ATTEMPTS = 5;
 
 // ====================================
 // Generate Email Verification Token
@@ -54,6 +62,25 @@ const generatePasswordResetToken = () => {
 };
 
 // ====================================
+// Generate Two-Factor Code
+// ====================================
+const generateTwoFactorCode = () => {
+  return crypto
+    .randomInt(100000, 1000000)
+    .toString();
+};
+
+// ====================================
+// Hash Two-Factor Code
+// ====================================
+const hashTwoFactorCode = (code) => {
+  return crypto
+    .createHash("sha256")
+    .update(code)
+    .digest("hex");
+};
+
+// ====================================
 // Generate Access & Refresh Tokens
 // ====================================
 const generateAccessAndRefreshTokens = async (
@@ -86,9 +113,47 @@ const generateAccessAndRefreshTokens = async (
 };
 
 // ====================================
+// Create Two-Factor Challenge
+// ====================================
+const createTwoFactorChallenge = async (
+  user
+) => {
+  // Remove any previous challenge
+  await TwoFactorChallenge.deleteMany({
+    userId: user._id,
+  });
+
+  const code = generateTwoFactorCode();
+
+  const codeHash = hashTwoFactorCode(code);
+
+  const challenge =
+    await TwoFactorChallenge.create({
+      userId: user._id,
+      codeHash,
+      expiresAt:
+        new Date(
+          Date.now() +
+            TWO_FACTOR_CODE_EXPIRY
+        ),
+      attempts: 0,
+    });
+
+  await sendTwoFactorCodeEmail({
+    email: user.email,
+    fullName: user.fullName,
+    code,
+  });
+
+  return challenge;
+};
+
+// ====================================
 // Register User
 // ====================================
-export const registerUser = async (userData) => {
+export const registerUser = async (
+  userData
+) => {
   const {
     fullName,
     username,
@@ -96,12 +161,10 @@ export const registerUser = async (userData) => {
     password,
   } = userData;
 
-  // ------------------------------------
-  // Check Existing User
-  // ------------------------------------
-  const existingUser = await User.findOne({
-    $or: [{ email }, { username }],
-  });
+  const existingUser =
+    await User.findOne({
+      $or: [{ email }, { username }],
+    });
 
   if (existingUser) {
     if (existingUser.email === email) {
@@ -111,7 +174,10 @@ export const registerUser = async (userData) => {
       );
     }
 
-    if (existingUser.username === username) {
+    if (
+      existingUser.username ===
+      username
+    ) {
       throw new ApiError(
         409,
         "Username already exists"
@@ -119,17 +185,12 @@ export const registerUser = async (userData) => {
     }
   }
 
-  // ------------------------------------
-  // Generate Verification Token
-  // ------------------------------------
   const {
     rawToken,
     hashedToken,
-  } = generateEmailVerificationToken();
+  } =
+    generateEmailVerificationToken();
 
-  // ------------------------------------
-  // Create User
-  // ------------------------------------
   const user = await User.create({
     fullName,
     username,
@@ -142,15 +203,12 @@ export const registerUser = async (userData) => {
       hashedToken,
 
     emailVerificationExpires:
-      Date.now() + 24 * 60 * 60 * 1000,
+      Date.now() +
+      24 * 60 * 60 * 1000,
   });
 
-  // ------------------------------------
-  // Verify User Was Created
-  // ------------------------------------
-  const createdUser = await User.findById(
-    user._id
-  );
+  const createdUser =
+    await User.findById(user._id);
 
   if (!createdUser) {
     throw new ApiError(
@@ -159,18 +217,12 @@ export const registerUser = async (userData) => {
     );
   }
 
-  // ------------------------------------
-  // Send Verification Email
-  // ------------------------------------
   await sendVerificationEmail({
     email: createdUser.email,
     fullName: createdUser.fullName,
     verificationToken: rawToken,
   });
 
-  // ------------------------------------
-  // Generate Login Tokens
-  // ------------------------------------
   const {
     accessToken,
     refreshToken,
@@ -199,26 +251,23 @@ export const verifyEmailService = async (
     );
   }
 
-  // ------------------------------------
-  // Hash Incoming Token
-  // ------------------------------------
-  const hashedToken = crypto
-    .createHash("sha256")
-    .update(token)
-    .digest("hex");
+  const hashedToken =
+    crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
 
-  // ------------------------------------
-  // Find User With Valid Token
-  // ------------------------------------
-  const user = await User.findOne({
-    emailVerificationToken: hashedToken,
+  const user =
+    await User.findOne({
+      emailVerificationToken:
+        hashedToken,
 
-    emailVerificationExpires: {
-      $gt: Date.now(),
-    },
-  }).select(
-    "+emailVerificationToken +emailVerificationExpires"
-  );
+      emailVerificationExpires: {
+        $gt: Date.now(),
+      },
+    }).select(
+      "+emailVerificationToken +emailVerificationExpires"
+    );
 
   if (!user) {
     throw new ApiError(
@@ -227,16 +276,13 @@ export const verifyEmailService = async (
     );
   }
 
-  // ------------------------------------
-  // Mark Email As Verified
-  // ------------------------------------
   user.emailVerified = true;
 
-  // ------------------------------------
-  // Remove Verification Token
-  // ------------------------------------
-  user.emailVerificationToken = undefined;
-  user.emailVerificationExpires = undefined;
+  user.emailVerificationToken =
+    undefined;
+
+  user.emailVerificationExpires =
+    undefined;
 
   await user.save({
     validateBeforeSave: false,
@@ -250,179 +296,162 @@ export const verifyEmailService = async (
 // ====================================
 // Forgot Password
 // ====================================
-export const forgotPasswordService = async (
-  email
-) => {
-  if (!email) {
-    throw new ApiError(
-      400,
-      "Email is required"
-    );
-  }
+export const forgotPasswordService =
+  async (email) => {
+    if (!email) {
+      throw new ApiError(
+        400,
+        "Email is required"
+      );
+    }
 
-  const normalizedEmail =
-    email.toLowerCase().trim();
+    const normalizedEmail =
+      email.toLowerCase().trim();
 
-  const user = await User.findOne({
-    email: normalizedEmail,
-  }).select(
-    "+password +passwordResetToken +passwordResetExpires"
-  );
+    const user =
+      await User.findOne({
+        email: normalizedEmail,
+      }).select(
+        "+password +passwordResetToken +passwordResetExpires"
+      );
 
-  // ------------------------------------
-  // Don't Reveal Whether Email Exists
-  // ------------------------------------
-  if (!user) {
+    if (!user) {
+      return {
+        message:
+          "If an account exists with this email, a password reset link has been sent.",
+      };
+    }
+
+    if (
+      user.googleId &&
+      !user.password
+    ) {
+      return {
+        message:
+          "If an account exists with this email, a password reset link has been sent.",
+      };
+    }
+
+    const {
+      rawToken,
+      hashedToken,
+    } =
+      generatePasswordResetToken();
+
+    user.passwordResetToken =
+      hashedToken;
+
+    user.passwordResetExpires =
+      Date.now() +
+      15 * 60 * 1000;
+
+    await user.save({
+      validateBeforeSave: false,
+    });
+
+    await sendPasswordResetEmail({
+      email: user.email,
+      fullName: user.fullName,
+      resetToken: rawToken,
+    });
+
     return {
       message:
         "If an account exists with this email, a password reset link has been sent.",
     };
-  }
-
-  // ------------------------------------
-  // Google-only Account
-  // ------------------------------------
-  if (user.googleId && !user.password) {
-    return {
-      message:
-        "If an account exists with this email, a password reset link has been sent.",
-    };
-  }
-
-  // ------------------------------------
-  // Generate Reset Token
-  // ------------------------------------
-  const {
-    rawToken,
-    hashedToken,
-  } = generatePasswordResetToken();
-
-  user.passwordResetToken =
-    hashedToken;
-
-  // Token valid for 15 minutes
-  user.passwordResetExpires =
-    Date.now() + 15 * 60 * 1000;
-
-  await user.save({
-    validateBeforeSave: false,
-  });
-
-  // ------------------------------------
-  // Send Reset Email
-  // ------------------------------------
-  await sendPasswordResetEmail({
-    email: user.email,
-    fullName: user.fullName,
-    resetToken: rawToken,
-  });
-
-  return {
-    message:
-      "If an account exists with this email, a password reset link has been sent.",
   };
-};
 
 // ====================================
 // Reset Password
 // ====================================
-export const resetPasswordService = async (
-  token,
-  newPassword
-) => {
-  if (!token) {
-    throw new ApiError(
-      400,
-      "Password reset token is required"
-    );
-  }
+export const resetPasswordService =
+  async (
+    token,
+    newPassword
+  ) => {
+    if (!token) {
+      throw new ApiError(
+        400,
+        "Password reset token is required"
+      );
+    }
 
-  if (!newPassword) {
-    throw new ApiError(
-      400,
-      "New password is required"
-    );
-  }
+    if (!newPassword) {
+      throw new ApiError(
+        400,
+        "New password is required"
+      );
+    }
 
-  // ------------------------------------
-  // Hash Incoming Token
-  // ------------------------------------
-  const hashedToken = crypto
-    .createHash("sha256")
-    .update(token)
-    .digest("hex");
+    const hashedToken =
+      crypto
+        .createHash("sha256")
+        .update(token)
+        .digest("hex");
 
-  // ------------------------------------
-  // Find User With Valid Reset Token
-  // ------------------------------------
-  const user = await User.findOne({
-    passwordResetToken: hashedToken,
+    const user =
+      await User.findOne({
+        passwordResetToken:
+          hashedToken,
 
-    passwordResetExpires: {
-      $gt: Date.now(),
-    },
-  }).select(
-    "+password +passwordResetToken +passwordResetExpires +refreshToken"
-  );
+        passwordResetExpires: {
+          $gt: Date.now(),
+        },
+      }).select(
+        "+password +passwordResetToken +passwordResetExpires +refreshToken"
+      );
 
-  if (!user) {
-    throw new ApiError(
-      400,
-      "Invalid or expired password reset token"
-    );
-  }
+    if (!user) {
+      throw new ApiError(
+        400,
+        "Invalid or expired password reset token"
+      );
+    }
 
-  // ------------------------------------
-  // Update Password
-  // ------------------------------------
-  user.password = newPassword;
+    user.password = newPassword;
 
-  // ------------------------------------
-  // Remove Reset Token
-  // ------------------------------------
-  user.passwordResetToken = undefined;
-  user.passwordResetExpires = undefined;
+    user.passwordResetToken =
+      undefined;
 
-  // ------------------------------------
-  // Invalidate Existing Sessions
-  // ------------------------------------
-  user.refreshToken = undefined;
+    user.passwordResetExpires =
+      undefined;
 
-  // ------------------------------------
-  // Save
-  // Password will be hashed by the
-  // User model pre-save middleware
-  // ------------------------------------
-await user.save();
+    user.refreshToken =
+      undefined;
 
-// ------------------------------------
-// Send Password Changed Confirmation
-// ------------------------------------
-await sendPasswordChangedEmail({
-  email: user.email,
-  fullName: user.fullName,
-});
+    await user.save();
 
-return {
-  message:
-    "Password reset successfully. You can now log in with your new password.",
-};
-};
+    await sendPasswordChangedEmail({
+      email: user.email,
+      fullName: user.fullName,
+    });
+
+    return {
+      message:
+        "Password reset successfully. You can now log in with your new password.",
+    };
+  };
 
 // ====================================
 // Login User
 // ====================================
-export const loginUser = async (userData) => {
+export const loginUser = async (
+  userData
+) => {
   const {
     email,
     password,
   } = userData;
 
-  const user = await User.findOne({
-    email,
-  }).select(
-    "+password +refreshToken"
-  );
+  const normalizedEmail =
+    email.toLowerCase().trim();
+
+  const user =
+    await User.findOne({
+      email: normalizedEmail,
+    }).select(
+      "+password +refreshToken"
+    );
 
   if (!user) {
     throw new ApiError(
@@ -443,6 +472,34 @@ export const loginUser = async (userData) => {
     );
   }
 
+  // ====================================
+  // Two-Factor Authentication
+  // ====================================
+  if (user.twoFactorEnabled) {
+    const challenge =
+      await createTwoFactorChallenge(
+        user
+      );
+
+    return {
+      requiresTwoFactor: true,
+
+      challengeId:
+        challenge._id.toString(),
+
+      user: {
+        _id: user._id,
+        fullName: user.fullName,
+        username: user.username,
+        email: user.email,
+        avatar: user.avatar,
+      },
+    };
+  }
+
+  // ====================================
+  // Normal Login
+  // ====================================
   const {
     accessToken,
     refreshToken,
@@ -455,11 +512,221 @@ export const loginUser = async (userData) => {
   user.refreshToken = undefined;
 
   return {
+    requiresTwoFactor: false,
     user,
     accessToken,
     refreshToken,
   };
 };
+
+// ====================================
+// Verify Two-Factor Code
+// ====================================
+export const verifyTwoFactorCode =
+  async (
+    challengeId,
+    code
+  ) => {
+    if (!challengeId) {
+      throw new ApiError(
+        400,
+        "Two-factor challenge is required"
+      );
+    }
+
+    if (!code) {
+      throw new ApiError(
+        400,
+        "Verification code is required"
+      );
+    }
+
+    const challenge =
+      await TwoFactorChallenge.findById(
+        challengeId
+      );
+
+    if (!challenge) {
+      throw new ApiError(
+        400,
+        "Invalid or expired verification request"
+      );
+    }
+
+    if (
+      challenge.expiresAt <
+      new Date()
+    ) {
+      await challenge.deleteOne();
+
+      throw new ApiError(
+        400,
+        "Verification code has expired"
+      );
+    }
+
+    if (
+      challenge.attempts >=
+      TWO_FACTOR_MAX_ATTEMPTS
+    ) {
+      await challenge.deleteOne();
+
+      throw new ApiError(
+        429,
+        "Too many verification attempts"
+      );
+    }
+
+    const normalizedCode =
+      String(code).trim();
+
+    if (
+      !/^\d{6}$/.test(
+        normalizedCode
+      )
+    ) {
+      challenge.attempts += 1;
+
+      await challenge.save();
+
+      throw new ApiError(
+        400,
+        "Verification code must be 6 digits"
+      );
+    }
+
+    const codeHash =
+      hashTwoFactorCode(
+        normalizedCode
+      );
+
+    if (
+      codeHash !==
+      challenge.codeHash
+    ) {
+      challenge.attempts += 1;
+
+      await challenge.save();
+
+      throw new ApiError(
+        401,
+        "Invalid verification code"
+      );
+    }
+
+    const user =
+      await User.findById(
+        challenge.userId
+      ).select(
+        "+refreshToken"
+      );
+
+    if (!user) {
+      await challenge.deleteOne();
+
+      throw new ApiError(
+        404,
+        "User not found"
+      );
+    }
+
+    if (!user.twoFactorEnabled) {
+      await challenge.deleteOne();
+
+      throw new ApiError(
+        400,
+        "Two-factor authentication is not enabled"
+      );
+    }
+
+    // Challenge is single-use
+    await challenge.deleteOne();
+
+    const {
+      accessToken,
+      refreshToken,
+    } =
+      await generateAccessAndRefreshTokens(
+        user._id
+      );
+
+    user.password = undefined;
+    user.refreshToken = undefined;
+
+    return {
+      user,
+      accessToken,
+      refreshToken,
+    };
+  };
+
+// ====================================
+// Enable Two-Factor Authentication
+// ====================================
+export const enableTwoFactor =
+  async (userId) => {
+    const user =
+      await User.findById(userId);
+
+    if (!user) {
+      throw new ApiError(
+        404,
+        "User not found"
+      );
+    }
+
+    if (user.twoFactorEnabled) {
+      return {
+        twoFactorEnabled: true,
+        message:
+          "Two-factor authentication is already enabled",
+      };
+    }
+
+    user.twoFactorEnabled = true;
+
+    await user.save({
+      validateBeforeSave: false,
+    });
+
+    return {
+      twoFactorEnabled: true,
+      message:
+        "Two-factor authentication enabled successfully",
+    };
+  };
+
+// ====================================
+// Disable Two-Factor Authentication
+// ====================================
+export const disableTwoFactor =
+  async (userId) => {
+    const user =
+      await User.findById(userId);
+
+    if (!user) {
+      throw new ApiError(
+        404,
+        "User not found"
+      );
+    }
+
+    user.twoFactorEnabled = false;
+
+    await TwoFactorChallenge.deleteMany({
+      userId: user._id,
+    });
+
+    await user.save({
+      validateBeforeSave: false,
+    });
+
+    return {
+      twoFactorEnabled: false,
+      message:
+        "Two-factor authentication disabled successfully",
+    };
+  };
 
 // ====================================
 // Google Login
@@ -474,7 +741,9 @@ export const googleLoginUser = async (
     );
   }
 
-  if (!process.env.GOOGLE_CLIENT_ID) {
+  if (
+    !process.env.GOOGLE_CLIENT_ID
+  ) {
     throw new ApiError(
       500,
       "Google authentication is not configured"
@@ -483,9 +752,6 @@ export const googleLoginUser = async (
 
   let payload;
 
-  // ------------------------------------
-  // Verify Google Credential
-  // ------------------------------------
   try {
     const ticket =
       await googleClient.verifyIdToken({
@@ -494,7 +760,8 @@ export const googleLoginUser = async (
           process.env.GOOGLE_CLIENT_ID,
       });
 
-    payload = ticket.getPayload();
+    payload =
+      ticket.getPayload();
   } catch (error) {
     console.error(
       "Google token verification failed:",
@@ -530,9 +797,6 @@ export const googleLoginUser = async (
     );
   }
 
-  // ------------------------------------
-  // Google Email Must Be Verified
-  // ------------------------------------
   if (!emailVerified) {
     throw new ApiError(
       401,
@@ -540,40 +804,45 @@ export const googleLoginUser = async (
     );
   }
 
-  // ------------------------------------
-  // Check Existing Google Account
-  // ------------------------------------
-  let user = await User.findOne({
-    googleId,
-  }).select("+refreshToken");
-
-  // ------------------------------------
-  // Check Existing DevPulse Account
-  // ------------------------------------
-  if (!user) {
-    user = await User.findOne({
-      email: email.toLowerCase(),
+  let user =
+    await User.findOne({
+      googleId,
     }).select("+refreshToken");
+
+  if (!user) {
+    user =
+      await User.findOne({
+        email:
+          email.toLowerCase(),
+      }).select(
+        "+refreshToken"
+      );
   }
 
-  // ------------------------------------
-  // Create New Google User
-  // ------------------------------------
   if (!user) {
     const baseUsername =
       email
         .split("@")[0]
         .toLowerCase()
-        .replace(/[^a-z0-9_]/g, "_")
-        .slice(0, 20) || "user";
+        .replace(
+          /[^a-z0-9_]/g,
+          "_"
+        )
+        .slice(0, 20) ||
+      "user";
 
-    let username = baseUsername;
+    let username =
+      baseUsername;
+
     let counter = 1;
 
     while (
-      await User.exists({ username })
+      await User.exists({
+        username,
+      })
     ) {
-      const suffix = String(counter);
+      const suffix =
+        String(counter);
 
       username =
         `${baseUsername.slice(
@@ -584,47 +853,78 @@ export const googleLoginUser = async (
       counter++;
     }
 
-    user = await User.create({
-      fullName:
-        name?.trim() || "Google User",
+    user =
+      await User.create({
+        fullName:
+          name?.trim() ||
+          "Google User",
 
-      username,
+        username,
 
-      email: email.toLowerCase(),
+        email:
+          email.toLowerCase(),
 
-      googleId,
+        googleId,
 
-      avatar: picture || "",
+        avatar:
+          picture || "",
 
-      emailVerified: true,
-    });
+        emailVerified: true,
+      });
 
-    user = await User.findById(
-      user._id
-    ).select("+refreshToken");
+    user =
+      await User.findById(
+        user._id
+      ).select(
+        "+refreshToken"
+      );
   } else {
-    // ------------------------------------
-    // Link Google Account
-    // ------------------------------------
     if (!user.googleId) {
-      user.googleId = googleId;
+      user.googleId =
+        googleId;
 
-      // Google has verified this email
-      user.emailVerified = true;
+      user.emailVerified =
+        true;
 
-      if (!user.avatar && picture) {
+      if (
+        !user.avatar &&
+        picture
+      ) {
         user.avatar = picture;
       }
 
       await user.save({
-        validateBeforeSave: false,
+        validateBeforeSave:
+          false,
       });
     }
   }
 
-  // ------------------------------------
-  // Generate Application Tokens
-  // ------------------------------------
+  // ====================================
+  // Google + 2FA
+  // ====================================
+  if (user.twoFactorEnabled) {
+    const challenge =
+      await createTwoFactorChallenge(
+        user
+      );
+
+    return {
+      requiresTwoFactor: true,
+
+      challengeId:
+        challenge._id.toString(),
+
+      user: {
+        _id: user._id,
+        fullName: user.fullName,
+        username: user.username,
+        email: user.email,
+        avatar: user.avatar,
+      },
+    };
+  }
+
   const {
     accessToken,
     refreshToken,
@@ -637,6 +937,7 @@ export const googleLoginUser = async (
   user.refreshToken = undefined;
 
   return {
+    requiresTwoFactor: false,
     user,
     accessToken,
     refreshToken,
@@ -666,7 +967,9 @@ export const logoutUser = async (
 // Refresh Access Token
 // ====================================
 export const refreshAccessTokenService =
-  async (incomingRefreshToken) => {
+  async (
+    incomingRefreshToken
+  ) => {
     if (!incomingRefreshToken) {
       throw new ApiError(
         401,
@@ -674,14 +977,19 @@ export const refreshAccessTokenService =
       );
     }
 
-    const decodedToken = jwt.verify(
-      incomingRefreshToken,
-      process.env.JWT_REFRESH_SECRET
-    );
+    const decodedToken =
+      jwt.verify(
+        incomingRefreshToken,
+        process.env
+          .JWT_REFRESH_SECRET
+      );
 
-    const user = await User.findById(
-      decodedToken._id
-    ).select("+refreshToken");
+    const user =
+      await User.findById(
+        decodedToken._id
+      ).select(
+        "+refreshToken"
+      );
 
     if (!user) {
       throw new ApiError(

@@ -306,6 +306,7 @@ export const sendPasswordResetEmail = async ({
 
   return data;
 };
+
 // ====================================
 // Send Password Changed Confirmation
 // ====================================
@@ -439,3 +440,170 @@ export const sendPasswordChangedEmail = async ({
   return data;
 };
 
+// ====================================
+// Send Two-Factor Authentication Code
+// ====================================
+export const sendTwoFactorCodeEmail = async ({
+  email,
+  fullName,
+  code,
+}) => {
+  const { data, error } =
+    await resend.emails.send({
+      from: "DevPulse <onboarding@resend.dev>",
+
+      to: [email],
+
+      subject:
+        "Your DevPulse verification code",
+
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="UTF-8" />
+            <title>
+              Your DevPulse verification code
+            </title>
+          </head>
+
+          <body
+            style="
+              margin: 0;
+              padding: 0;
+              background-color: #f5f5f5;
+              font-family: Arial, sans-serif;
+            "
+          >
+            <div
+              style="
+                max-width: 600px;
+                margin: 40px auto;
+                padding: 32px;
+                background-color: #ffffff;
+                border-radius: 12px;
+              "
+            >
+              <h1
+                style="
+                  margin-bottom: 16px;
+                  color: #111827;
+                "
+              >
+                Verify your DevPulse login
+              </h1>
+
+              <p
+                style="
+                  color: #4b5563;
+                  font-size: 16px;
+                  line-height: 1.6;
+                "
+              >
+                Hi ${fullName},
+              </p>
+
+              <p
+                style="
+                  color: #4b5563;
+                  font-size: 16px;
+                  line-height: 1.6;
+                "
+              >
+                Someone is trying to sign in to your
+                DevPulse account. Use the verification
+                code below to complete your login.
+              </p>
+
+              <div
+                style="
+                  margin: 32px 0;
+                  padding: 20px;
+                  text-align: center;
+                  background-color: #f3e8ff;
+                  border-radius: 12px;
+                "
+              >
+                <span
+                  style="
+                    font-size: 32px;
+                    font-weight: 700;
+                    letter-spacing: 8px;
+                    color: #7c3aed;
+                  "
+                >
+                  ${code}
+                </span>
+              </div>
+
+              <p
+                style="
+                  color: #6b7280;
+                  font-size: 14px;
+                  line-height: 1.6;
+                "
+              >
+                This verification code will expire
+                in 10 minutes.
+              </p>
+
+              <p
+                style="
+                  color: #b91c1c;
+                  font-size: 14px;
+                  line-height: 1.6;
+                "
+              >
+                Never share this code with anyone.
+                DevPulse will never ask you for this
+                code.
+              </p>
+
+              <p
+                style="
+                  color: #6b7280;
+                  font-size: 14px;
+                  line-height: 1.6;
+                "
+              >
+                If you did not attempt to sign in,
+                you can safely ignore this email and
+                consider changing your password.
+              </p>
+
+              <hr
+                style="
+                  margin: 32px 0;
+                  border: none;
+                  border-top: 1px solid #e5e7eb;
+                "
+              />
+
+              <p
+                style="
+                  color: #9ca3af;
+                  font-size: 12px;
+                "
+              >
+                © ${new Date().getFullYear()}
+                DevPulse. All rights reserved.
+              </p>
+            </div>
+          </body>
+        </html>
+      `,
+    });
+
+  if (error) {
+    console.error(
+      "Resend two-factor email error:",
+      error
+    );
+
+    throw new Error(
+      "Failed to send two-factor authentication email"
+    );
+  }
+
+  return data;
+};

@@ -58,14 +58,14 @@ function FeedList() {
   // Comment State
   // ====================================
 
-const [openComments, setOpenComments] =
-  useState(null);
+  const [openComments, setOpenComments] =
+    useState(null);
 
-const [editingPostId, setEditingPostId] =
-  useState(null);
+  const [editingPostId, setEditingPostId] =
+    useState(null);
 
-const [editContent, setEditContent] =
-  useState("");
+  const [editContent, setEditContent] =
+    useState("");
 
   // ====================================
   // Extract Posts
@@ -95,7 +95,7 @@ const [editContent, setEditContent] =
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-12">
+      <div className="flex justify-center py-10 sm:py-12">
         <Loader2
           className="
             h-6
@@ -119,11 +119,12 @@ const [editContent, setEditContent] =
           rounded-2xl
           border-destructive/20
           bg-card
-          p-8
+          p-5
           text-center
+          sm:p-8
         "
       >
-        <h3 className="text-lg font-semibold">
+        <h3 className="text-base font-semibold sm:text-lg">
           Unable to load posts
         </h3>
 
@@ -147,8 +148,9 @@ const [editContent, setEditContent] =
           rounded-2xl
           border-border/60
           bg-card
-          p-8
+          p-5
           text-center
+          sm:p-8
         "
       >
         <div className="mx-auto max-w-md">
@@ -156,19 +158,21 @@ const [editContent, setEditContent] =
             className="
               mx-auto
               flex
-              h-12
-              w-12
+              h-11
+              w-11
               items-center
               justify-center
               rounded-full
               bg-primary/10
               text-primary
+              sm:h-12
+              sm:w-12
             "
           >
             <MessageCircle className="h-5 w-5" />
           </div>
 
-          <h3 className="mt-4 text-lg font-semibold">
+          <h3 className="mt-4 text-base font-semibold sm:text-lg">
             No posts yet
           </h3>
 
@@ -362,6 +366,8 @@ const [editContent, setEditContent] =
           <Card
             key={postId}
             className="
+              w-full
+              min-w-0
               overflow-hidden
               rounded-2xl
               border-border/60
@@ -369,20 +375,23 @@ const [editContent, setEditContent] =
               shadow-sm
             "
           >
-            <div className="p-5">
+            <div className="min-w-0 p-4 sm:p-5">
 
               {/* ================================= */}
               {/* Post Header */}
               {/* ================================= */}
 
-              <div className="flex items-center gap-3">
+              <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
 
                 <Avatar
                   className="
-                    h-10
-                    w-10
+                    h-9
+                    w-9
+                    shrink-0
                     border
                     border-border/60
+                    sm:h-10
+                    sm:w-10
                   "
                 >
                   <AvatarImage
@@ -415,7 +424,7 @@ const [editContent, setEditContent] =
                 {/* Owner Actions */}
 
                 {isOwner && !isEditing && (
-                  <div className="flex items-center gap-1">
+                  <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
 
                     <button
                       type="button"
@@ -505,7 +514,7 @@ const [editContent, setEditContent] =
                       border
                       border-border/60
                       bg-muted/20
-                      px-4
+                      px-3
                       py-3
                       text-sm
                       leading-6
@@ -514,6 +523,7 @@ const [editContent, setEditContent] =
                       focus:border-primary/40
                       focus:ring-2
                       focus:ring-primary/10
+                      sm:px-4
                     "
                   />
 
@@ -521,6 +531,7 @@ const [editContent, setEditContent] =
                     className="
                       mt-3
                       flex
+                      flex-wrap
                       items-center
                       justify-end
                       gap-2
@@ -601,7 +612,9 @@ const [editContent, setEditContent] =
                     <p
                       className="
                         mt-4
+                        min-w-0
                         whitespace-pre-wrap
+                        break-words
                         text-sm
                         leading-6
                       "
@@ -633,6 +646,8 @@ const [editContent, setEditContent] =
                 <div
                   className="
                     mt-4
+                    w-full
+                    min-w-0
                     overflow-hidden
                     rounded-xl
                     border
@@ -644,8 +659,10 @@ const [editContent, setEditContent] =
                     src={post.image}
                     alt="Post"
                     className="
+                      block
                       max-h-[500px]
                       w-full
+                      max-w-full
                       object-contain
                     "
                     loading="lazy"
@@ -663,10 +680,11 @@ const [editContent, setEditContent] =
                   flex
                   flex-wrap
                   items-center
-                  gap-2
+                  gap-1
                   border-t
                   border-border/50
                   pt-3
+                  sm:gap-2
                 "
               >
 
@@ -685,15 +703,19 @@ const [editContent, setEditContent] =
                   }
                   className={`
                     flex
+                    min-w-0
                     items-center
-                    gap-2
+                    gap-1.5
                     rounded-lg
-                    px-3
+                    px-2.5
                     py-2
-                    text-sm
+                    text-xs
                     transition-colors
                     disabled:pointer-events-none
                     disabled:opacity-50
+                    sm:gap-2
+                    sm:px-3
+                    sm:text-sm
 
                     ${
                       isLiked
@@ -707,12 +729,17 @@ const [editContent, setEditContent] =
                       className="
                         h-4
                         w-4
+                        shrink-0
                         animate-spin
                       "
                     />
                   ) : (
                     <Heart
-                      className="h-4 w-4"
+                      className="
+                        h-4
+                        w-4
+                        shrink-0
+                      "
                       fill={
                         isLiked
                           ? "currentColor"
@@ -721,7 +748,7 @@ const [editContent, setEditContent] =
                     />
                   )}
 
-                  <span>
+                  <span className="whitespace-nowrap">
                     {isLiked
                       ? "Liked"
                       : "Like"}
@@ -746,15 +773,19 @@ const [editContent, setEditContent] =
                   }
                   className={`
                     flex
+                    min-w-0
                     items-center
-                    gap-2
+                    gap-1.5
                     rounded-lg
-                    px-3
+                    px-2.5
                     py-2
-                    text-sm
+                    text-xs
                     transition-colors
                     disabled:pointer-events-none
                     disabled:opacity-50
+                    sm:gap-2
+                    sm:px-3
+                    sm:text-sm
 
                     ${
                       isCommentsOpen
@@ -763,9 +794,15 @@ const [editContent, setEditContent] =
                     }
                   `}
                 >
-                  <MessageCircle className="h-4 w-4" />
+                  <MessageCircle
+                    className="
+                      h-4
+                      w-4
+                      shrink-0
+                    "
+                  />
 
-                  <span>
+                  <span className="whitespace-nowrap">
                     {isCommentsOpen
                       ? "Hide comments"
                       : "Comment"}
@@ -789,6 +826,7 @@ const [editContent, setEditContent] =
             {isCommentsOpen && (
               <div
                 className="
+                  min-w-0
                   border-t
                   border-border/50
                   bg-muted/10
@@ -843,15 +881,19 @@ function BookmarkButton({
       }
       className={`
         flex
+        min-w-0
         items-center
-        gap-2
+        gap-1.5
         rounded-lg
-        px-3
+        px-2.5
         py-2
-        text-sm
+        text-xs
         transition-colors
         disabled:pointer-events-none
         disabled:opacity-50
+        sm:gap-2
+        sm:px-3
+        sm:text-sm
 
         ${
           isBookmarked
@@ -865,12 +907,17 @@ function BookmarkButton({
           className="
             h-4
             w-4
+            shrink-0
             animate-spin
           "
         />
       ) : (
         <Bookmark
-          className="h-4 w-4"
+          className="
+            h-4
+            w-4
+            shrink-0
+          "
           fill={
             isBookmarked
               ? "currentColor"
@@ -879,7 +926,7 @@ function BookmarkButton({
         />
       )}
 
-      <span>
+      <span className="whitespace-nowrap">
         {isBookmarked
           ? "Saved"
           : "Save"}

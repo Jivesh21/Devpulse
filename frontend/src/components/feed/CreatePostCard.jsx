@@ -167,6 +167,9 @@ function CreatePostCard() {
   return (
     <article
       className="
+        w-full
+        min-w-0
+        max-w-full
         overflow-hidden
         rounded-2xl
         border
@@ -182,18 +185,25 @@ function CreatePostCard() {
       <div
         className="
           flex
+          min-w-0
           items-center
-          gap-3
-          px-5
-          pt-5
+          gap-2.5
+          px-4
+          pt-4
+          sm:gap-3
+          sm:px-5
+          sm:pt-5
         "
       >
         <Avatar
           className="
-            h-10
-            w-10
+            h-9
+            w-9
+            shrink-0
             border
             border-border/60
+            sm:h-10
+            sm:w-10
           "
         >
           <AvatarImage
@@ -216,13 +226,13 @@ function CreatePostCard() {
           </AvatarFallback>
         </Avatar>
 
-        <div className="min-w-0">
-          <p className="text-sm font-semibold">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold">
             {user?.fullName ||
               "Create a post"}
           </p>
 
-          <p className="text-xs text-muted-foreground">
+          <p className="truncate text-xs text-muted-foreground">
             Share something with the community
           </p>
         </div>
@@ -233,6 +243,7 @@ function CreatePostCard() {
             hidden
             h-8
             w-8
+            shrink-0
             items-center
             justify-center
             rounded-lg
@@ -251,7 +262,13 @@ function CreatePostCard() {
 
       <form
         onSubmit={handleSubmit}
-        className="px-5 pb-4 pt-4"
+        className="
+          min-w-0
+          px-4
+          pb-4
+          pt-4
+          sm:px-5
+        "
       >
         <Textarea
           rows={4}
@@ -262,12 +279,16 @@ function CreatePostCard() {
           placeholder="What's on your mind?"
           disabled={isPosting}
           className="
-            min-h-[110px]
+            box-border
+            min-h-[100px]
+            w-full
+            min-w-0
+            max-w-full
             resize-none
             rounded-xl
             border-border/50
             bg-muted/20
-            px-4
+            px-3
             py-3
             text-sm
             leading-6
@@ -277,6 +298,8 @@ function CreatePostCard() {
             focus-visible:border-primary/30
             focus-visible:ring-2
             focus-visible:ring-primary/10
+            sm:min-h-[110px]
+            sm:px-4
           "
         />
 
@@ -290,6 +313,8 @@ function CreatePostCard() {
               group
               relative
               mt-4
+              w-full
+              min-w-0
               overflow-hidden
               rounded-xl
               border
@@ -301,8 +326,10 @@ function CreatePostCard() {
               src={preview}
               alt="Post preview"
               className="
+                block
                 max-h-[320px]
                 w-full
+                max-w-full
                 object-contain
               "
             />
@@ -315,8 +342,8 @@ function CreatePostCard() {
               disabled={isPosting}
               className="
                 absolute
-                right-3
-                top-3
+                right-2
+                top-2
                 h-8
                 w-8
                 rounded-full
@@ -325,6 +352,8 @@ function CreatePostCard() {
                 backdrop-blur-md
                 transition-transform
                 hover:scale-105
+                sm:right-3
+                sm:top-3
               "
               aria-label="Remove image"
             >
@@ -354,8 +383,10 @@ function CreatePostCard() {
           className="
             mt-4
             flex
+            min-w-0
             items-center
             justify-between
+            gap-2
             border-t
             border-border/50
             pt-3
@@ -370,13 +401,17 @@ function CreatePostCard() {
             }
             className="
               h-9
-              gap-2
+              shrink-0
+              gap-1.5
               rounded-xl
-              px-3
-              text-sm
+              px-2.5
+              text-xs
               text-muted-foreground
               hover:bg-primary/5
               hover:text-primary
+              sm:gap-2
+              sm:px-3
+              sm:text-sm
             "
           >
             <ImagePlus className="h-4 w-4" />
@@ -391,14 +426,18 @@ function CreatePostCard() {
             }
             className="
               h-9
-              gap-2
+              shrink-0
+              gap-1.5
               rounded-xl
-              px-4
-              text-sm
+              px-3
+              text-xs
               shadow-sm
               transition-all
               hover:shadow-md
               active:scale-[0.98]
+              sm:gap-2
+              sm:px-4
+              sm:text-sm
             "
           >
             {isPosting ? (
@@ -411,13 +450,13 @@ function CreatePostCard() {
                   "
                 />
 
-                Posting...
+                <span>Posting...</span>
               </>
             ) : (
               <>
                 <Send className="h-4 w-4" />
 
-                Post
+                <span>Post</span>
               </>
             )}
           </Button>

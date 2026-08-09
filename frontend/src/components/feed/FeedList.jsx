@@ -4,6 +4,11 @@ import {
   Loader2,
   MessageCircle,
   Heart,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  Check,
+  X,
 } from "lucide-react";
 
 import {
@@ -17,6 +22,8 @@ import { Card } from "@/components/ui/card";
 import {
   usePosts,
   useToggleLike,
+  useUpdatePost,
+  useDeletePost,
 } from "@/hooks/usePosts";
 
 import { useAuthContext } from "@/context/AuthContext";
@@ -34,6 +41,12 @@ function FeedList() {
   const toggleLikeMutation =
     useToggleLike();
 
+  const updatePostMutation =
+    useUpdatePost();
+
+  const deletePostMutation =
+    useDeletePost();
+
   const { user } = useAuthContext();
 
   // ====================================
@@ -44,7 +57,17 @@ function FeedList() {
     useState(null);
 
   // ====================================
-  // Extract posts from API response
+  // Edit State
+  // ====================================
+
+  const [editingPostId, setEditingPostId] =
+    useState(null);
+
+  const [editContent, setEditContent] =
+    useState("");
+
+  // ====================================
+  // Extract Posts
   // ====================================
 
   let posts = [];
@@ -158,6 +181,87 @@ function FeedList() {
   }
 
   // ====================================
+  // Start Editing
+  // ====================================
+
+  const startEditing = (post) => {
+    setEditingPostId(post._id);
+    setEditContent(post.content || "");
+  };
+
+  // ====================================
+  // Cancel Editing
+  // ====================================
+
+  const cancelEditing = () => {
+    setEditingPostId(null);
+    setEditContent("");
+  };
+
+  // ====================================
+  // Save Edited Post
+  // ====================================
+
+  const handleUpdatePost = async (
+    postId
+  ) => {
+    const trimmedContent =
+      editContent.trim();
+
+    if (!trimmedContent) {
+      return;
+    }
+
+    const formData = new FormData();
+
+    formData.append(
+      "content",
+      trimmedContent
+    );
+
+    try {
+      await updatePostMutation.mutateAsync({
+        postId,
+        formData,
+      });
+
+      cancelEditing();
+    } catch (error) {
+      console.error(
+        "Failed to update post:",
+        error
+      );
+    }
+  };
+
+  // ====================================
+  // Delete Post
+  // ====================================
+
+  const handleDeletePost = async (
+    postId
+  ) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this post?"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deletePostMutation.mutateAsync(
+        postId
+      );
+    } catch (error) {
+      console.error(
+        "Failed to delete post:",
+        error
+      );
+    }
+  };
+
+  // ====================================
   // Posts
   // ====================================
 
@@ -185,6 +289,21 @@ function FeedList() {
           "";
 
         // ====================================
+        // Ownership
+        // ====================================
+
+        const currentUserId =
+          user?._id || user?.id;
+
+        const authorId =
+          author?._id ||
+          author?.id;
+
+        const isOwner =
+          String(currentUserId) ===
+          String(authorId);
+
+        // ====================================
         // Likes
         // ====================================
 
@@ -196,9 +315,6 @@ function FeedList() {
 
         const likesCount =
           likes.length;
-
-        const currentUserId =
-          user?._id || user?.id;
 
         const isLiked = likes.some(
           (like) => {
@@ -219,8 +335,27 @@ function FeedList() {
           toggleLikeMutation.variables ===
             postId;
 
+        // ====================================
+        // Comments
+        // ====================================
+
         const isCommentsOpen =
           openComments === postId;
+
+        // ====================================
+        // Editing
+        // ====================================
+
+        const isEditing =
+          editingPostId === postId;
+
+        const isUpdating =
+          updatePostMutation.isPending;
+
+        const isDeleting =
+          deletePostMutation.isPending &&
+          deletePostMutation.variables ===
+            postId;
 
         return (
           <Card
@@ -233,14 +368,14 @@ function FeedList() {
               shadow-sm
             "
           >
-            {/* ================================= */}
-            {/* Post Content */}
-            {/* ================================= */}
-
             <div className="p-5">
+
+              {/* ================================= */}
               {/* Post Header */}
+              {/* ================================= */}
 
               <div className="flex items-center gap-3">
+
                 <Avatar
                   className="
                     h-10
@@ -266,7 +401,7 @@ function FeedList() {
                   </AvatarFallback>
                 </Avatar>
 
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">
                     {authorName}
                   </p>
@@ -275,24 +410,231 @@ function FeedList() {
                     @{authorUsername}
                   </p>
                 </div>
+
+                {/* ================================= */}
+                {/* Owner Menu */}
+                {/* ================================= */}
+
+                {isOwner && !isEditing && (
+                  <div className="flex items-center gap-1">
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        startEditing(post)
+                      }
+                      disabled={isDeleting}
+                      className="
+                        flex
+                        h-8
+                        w-8
+                        items-center
+                        justify-center
+                        rounded-lg
+                        text-muted-foreground
+                        transition-colors
+                        hover:bg-primary/10
+                        hover:text-primary
+                        disabled:opacity-50
+                      "
+                      aria-label="Edit post"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleDeletePost(
+                          postId
+                        )
+                      }
+                      disabled={isDeleting}
+                      className="
+                        flex
+                        h-8
+                        w-8
+                        items-center
+                        justify-center
+                        rounded-lg
+                        text-muted-foreground
+                        transition-colors
+                        hover:bg-destructive/10
+                        hover:text-destructive
+                        disabled:opacity-50
+                      "
+                      aria-label="Delete post"
+                    >
+                      {isDeleting ? (
+                        <Loader2
+                          className="
+                            h-4
+                            w-4
+                            animate-spin
+                          "
+                        />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                    </button>
+
+                  </div>
+                )}
               </div>
 
-              {/* Post Text */}
+              {/* ================================= */}
+              {/* Editing UI */}
+              {/* ================================= */}
 
-              {post?.content && (
-                <p
-                  className="
-                    mt-4
-                    whitespace-pre-wrap
-                    text-sm
-                    leading-6
-                  "
-                >
-                  {post.content}
-                </p>
+              {isEditing ? (
+                <div className="mt-4">
+
+                  <textarea
+                    value={editContent}
+                    onChange={(e) =>
+                      setEditContent(
+                        e.target.value
+                      )
+                    }
+                    disabled={isUpdating}
+                    rows={4}
+                    maxLength={5000}
+                    className="
+                      w-full
+                      resize-none
+                      rounded-xl
+                      border
+                      border-border/60
+                      bg-muted/20
+                      px-4
+                      py-3
+                      text-sm
+                      leading-6
+                      outline-none
+                      transition-colors
+                      focus:border-primary/40
+                      focus:ring-2
+                      focus:ring-primary/10
+                    "
+                  />
+
+                  <div
+                    className="
+                      mt-3
+                      flex
+                      items-center
+                      justify-end
+                      gap-2
+                    "
+                  >
+                    <button
+                      type="button"
+                      onClick={cancelEditing}
+                      disabled={isUpdating}
+                      className="
+                        flex
+                        items-center
+                        gap-2
+                        rounded-lg
+                        px-3
+                        py-2
+                        text-sm
+                        text-muted-foreground
+                        hover:bg-muted
+                      "
+                    >
+                      <X className="h-4 w-4" />
+                      Cancel
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleUpdatePost(
+                          postId
+                        )
+                      }
+                      disabled={
+                        isUpdating ||
+                        !editContent.trim()
+                      }
+                      className="
+                        flex
+                        items-center
+                        gap-2
+                        rounded-lg
+                        bg-primary
+                        px-3
+                        py-2
+                        text-sm
+                        font-medium
+                        text-primary-foreground
+                        hover:bg-primary/90
+                        disabled:pointer-events-none
+                        disabled:opacity-50
+                      "
+                    >
+                      {isUpdating ? (
+                        <>
+                          <Loader2
+                            className="
+                              h-4
+                              w-4
+                              animate-spin
+                            "
+                          />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Check className="h-4 w-4" />
+                          Save
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* ================================= */}
+                  {/* Post Text */}
+                  {/* ================================= */}
+
+                  {post?.content && (
+                    <p
+                      className="
+                        mt-4
+                        whitespace-pre-wrap
+                        text-sm
+                        leading-6
+                      "
+                    >
+                      {post.content}
+                    </p>
+                  )}
+
+                  {/* ================================= */}
+                  {/* Edited Label */}
+                  {/* ================================= */}
+
+                  {post?.isEdited && (
+                    <span
+                      className="
+                        mt-1
+                        block
+                        text-[11px]
+                        text-muted-foreground
+                      "
+                    >
+                      edited
+                    </span>
+                  )}
+                </>
               )}
 
+              {/* ================================= */}
               {/* Post Image */}
+              {/* ================================= */}
 
               {post?.image && (
                 <div
@@ -333,11 +675,15 @@ function FeedList() {
                   pt-3
                 "
               >
+
                 {/* Like */}
 
                 <button
                   type="button"
-                  disabled={isLiking}
+                  disabled={
+                    isLiking ||
+                    isEditing
+                  }
                   onClick={() =>
                     toggleLikeMutation.mutate(
                       postId
@@ -404,6 +750,7 @@ function FeedList() {
 
                 <button
                   type="button"
+                  disabled={isEditing}
                   onClick={() =>
                     setOpenComments(
                       isCommentsOpen
@@ -420,6 +767,8 @@ function FeedList() {
                     py-2
                     text-sm
                     transition-colors
+                    disabled:pointer-events-none
+                    disabled:opacity-50
 
                     ${
                       isCommentsOpen

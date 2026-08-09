@@ -8,17 +8,7 @@ function AuthLayout({ children }) {
       {/* Desktop Hero */}
       {/* ================================= */}
 
-      <div
-        className="
-          hidden
-          lg:flex
-          lg:w-1/2
-          lg:basis-1/2
-          lg:shrink-0
-        "
-      >
-        <LeftHero />
-      </div>
+      <LeftHero />
 
       {/* ================================= */}
       {/* Auth Content */}
@@ -37,7 +27,6 @@ function AuthLayout({ children }) {
           sm:px-6
           sm:py-10
           lg:w-1/2
-          lg:basis-1/2
           lg:shrink-0
           lg:justify-center
           lg:px-8

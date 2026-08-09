@@ -3,7 +3,7 @@ import { useUnreadCount } from "@/hooks/useNotification";
 
 import { Button } from "@/components/ui/button";
 import SearchBar from "@/components/search/SearchBar";
-import AppearanceMenu from "@/components/theme/AppearanceMenu";
+import AppearanceMenu from "@/components/Theme/AppearanceMenu";
 
 import {
   Avatar,

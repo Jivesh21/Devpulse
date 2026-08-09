@@ -78,9 +78,9 @@ function DashboardLayout({
               sm:px-6
               lg:px-8
               ${
-                wide
-                  ? "max-w-6xl"
-                  : "max-w-3xl"
+              wide
+  ? "max-w-6xl"
+  : "max-w-4xl"
               }
             `}
           >

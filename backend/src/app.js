@@ -31,7 +31,10 @@ app.use(helmet());
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "https://devpulse-sf3s.vercel.app",
+    ],
     credentials: true,
   })
 );

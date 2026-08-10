@@ -21,9 +21,7 @@ import {
 // ======================
 export const register = asyncHandler(
   async (req, res) => {
-    const result = await registerUser(
-      req.body
-    );
+    const result = await registerUser(req.body);
 
     return res.status(201).json(
       new ApiResponse(
@@ -40,9 +38,7 @@ export const register = asyncHandler(
 // ======================
 export const login = asyncHandler(
   async (req, res) => {
-    const result = await loginUser(
-      req.body
-    );
+    const result = await loginUser(req.body);
 
     // ====================================
     // Two-Factor Authentication Required
@@ -53,8 +49,7 @@ export const login = asyncHandler(
           200,
           {
             requiresTwoFactor: true,
-            challengeId:
-              result.challengeId,
+            challengeId: result.challengeId,
             user: result.user,
           },
           "Two-factor verification required"
@@ -93,14 +88,12 @@ export const login = asyncHandler(
 // ======================
 // Google Login
 // ======================
-export const googleLogin =
-  asyncHandler(async (req, res) => {
+export const googleLogin = asyncHandler(
+  async (req, res) => {
     const { credential } = req.body;
 
     const result =
-      await googleLoginUser(
-        credential
-      );
+      await googleLoginUser(credential);
 
     // ====================================
     // Two-Factor Authentication Required
@@ -111,8 +104,7 @@ export const googleLogin =
           200,
           {
             requiresTwoFactor: true,
-            challengeId:
-              result.challengeId,
+            challengeId: result.challengeId,
             user: result.user,
           },
           "Two-factor verification required"
@@ -145,13 +137,14 @@ export const googleLogin =
           "Google login successful"
         )
       );
-  });
+  }
+);
 
 // ======================
 // Verify Two-Factor Code
 // ======================
-export const verifyTwoFactor =
-  asyncHandler(async (req, res) => {
+export const verifyTwoFactor = asyncHandler(
+  async (req, res) => {
     const {
       challengeId,
       code,
@@ -184,68 +177,87 @@ export const verifyTwoFactor =
           "Two-factor verification successful"
         )
       );
-  });
+  }
+);
 
 // ======================
 // Enable Two-Factor Authentication
 // ======================
 export const enableTwoFactorAuth =
-  asyncHandler(async (req, res) => {
-    const result =
-      await enableTwoFactor(
-        req.user._id
-      );
+  asyncHandler(
+    async (req, res) => {
+      const {
+        password,
+        credential,
+      } = req.body;
 
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-        result,
-        "Two-factor authentication enabled successfully"
-      )
-    );
-  });
+      const result =
+        await enableTwoFactor(
+          req.user._id,
+          password,
+          credential
+        );
+
+      return res.status(200).json(
+        new ApiResponse(
+          200,
+          result,
+          "Two-factor authentication enabled successfully"
+        )
+      );
+    }
+  );
 
 // ======================
 // Disable Two-Factor Authentication
 // ======================
 export const disableTwoFactorAuth =
-  asyncHandler(async (req, res) => {
-    const result =
-      await disableTwoFactor(
-        req.user._id
-      );
+  asyncHandler(
+    async (req, res) => {
+      const {
+        password,
+        credential,
+      } = req.body;
 
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-        result,
-        "Two-factor authentication disabled successfully"
-      )
-    );
-  });
+      const result =
+        await disableTwoFactor(
+          req.user._id,
+          password,
+          credential
+        );
+
+      return res.status(200).json(
+        new ApiResponse(
+          200,
+          result,
+          "Two-factor authentication disabled successfully"
+        )
+      );
+    }
+  );
 
 // ======================
 // Get Current User
 // ======================
 export const getCurrentUser =
-  asyncHandler(async (req, res) => {
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-        req.user,
-        "Current user fetched successfully"
-      )
-    );
-  });
+  asyncHandler(
+    async (req, res) => {
+      return res.status(200).json(
+        new ApiResponse(
+          200,
+          req.user,
+          "Current user fetched successfully"
+        )
+      );
+    }
+  );
 
 // ======================
 // Logout
 // ======================
 export const logout = asyncHandler(
   async (req, res) => {
-    await logoutUser(
-      req.user._id
-    );
+    await logoutUser(req.user._id);
 
     return res
       .status(200)
@@ -271,105 +283,107 @@ export const logout = asyncHandler(
 // Forgot Password
 // ====================================
 export const forgotPassword =
-  asyncHandler(async (req, res) => {
-    const { email } = req.body;
+  asyncHandler(
+    async (req, res) => {
+      const { email } = req.body;
 
-    const result =
-      await forgotPasswordService(
-        email
+      const result =
+        await forgotPasswordService(
+          email
+        );
+
+      return res.status(200).json(
+        new ApiResponse(
+          200,
+          result,
+          "If an account exists with this email, a password reset link has been sent."
+        )
       );
-
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-        result,
-        "If an account exists with this email, a password reset link has been sent."
-      )
-    );
-  });
+    }
+  );
 
 // ====================================
 // Reset Password
 // ====================================
 export const resetPassword =
-  asyncHandler(async (req, res) => {
-    const { token } =
-      req.params;
+  asyncHandler(
+    async (req, res) => {
+      const { token } = req.params;
+      const { newPassword } = req.body;
 
-    const { newPassword } =
-      req.body;
+      const result =
+        await resetPasswordService(
+          token,
+          newPassword
+        );
 
-    const result =
-      await resetPasswordService(
-        token,
-        newPassword
+      return res.status(200).json(
+        new ApiResponse(
+          200,
+          result,
+          "Password reset successfully"
+        )
       );
-
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-        result,
-        "Password reset successfully"
-      )
-    );
-  });
+    }
+  );
 
 // ====================================
 // Verify Email
 // ====================================
 export const verifyEmail =
-  asyncHandler(async (req, res) => {
-    const { token } =
-      req.params;
+  asyncHandler(
+    async (req, res) => {
+      const { token } = req.params;
 
-    const result =
-      await verifyEmailService(
-        token
+      const result =
+        await verifyEmailService(token);
+
+      return res.status(200).json(
+        new ApiResponse(
+          200,
+          result,
+          "Email verified successfully"
+        )
       );
-
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-        result,
-        "Email verified successfully"
-      )
-    );
-  });
+    }
+  );
 
 // ======================
 // Refresh Access Token
 // ======================
 export const refreshAccessToken =
-  asyncHandler(async (req, res) => {
-    const incomingRefreshToken =
-      req.cookies?.refreshToken ||
-      req.body?.refreshToken;
+  asyncHandler(
+    async (req, res) => {
+      const incomingRefreshToken =
+        req.cookies?.refreshToken ||
+        req.body?.refreshToken;
 
-    const {
-      accessToken,
-      refreshToken,
-    } =
-      await refreshAccessTokenService(
-        incomingRefreshToken
-      );
-
-    return res
-      .status(200)
-      .cookie(
-        "accessToken",
+      const {
         accessToken,
-        cookieOptions
-      )
-      .cookie(
-        "refreshToken",
         refreshToken,
-        cookieOptions
-      )
-      .json(
-        new ApiResponse(
-          200,
-          null,
-          "Access token refreshed successfully"
+      } =
+        await refreshAccessTokenService(
+          incomingRefreshToken
+        );
+
+      return res
+        .status(200)
+        .cookie(
+          "accessToken",
+          accessToken,
+          cookieOptions
         )
-      );
-  });
+        .cookie(
+          "refreshToken",
+          refreshToken,
+          cookieOptions
+        )
+        .json(
+          new ApiResponse(
+            200,
+            null,
+            "Access token refreshed successfully"
+          )
+        );
+    }
+  );

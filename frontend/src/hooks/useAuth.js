@@ -17,25 +17,23 @@ import {
 // Login
 // ====================================
 export const useLogin = () => {
-  const queryClient = useQueryClient();
+  const queryClient =
+    useQueryClient();
 
   return useMutation({
     mutationFn: login,
 
     onSuccess: (response) => {
-      const requiresTwoFactor =
-        response?.data?.requiresTwoFactor;
-
-      // Do not authenticate the user yet.
-      // JWT cookies are only issued after OTP verification.
-      if (requiresTwoFactor) {
-        return;
-      }
-
       const user =
         response?.data?.user;
 
-      if (user) {
+      // Only update current user
+      // when authentication is complete.
+      if (
+        user &&
+        !response?.data
+          ?.requiresTwoFactor
+      ) {
         queryClient.setQueryData(
           ["current-user"],
           {
@@ -52,25 +50,23 @@ export const useLogin = () => {
 // Google Login
 // ====================================
 export const useGoogleLogin = () => {
-  const queryClient = useQueryClient();
+  const queryClient =
+    useQueryClient();
 
   return useMutation({
     mutationFn: googleLogin,
 
     onSuccess: (response) => {
-      const requiresTwoFactor =
-        response?.data?.requiresTwoFactor;
-
-      // Do not authenticate the user yet.
-      // JWT cookies are only issued after OTP verification.
-      if (requiresTwoFactor) {
-        return;
-      }
-
       const user =
         response?.data?.user;
 
-      if (user) {
+      // Only update current user
+      // when authentication is complete.
+      if (
+        user &&
+        !response?.data
+          ?.requiresTwoFactor
+      ) {
         queryClient.setQueryData(
           ["current-user"],
           {
@@ -86,28 +82,31 @@ export const useGoogleLogin = () => {
 // ====================================
 // Verify Two-Factor Code
 // ====================================
-export const useVerifyTwoFactor = () => {
-  const queryClient = useQueryClient();
+export const useVerifyTwoFactor =
+  () => {
+    const queryClient =
+      useQueryClient();
 
-  return useMutation({
-    mutationFn: verifyTwoFactor,
+    return useMutation({
+      mutationFn:
+        verifyTwoFactor,
 
-    onSuccess: (response) => {
-      const user =
-        response?.data?.user;
+      onSuccess: (response) => {
+        const user =
+          response?.data?.user;
 
-      if (user) {
-        queryClient.setQueryData(
-          ["current-user"],
-          {
-            ...response,
-            data: user,
-          }
-        );
-      }
-    },
-  });
-};
+        if (user) {
+          queryClient.setQueryData(
+            ["current-user"],
+            {
+              ...response,
+              data: user,
+            }
+          );
+        }
+      },
+    });
+  };
 
 // ====================================
 // Register
@@ -122,7 +121,8 @@ export const useRegister = () => {
 // Logout
 // ====================================
 export const useLogout = () => {
-  const queryClient = useQueryClient();
+  const queryClient =
+    useQueryClient();
 
   return useMutation({
     mutationFn: logout,

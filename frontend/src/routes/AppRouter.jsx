@@ -2,30 +2,36 @@ import {
   createBrowserRouter,
   RouterProvider,
 } from "react-router-dom";
+
 import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
-import NotificationsPage from "../pages/NotificationsPage";
-import LoginPage from "../pages/auth/LoginPage";
-import RegisterPage from "../pages/auth/RegisterPage";
-import FeedPage from "../pages/feed/FeedPage";
-import ProfilePage from "../pages/profile/ProfilePage";
-import SettingsPage from "../pages/settings/SettingsPage";
-import BookmarksPage from "../pages/BookmarksPage";
-import NetworkPage from "../pages/NetworkPage";
+import LoginPage from "@/pages/auth/LoginPage";
+import RegisterPage from "@/pages/auth/RegisterPage";
 import ResetPasswordPage from "@/pages/auth/ResetPasswordPage";
-import ProtectedRoute from "./ProtectedRoute";
-import DashboardLayout from "../layouts/DashboardLayout";
 import VerifyTwoFactorPage from "@/pages/auth/VerifyTwoFactorPage";
 import VerifyEmailPage from "@/pages/VerifyEmailPage";
 
+import NotificationsPage from "@/pages/NotificationsPage";
+import FeedPage from "@/pages/feed/FeedPage";
+import ProfilePage from "@/pages/profile/ProfilePage";
+import SettingsPage from "@/pages/settings/SettingsPage";
+import BookmarksPage from "@/pages/BookmarksPage";
+import NetworkPage from "@/pages/NetworkPage";
+
+import ProtectedRoute from "./ProtectedRoute";
+import DashboardLayout from "@/layouts/DashboardLayout";
+
+// ====================================
+// Placeholder Page
+// ====================================
 function PlaceholderPage({ title }) {
   return (
     <DashboardLayout>
-      <div className="flex flex-col items-center justify-center rounded-2xl border bg-card p-12 text-center shadow-sm">
-        <h2 className="mb-2 text-2xl font-bold">
+      <div className="py-8">
+        <h1 className="text-2xl font-bold">
           {title} Page
-        </h2>
+        </h1>
 
-        <p className="text-muted-foreground">
+        <p className="mt-2 text-muted-foreground">
           This feature is currently under construction.
           Stay tuned!
         </p>
@@ -34,18 +40,24 @@ function PlaceholderPage({ title }) {
   );
 }
 
+// ====================================
+// Router
+// ====================================
 const router = createBrowserRouter([
   // ====================================
   // Public Routes
   // ====================================
-{
-  path: "/forgot-password",
-  element: <ForgotPasswordPage />,
-},
-{
-  path: "/reset-password/:token",
-  element: <ResetPasswordPage />,
-},
+
+  {
+    path: "/forgot-password",
+    element: <ForgotPasswordPage />,
+  },
+
+  {
+    path: "/reset-password/:token",
+    element: <ResetPasswordPage />,
+  },
+
   {
     path: "/",
     element: <LoginPage />,
@@ -60,10 +72,19 @@ const router = createBrowserRouter([
     path: "/register",
     element: <RegisterPage />,
   },
+
+  // ====================================
+  // Two-Factor Authentication
+  // ====================================
+
   {
-  path: "/verify-2fa",
-  element: <VerifyTwoFactorPage />,
-},
+    path: "/verify-2fa",
+    element: <VerifyTwoFactorPage />,
+  },
+
+  // ====================================
+  // Email Verification
+  // ====================================
 
   {
     path: "/verify-email/:token",
@@ -128,6 +149,10 @@ const router = createBrowserRouter([
     ),
   },
 ]);
+
+// ====================================
+// App Router
+// ====================================
 
 function AppRouter() {
   return <RouterProvider router={router} />;

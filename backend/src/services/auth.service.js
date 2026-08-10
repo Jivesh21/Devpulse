@@ -20,7 +20,9 @@ const googleClient = new OAuth2Client();
 // ====================================
 // Two-Factor Configuration
 // ====================================
-const TWO_FACTOR_CODE_EXPIRY = 10 * 60 * 1000;
+const TWO_FACTOR_CODE_EXPIRY =
+  10 * 60 * 1000;
+
 const TWO_FACTOR_MAX_ATTEMPTS = 5;
 
 // ====================================
@@ -83,34 +85,36 @@ const hashTwoFactorCode = (code) => {
 // ====================================
 // Generate Access & Refresh Tokens
 // ====================================
-const generateAccessAndRefreshTokens = async (
-  userId
-) => {
-  const user = await User.findById(userId).select(
-    "+refreshToken"
-  );
+const generateAccessAndRefreshTokens =
+  async (userId) => {
+    const user = await User.findById(
+      userId
+    ).select("+refreshToken");
 
-  if (!user) {
-    throw new ApiError(404, "User not found");
-  }
+    if (!user) {
+      throw new ApiError(
+        404,
+        "User not found"
+      );
+    }
 
-  const accessToken =
-    user.generateAccessToken();
+    const accessToken =
+      user.generateAccessToken();
 
-  const refreshToken =
-    user.generateRefreshToken();
+    const refreshToken =
+      user.generateRefreshToken();
 
-  user.refreshToken = refreshToken;
+    user.refreshToken = refreshToken;
 
-  await user.save({
-    validateBeforeSave: false,
-  });
+    await user.save({
+      validateBeforeSave: false,
+    });
 
-  return {
-    accessToken,
-    refreshToken,
+    return {
+      accessToken,
+      refreshToken,
+    };
   };
-};
 
 // ====================================
 // Create Two-Factor Challenge
@@ -118,24 +122,24 @@ const generateAccessAndRefreshTokens = async (
 const createTwoFactorChallenge = async (
   user
 ) => {
-  // Remove any previous challenge
   await TwoFactorChallenge.deleteMany({
     userId: user._id,
   });
 
-  const code = generateTwoFactorCode();
+  const code =
+    generateTwoFactorCode();
 
-  const codeHash = hashTwoFactorCode(code);
+  const codeHash =
+    hashTwoFactorCode(code);
 
   const challenge =
     await TwoFactorChallenge.create({
       userId: user._id,
       codeHash,
-      expiresAt:
-        new Date(
-          Date.now() +
-            TWO_FACTOR_CODE_EXPIRY
-        ),
+      expiresAt: new Date(
+        Date.now() +
+          TWO_FACTOR_CODE_EXPIRY
+      ),
       attempts: 0,
     });
 
@@ -146,6 +150,126 @@ const createTwoFactorChallenge = async (
   });
 
   return challenge;
+};
+
+// ====================================
+// Verify Security Credential
+// ====================================
+// Used before changing sensitive
+// authentication settings.
+//
+// Password users:
+//     current password required
+//
+// Google-only users:
+//     fresh Google credential required
+// ====================================
+const verifySecurityCredential = async (
+  user,
+  password,
+  credential
+) => {
+  // ====================================
+  // Password-based account
+  // ====================================
+  if (user.password) {
+    if (!password) {
+      throw new ApiError(
+        400,
+        "Current password is required"
+      );
+    }
+
+    const isPasswordValid =
+      await user.isPasswordCorrect(
+        password
+      );
+
+    if (!isPasswordValid) {
+      throw new ApiError(
+        401,
+        "Current password is incorrect"
+      );
+    }
+
+    return true;
+  }
+
+  // ====================================
+  // Google-only account
+  // ====================================
+  if (user.googleId) {
+    if (!credential) {
+      throw new ApiError(
+        400,
+        "Google re-authentication is required"
+      );
+    }
+
+    if (
+      !process.env.GOOGLE_CLIENT_ID
+    ) {
+      throw new ApiError(
+        500,
+        "Google authentication is not configured"
+      );
+    }
+
+    let payload;
+
+    try {
+      const ticket =
+        await googleClient.verifyIdToken({
+          idToken: credential,
+          audience:
+            process.env.GOOGLE_CLIENT_ID,
+        });
+
+      payload =
+        ticket.getPayload();
+    } catch (error) {
+      console.error(
+        "Google security re-authentication failed:",
+        error
+      );
+
+      throw new ApiError(
+        401,
+        "Invalid Google credential"
+      );
+    }
+
+    if (!payload) {
+      throw new ApiError(
+        401,
+        "Invalid Google credential"
+      );
+    }
+
+    if (
+      payload.sub !==
+      user.googleId
+    ) {
+      throw new ApiError(
+        401,
+        "Google account does not match this user"
+      );
+    }
+
+    if (!payload.email_verified) {
+      throw new ApiError(
+        401,
+        "Google email is not verified"
+      );
+    }
+
+    return true;
+  }
+
+  throw new ApiError(
+    400,
+    "Unable to verify account security credentials"
+  );
 };
 
 // ====================================
@@ -167,7 +291,9 @@ export const registerUser = async (
     });
 
   if (existingUser) {
-    if (existingUser.email === email) {
+    if (
+      existingUser.email === email
+    ) {
       throw new ApiError(
         409,
         "Email already exists"
@@ -639,7 +765,6 @@ export const verifyTwoFactorCode =
       );
     }
 
-    // Challenge is single-use
     await challenge.deleteOne();
 
     const {
@@ -664,9 +789,15 @@ export const verifyTwoFactorCode =
 // Enable Two-Factor Authentication
 // ====================================
 export const enableTwoFactor =
-  async (userId) => {
+  async (
+    userId,
+    password,
+    credential
+  ) => {
     const user =
-      await User.findById(userId);
+      await User.findById(
+        userId
+      ).select("+password");
 
     if (!user) {
       throw new ApiError(
@@ -674,6 +805,15 @@ export const enableTwoFactor =
         "User not found"
       );
     }
+
+    // ====================================
+    // Re-authenticate user
+    // ====================================
+    await verifySecurityCredential(
+      user,
+      password,
+      credential
+    );
 
     if (user.twoFactorEnabled) {
       return {
@@ -700,9 +840,15 @@ export const enableTwoFactor =
 // Disable Two-Factor Authentication
 // ====================================
 export const disableTwoFactor =
-  async (userId) => {
+  async (
+    userId,
+    password,
+    credential
+  ) => {
     const user =
-      await User.findById(userId);
+      await User.findById(
+        userId
+      ).select("+password");
 
     if (!user) {
       throw new ApiError(
@@ -711,8 +857,26 @@ export const disableTwoFactor =
       );
     }
 
+    // ====================================
+    // Re-authenticate user
+    // ====================================
+    await verifySecurityCredential(
+      user,
+      password,
+      credential
+    );
+
+    if (!user.twoFactorEnabled) {
+      return {
+        twoFactorEnabled: false,
+        message:
+          "Two-factor authentication is already disabled",
+      };
+    }
+
     user.twoFactorEnabled = false;
 
+    // Invalidate pending OTP challenges
     await TwoFactorChallenge.deleteMany({
       userId: user._id,
     });

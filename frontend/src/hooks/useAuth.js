@@ -137,11 +137,20 @@ export const useLogout = () => {
 
 // ====================================
 // Current User
-// ====================================
 export const useCurrentUser = () => {
   return useQuery({
     queryKey: ["current-user"],
     queryFn: getCurrentUser,
-    retry: false,
+
+    // Don't immediately treat the session
+    // as dead after a temporary network error.
+    retry: 1,
+
+    // Keep the authenticated user fresh.
+    staleTime: 5 * 60 * 1000,
+
+    // Restore authentication whenever
+    // the app/tab becomes active.
+    refetchOnWindowFocus: true,
   });
 };

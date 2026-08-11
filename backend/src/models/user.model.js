@@ -142,65 +142,33 @@ const userSchema = new Schema(
       },
     ],
 
-    github: {
-      type: String,
-      trim: true,
-      default: "",
-    },
+   githubIntegration: {
+  connected: {
+    type: Boolean,
+    default: false,
+  },
 
-    linkedin: {
-      type: String,
-      trim: true,
-      default: "",
-    },
+  githubId: {
+    type: String,
+    default: "",
+  },
 
-    website: {
-      type: String,
-      trim: true,
-      default: "",
-    },
+  username: {
+    type: String,
+    default: "",
+  },
 
-    // ====================================
-    // Experience
-    // ====================================
-    experience: [
-      {
-        company: {
-          type: String,
-          trim: true,
-        },
+  accessToken: {
+    type: String,
+    select: false,
+    default: "",
+  },
 
-        position: {
-          type: String,
-          trim: true,
-        },
-
-        employmentType: {
-          type: String,
-          default: "",
-        },
-
-        location: {
-          type: String,
-          default: "",
-        },
-
-        currentlyWorking: {
-          type: Boolean,
-          default: false,
-        },
-
-        startDate: Date,
-
-        endDate: Date,
-
-        description: {
-          type: String,
-          default: "",
-        },
-      },
-    ],
-
+  connectedAt: {
+    type: Date,
+    default: null,
+  },
+},
     // ====================================
     // Education
     // ====================================

@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import {
   ArrowLeft,
@@ -21,6 +21,7 @@ import {
   ShieldCheck,
   UserCog,
   UserRound,
+  Unplug,
 } from "lucide-react";
 
 import DashboardLayout from "@/layouts/DashboardLayout";
@@ -33,6 +34,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuthContext } from "@/context/AuthContext";
 import { useUpdateProfile } from "@/hooks/useProfile";
 import { useLogout } from "@/hooks/useAuth";
+
+import {
+  useConnectGithub,
+  useConnectedGithub,
+  useDisconnectGithub,
+} from "@/hooks/useGithub";
 
 import AppearanceMenu from "@/components/Theme/AppearanceMenu";
 
@@ -78,6 +85,12 @@ const SETTINGS_ITEMS = [
     icon: UserCog,
   },
   {
+    id: "github",
+    label: "GitHub",
+    description: "Developer integration",
+    icon: Code2,
+  },
+  {
     id: "appearance",
     label: "Appearance",
     description: "Theme preferences",
@@ -96,11 +109,26 @@ function SettingsPage() {
 
   const navigate = useNavigate();
 
+  const [searchParams, setSearchParams] =
+    useSearchParams();
+
   const updateProfileMutation =
     useUpdateProfile();
 
   const logoutMutation =
     useLogout();
+
+  const connectGithubMutation =
+    useConnectGithub();
+
+  const disconnectGithubMutation =
+    useDisconnectGithub();
+
+  const {
+    data: githubData,
+    isLoading: isGithubLoading,
+    refetch: refetchGithub,
+  } = useConnectedGithub();
 
   const [activeSection, setActiveSection] =
     useState("account");
@@ -115,7 +143,9 @@ function SettingsPage() {
       isDirty,
     },
   } = useForm({
-    resolver: zodResolver(settingsFormSchema),
+    resolver: zodResolver(
+      settingsFormSchema
+    ),
 
     defaultValues: {
       bio: "",
@@ -125,6 +155,65 @@ function SettingsPage() {
       linkedin: "",
     },
   });
+
+  // ====================================
+  // Handle GitHub OAuth Callback
+  // ====================================
+
+  useEffect(() => {
+    const githubStatus =
+      searchParams.get("github");
+
+    if (!githubStatus) {
+      return;
+    }
+
+    if (githubStatus === "connected") {
+      toast.success(
+        "GitHub account connected successfully"
+      );
+
+      setActiveSection("github");
+
+      refetchGithub();
+    }
+
+    if (githubStatus === "cancelled") {
+      toast.info(
+        "GitHub connection was cancelled"
+      );
+
+      setActiveSection("github");
+    }
+
+    if (githubStatus === "failed") {
+      toast.error(
+        "GitHub connection failed"
+      );
+
+      setActiveSection("github");
+    }
+
+    if (
+      githubStatus === "invalid_state"
+    ) {
+      toast.error(
+        "GitHub security verification failed"
+      );
+
+      setActiveSection("github");
+    }
+
+    setSearchParams({});
+  }, [
+    searchParams,
+    setSearchParams,
+    refetchGithub,
+  ]);
+
+  // ====================================
+  // Load User Profile
+  // ====================================
 
   useEffect(() => {
     if (!user) return;
@@ -140,34 +229,47 @@ function SettingsPage() {
 
       github: user.github || "",
 
-      linkedin: user.linkedin || "",
+      linkedin:
+        user.linkedin || "",
     });
   }, [user, reset]);
 
-  const bioValue = watch("bio") || "";
+  const bioValue =
+    watch("bio") || "";
+
+  // ====================================
+  // Update Profile
+  // ====================================
 
   const onSubmit = async (data) => {
     try {
       const skillsArray = data.skills
         ? data.skills
             .split(",")
-            .map((skill) => skill.trim())
+            .map((skill) =>
+              skill.trim()
+            )
             .filter(Boolean)
         : [];
 
-      await updateProfileMutation.mutateAsync({
-        bio: data.bio,
-        skills: skillsArray,
-        website: data.website,
-        github: data.github,
-        linkedin: data.linkedin,
-      });
+      await updateProfileMutation.mutateAsync(
+        {
+          bio: data.bio,
+          skills: skillsArray,
+          website: data.website,
+          github: data.github,
+          linkedin: data.linkedin,
+        }
+      );
 
-      toast.success("Profile updated successfully");
+      toast.success(
+        "Profile updated successfully"
+      );
 
       reset({
         ...data,
-        skills: skillsArray.join(", "),
+        skills:
+          skillsArray.join(", "),
       });
     } catch (error) {
       toast.error(
@@ -177,17 +279,97 @@ function SettingsPage() {
     }
   };
 
+  // ====================================
+  // Logout
+  // ====================================
+
   const handleLogout = async () => {
     try {
       await logoutMutation.mutateAsync();
     } catch (error) {
-      console.error("Logout failed:", error);
+      console.error(
+        "Logout failed:",
+        error
+      );
     } finally {
       navigate("/login", {
         replace: true,
       });
     }
   };
+
+  // ====================================
+  // Connect GitHub
+  // ====================================
+
+  const handleConnectGithub =
+    async () => {
+      try {
+        const response =
+          await connectGithubMutation.mutateAsync();
+
+        const authorizationUrl =
+          response?.data
+            ?.authorizationUrl;
+
+        if (!authorizationUrl) {
+          throw new Error(
+            "GitHub authorization URL was not returned"
+          );
+        }
+
+        window.location.href =
+          authorizationUrl;
+      } catch (error) {
+        console.error(
+          "GitHub connection failed:",
+          error
+        );
+
+        toast.error(
+          error.response?.data?.message ||
+            error.message ||
+            "Unable to connect GitHub"
+        );
+      }
+    };
+
+  // ====================================
+  // Disconnect GitHub
+  // ====================================
+
+  const handleDisconnectGithub =
+    async () => {
+      try {
+        await disconnectGithubMutation.mutateAsync();
+
+        toast.success(
+          "GitHub account disconnected"
+        );
+
+        await refetchGithub();
+      } catch (error) {
+        console.error(
+          "GitHub disconnect failed:",
+          error
+        );
+
+        toast.error(
+          error.response?.data?.message ||
+            "Unable to disconnect GitHub"
+        );
+      }
+    };
+
+  const githubProfile =
+    githubData?.data?.profile;
+
+  const githubRepositories =
+    githubData?.data?.repositories ||
+    [];
+
+  const isGithubConnected =
+    Boolean(githubProfile);
 
   return (
     <DashboardLayout>
@@ -217,7 +399,9 @@ function SettingsPage() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate(-1)}
+              onClick={() =>
+                navigate(-1)
+              }
               className="
                 h-9
                 w-9
@@ -276,70 +460,78 @@ function SettingsPage() {
               </p>
 
               <div className="space-y-0.5">
-                {SETTINGS_ITEMS.map((item) => {
-                  const Icon = item.icon;
+                {SETTINGS_ITEMS.map(
+                  (item) => {
+                    const Icon =
+                      item.icon;
 
-                  const active =
-                    activeSection === item.id;
+                    const active =
+                      activeSection ===
+                      item.id;
 
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() =>
-                        setActiveSection(item.id)
-                      }
-                      className={`
-                        group
-                        flex
-                        w-full
-                        items-center
-                        gap-3
-                        rounded-xl
-                        px-3
-                        py-2.5
-                        text-left
-                        transition-all
-                        duration-200
-                        ${
-                          active
-                            ? "bg-primary/10 text-primary"
-                            : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() =>
+                          setActiveSection(
+                            item.id
+                          )
                         }
-                      `}
-                    >
-                      <div
                         className={`
+                          group
                           flex
-                          h-8
-                          w-8
-                          shrink-0
+                          w-full
                           items-center
-                          justify-center
-                          rounded-lg
-                          transition-colors
+                          gap-3
+                          rounded-xl
+                          px-3
+                          py-2.5
+                          text-left
+                          transition-all
+                          duration-200
                           ${
                             active
-                              ? "bg-primary/10"
-                              : "bg-muted/50 group-hover:bg-background"
+                              ? "bg-primary/10 text-primary"
+                              : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                           }
                         `}
                       >
-                        <Icon className="h-4 w-4" />
-                      </div>
+                        <div
+                          className={`
+                            flex
+                            h-8
+                            w-8
+                            shrink-0
+                            items-center
+                            justify-center
+                            rounded-lg
+                            transition-colors
+                            ${
+                              active
+                                ? "bg-primary/10"
+                                : "bg-muted/50 group-hover:bg-background"
+                            }
+                          `}
+                        >
+                          <Icon className="h-4 w-4" />
+                        </div>
 
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium">
-                          {item.label}
-                        </p>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium">
+                            {item.label}
+                          </p>
 
-                        <p className="truncate text-[10px] text-muted-foreground">
-                          {item.description}
-                        </p>
-                      </div>
-                    </button>
-                  );
-                })}
+                          <p className="truncate text-[10px] text-muted-foreground">
+                            {
+                              item.description
+                            }
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  }
+                )}
               </div>
             </nav>
           </aside>
@@ -349,7 +541,9 @@ function SettingsPage() {
           {/* ================================= */}
 
           <div className="min-w-0">
-            {activeSection === "profile" && (
+
+            {activeSection ===
+              "profile" && (
               <ProfileSettings
                 register={register}
                 errors={errors}
@@ -358,12 +552,15 @@ function SettingsPage() {
                 isSaving={
                   updateProfileMutation.isPending
                 }
-                handleSubmit={handleSubmit}
+                handleSubmit={
+                  handleSubmit
+                }
                 onSubmit={onSubmit}
               />
             )}
 
-            {activeSection === "account" && (
+            {activeSection ===
+              "account" && (
               <AccountSettings
                 user={user}
                 onLogout={handleLogout}
@@ -373,12 +570,46 @@ function SettingsPage() {
               />
             )}
 
-            {activeSection === "appearance" && (
+            {activeSection ===
+              "github" && (
+              <GithubSettings
+                isConnected={
+                  isGithubConnected
+                }
+                profile={
+                  githubProfile
+                }
+                repositories={
+                  githubRepositories
+                }
+                isLoading={
+                  isGithubLoading
+                }
+                isConnecting={
+                  connectGithubMutation.isPending
+                }
+                isDisconnecting={
+                  disconnectGithubMutation.isPending
+                }
+                onConnect={
+                  handleConnectGithub
+                }
+                onDisconnect={
+                  handleDisconnectGithub
+                }
+              />
+            )}
+
+            {activeSection ===
+              "appearance" && (
               <AppearanceSettings />
             )}
 
-            {activeSection === "security" && (
-              <SecuritySettings user={user} />
+            {activeSection ===
+              "security" && (
+              <SecuritySettings
+                user={user}
+              />
             )}
           </div>
         </div>
@@ -402,7 +633,9 @@ function ProfileSettings({
 }) {
   return (
     <form
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleSubmit(
+        onSubmit
+      )}
       className="space-y-5"
     >
       <SettingsCard
@@ -412,7 +645,9 @@ function ProfileSettings({
       >
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="bio">Bio</Label>
+            <Label htmlFor="bio">
+              Bio
+            </Label>
 
             <span className="text-xs text-muted-foreground">
               {bioValue.length}/250
@@ -492,7 +727,9 @@ function ProfileSettings({
       <div className="flex justify-end">
         <Button
           type="submit"
-          disabled={isSaving || !isDirty}
+          disabled={
+            isSaving || !isDirty
+          }
           className="h-10 gap-2 rounded-xl px-5"
         >
           {isSaving ? (
@@ -621,7 +858,9 @@ function AccountSettings({
           <Button
             variant="outline"
             onClick={onLogout}
-            disabled={isLoggingOut}
+            disabled={
+              isLoggingOut
+            }
             className="gap-2 rounded-xl"
           >
             {isLoggingOut ? (
@@ -636,6 +875,289 @@ function AccountSettings({
           </Button>
         </div>
       </SettingsCard>
+    </div>
+  );
+}
+
+/* ====================================
+   GitHub
+==================================== */
+
+function GithubSettings({
+  isConnected,
+  profile,
+  repositories,
+  isLoading,
+  isConnecting,
+  isDisconnecting,
+  onConnect,
+  onDisconnect,
+}) {
+  return (
+    <div className="space-y-5">
+
+      <SettingsCard
+        icon={Code2}
+        title="GitHub Integration"
+        description="Connect your GitHub account to bring your developer work into DevPulse."
+      >
+        {!isConnected ? (
+          <div className="rounded-2xl border border-border/60 bg-muted/20 p-5">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-foreground text-background">
+                  <span className="text-lg font-bold">
+                    GH
+                  </span>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-semibold">
+                    Connect GitHub
+                  </h3>
+
+                  <p className="mt-1 max-w-lg text-xs leading-5 text-muted-foreground">
+                    Connect your GitHub account to
+                    display your developer profile
+                    and repositories on DevPulse.
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                onClick={onConnect}
+                disabled={isConnecting}
+                className="gap-2 rounded-xl sm:shrink-0"
+              >
+                {isConnecting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Connecting...
+                  </>
+                ) : (
+                  <>
+                    <span className="text-xs font-bold">
+                      GH
+                    </span>
+                    Connect GitHub
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-4">
+                  <img
+                    src={
+                      profile?.avatar_url
+                    }
+                    alt={
+                      profile?.login ||
+                      "GitHub"
+                    }
+                    className="h-12 w-12 rounded-full border border-border/60"
+                  />
+
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-semibold">
+                        {profile?.name ||
+                          profile?.login}
+                      </h3>
+
+                      <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600">
+                        Connected
+                      </span>
+                    </div>
+
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      @{profile?.login}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    asChild
+                    className="gap-2 rounded-xl"
+                  >
+                    <a
+                      href={
+                        profile?.html_url
+                      }
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      GitHub
+                    </a>
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    onClick={onDisconnect}
+                    disabled={
+                      isDisconnecting
+                    }
+                    className="gap-2 rounded-xl"
+                  >
+                    {isDisconnecting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Unplug className="h-4 w-4" />
+                    )}
+
+                    Disconnect
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <GithubStat
+                label="Repositories"
+                value={
+                  profile?.public_repos ??
+                  0
+                }
+              />
+
+              <GithubStat
+                label="Followers"
+                value={
+                  profile?.followers ??
+                  0
+                }
+              />
+
+              <GithubStat
+                label="Following"
+                value={
+                  profile?.following ??
+                  0
+                }
+              />
+            </div>
+          </>
+        )}
+      </SettingsCard>
+
+      {isConnected && (
+        <SettingsCard
+          icon={Code2}
+          title="Repositories"
+          description="Your latest GitHub repositories available through the connected account."
+        >
+          {isLoading ? (
+            <div className="flex items-center justify-center py-10">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            </div>
+          ) : repositories.length ===
+            0 ? (
+            <div className="rounded-xl border border-border/60 bg-muted/20 p-6 text-center">
+              <p className="text-sm font-medium">
+                No repositories found
+              </p>
+
+              <p className="mt-1 text-xs text-muted-foreground">
+                Your GitHub account does not
+                currently have repositories
+                available.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2">
+              {repositories.map(
+                (repo) => (
+                  <div
+                    key={repo.id}
+                    className="
+                      rounded-xl
+                      border
+                      border-border/60
+                      bg-muted/20
+                      p-4
+                      transition-colors
+                      hover:bg-muted/40
+                    "
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="truncate text-sm font-semibold">
+                          {repo.name}
+                        </h3>
+
+                        <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
+                          {repo.description ||
+                            "No description provided."}
+                        </p>
+                      </div>
+
+                      <a
+                        href={
+                          repo.url
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                        className="shrink-0 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
+                      {repo.language && (
+                        <span className="rounded-full bg-primary/10 px-2 py-1 text-primary">
+                          {repo.language}
+                        </span>
+                      )}
+
+                      <span>
+                        ★ {repo.stars}
+                      </span>
+
+                      <span>
+                        Forks {repo.forks}
+                      </span>
+
+                      {repo.private && (
+                        <span className="rounded-full bg-yellow-500/10 px-2 py-1 text-yellow-600">
+                          Private
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )
+              )}
+            </div>
+          )}
+        </SettingsCard>
+      )}
+    </div>
+  );
+}
+
+/* ====================================
+   GitHub Stats
+==================================== */
+
+function GithubStat({
+  label,
+  value,
+}) {
+  return (
+    <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
+      <p className="text-xs text-muted-foreground">
+        {label}
+      </p>
+
+      <p className="mt-1 text-xl font-bold">
+        {value}
+      </p>
     </div>
   );
 }
@@ -682,7 +1204,9 @@ function AppearanceSettings() {
    Security
 ==================================== */
 
-function SecuritySettings({ user }) {
+function SecuritySettings({
+  user,
+}) {
   const navigate = useNavigate();
 
   return (
@@ -711,7 +1235,9 @@ function SecuritySettings({ user }) {
         <Button
           variant="outline"
           onClick={() =>
-            navigate("/forgot-password")
+            navigate(
+              "/forgot-password"
+            )
           }
           className="gap-2 rounded-xl"
         >
@@ -836,7 +1362,9 @@ function LinkField({
   );
 }
 
-function ErrorText({ children }) {
+function ErrorText({
+  children,
+}) {
   return (
     <p className="text-sm text-destructive">
       {children}

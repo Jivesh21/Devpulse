@@ -7,15 +7,17 @@ const api = axios.create({
 
 api.interceptors.response.use(
   (response) => response,
+
   async (error) => {
     const originalRequest = error.config;
 
     const authEndpointPattern =
-      /\/auth\/(login|register|refresh-token)$/;
+      /\/auth\/(login|register|refresh-token|2fa\/verify)$/;
 
-    const isAuthRequest = authEndpointPattern.test(
-      originalRequest?.url || ""
-    );
+    const isAuthRequest =
+      authEndpointPattern.test(
+        originalRequest?.url || ""
+      );
 
     if (
       error.response?.status === 401 &&
@@ -36,7 +38,9 @@ api.interceptors.response.use(
 
         return api(originalRequest);
       } catch (refreshError) {
-        return Promise.reject(refreshError);
+        return Promise.reject(
+          refreshError
+        );
       }
     }
 

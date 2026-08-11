@@ -189,6 +189,45 @@ const userSchema = new Schema(
         description: String,
       },
     ],
+    // ====================================
+// Experience
+// ====================================
+experience: [
+  {
+    company: {
+      type: String,
+      trim: true,
+    },
+
+    position: {
+      type: String,
+      trim: true,
+    },
+
+    startDate: {
+      type: Date,
+    },
+
+    endDate: {
+      type: Date,
+    },
+
+    currentlyWorking: {
+      type: Boolean,
+      default: false,
+    },
+
+    location: {
+      type: String,
+      trim: true,
+    },
+
+    description: {
+      type: String,
+      trim: true,
+    },
+  },
+],
 
     // ====================================
     // Certificates

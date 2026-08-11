@@ -14,10 +14,9 @@ api.interceptors.response.use(
     const authEndpointPattern =
       /\/auth\/(login|register|refresh-token|2fa\/verify)$/;
 
-    const isAuthRequest =
-      authEndpointPattern.test(
-        originalRequest?.url || ""
-      );
+    const isAuthRequest = authEndpointPattern.test(
+      originalRequest?.url || ""
+    );
 
     if (
       error.response?.status === 401 &&
@@ -28,19 +27,11 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        await axios.post(
-          `${import.meta.env.VITE_API_URL}/auth/refresh-token`,
-          {},
-          {
-            withCredentials: true,
-          }
-        );
+        await api.post("/auth/refresh-token");
 
         return api(originalRequest);
       } catch (refreshError) {
-        return Promise.reject(
-          refreshError
-        );
+        return Promise.reject(refreshError);
       }
     }
 

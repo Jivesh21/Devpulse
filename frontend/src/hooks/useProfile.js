@@ -49,25 +49,25 @@ export const useUserPosts = (username) => {
 // ====================================
 // Update Profile
 // ====================================
+// ====================================
+// Update Profile
+// ====================================
 export const useUpdateProfile = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: updateProfile,
 
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      // Refresh current logged-in user
+      await queryClient.invalidateQueries({
         queryKey: ["current-user"],
       });
 
-      if (data?.data?.username) {
-        queryClient.invalidateQueries({
-          queryKey: [
-            "profile",
-            data.data.username,
-          ],
-        });
-      }
+      // Refresh all profile queries
+      await queryClient.invalidateQueries({
+        queryKey: ["profile"],
+      });
     },
   });
 };

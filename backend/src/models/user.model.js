@@ -142,33 +142,58 @@ const userSchema = new Schema(
       },
     ],
 
-   githubIntegration: {
-  connected: {
-    type: Boolean,
-    default: false,
-  },
+    // ====================================
+    // Social Links
+    // ====================================
+    github: {
+      type: String,
+      trim: true,
+      default: "",
+    },
 
-  githubId: {
-    type: String,
-    default: "",
-  },
+    linkedin: {
+      type: String,
+      trim: true,
+      default: "",
+    },
 
-  username: {
-    type: String,
-    default: "",
-  },
+    website: {
+      type: String,
+      trim: true,
+      default: "",
+    },
 
-  accessToken: {
-    type: String,
-    select: false,
-    default: "",
-  },
+    // ====================================
+    // GitHub Integration
+    // ====================================
+    githubIntegration: {
+      connected: {
+        type: Boolean,
+        default: false,
+      },
 
-  connectedAt: {
-    type: Date,
-    default: null,
-  },
-},
+      githubId: {
+        type: String,
+        default: "",
+      },
+
+      username: {
+        type: String,
+        default: "",
+      },
+
+      accessToken: {
+        type: String,
+        select: false,
+        default: "",
+      },
+
+      connectedAt: {
+        type: Date,
+        default: null,
+      },
+    },
+
     // ====================================
     // Education
     // ====================================
@@ -189,45 +214,46 @@ const userSchema = new Schema(
         description: String,
       },
     ],
+
     // ====================================
-// Experience
-// ====================================
-experience: [
-  {
-    company: {
-      type: String,
-      trim: true,
-    },
+    // Experience
+    // ====================================
+    experience: [
+      {
+        company: {
+          type: String,
+          trim: true,
+        },
 
-    position: {
-      type: String,
-      trim: true,
-    },
+        position: {
+          type: String,
+          trim: true,
+        },
 
-    startDate: {
-      type: Date,
-    },
+        startDate: {
+          type: Date,
+        },
 
-    endDate: {
-      type: Date,
-    },
+        endDate: {
+          type: Date,
+        },
 
-    currentlyWorking: {
-      type: Boolean,
-      default: false,
-    },
+        currentlyWorking: {
+          type: Boolean,
+          default: false,
+        },
 
-    location: {
-      type: String,
-      trim: true,
-    },
+        location: {
+          type: String,
+          trim: true,
+        },
 
-    description: {
-      type: String,
-      trim: true,
-    },
-  },
-],
+        description: {
+          type: String,
+          trim: true,
+        },
+      },
+    ],
 
     // ====================================
     // Certificates
@@ -285,48 +311,49 @@ userSchema.pre("save", async function () {
 // ====================================
 // Compare Password
 // ====================================
-userSchema.methods.isPasswordCorrect = async function (
-  password
-) {
-  return bcrypt.compare(
-    password,
-    this.password
-  );
-};
+userSchema.methods.isPasswordCorrect =
+  async function (password) {
+    return bcrypt.compare(
+      password,
+      this.password
+    );
+  };
 
 // ====================================
 // Generate Access Token
 // ====================================
-userSchema.methods.generateAccessToken = function () {
-  return jwt.sign(
-    {
-      _id: this._id,
-      email: this.email,
-      username: this.username,
-    },
-    process.env.JWT_SECRET,
-    {
-      expiresIn:
-        process.env.ACCESS_TOKEN_EXPIRY,
-    }
-  );
-};
+userSchema.methods.generateAccessToken =
+  function () {
+    return jwt.sign(
+      {
+        _id: this._id,
+        email: this.email,
+        username: this.username,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn:
+          process.env.ACCESS_TOKEN_EXPIRY,
+      }
+    );
+  };
 
 // ====================================
 // Generate Refresh Token
 // ====================================
-userSchema.methods.generateRefreshToken = function () {
-  return jwt.sign(
-    {
-      _id: this._id,
-    },
-    process.env.JWT_REFRESH_SECRET,
-    {
-      expiresIn:
-        process.env.REFRESH_TOKEN_EXPIRY,
-    }
-  );
-};
+userSchema.methods.generateRefreshToken =
+  function () {
+    return jwt.sign(
+      {
+        _id: this._id,
+      },
+      process.env.JWT_REFRESH_SECRET,
+      {
+        expiresIn:
+          process.env.REFRESH_TOKEN_EXPIRY,
+      }
+    );
+  };
 
 const User = model("User", userSchema);
 

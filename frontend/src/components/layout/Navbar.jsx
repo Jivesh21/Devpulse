@@ -175,11 +175,15 @@ function Navbar() {
           top-0
           z-50
           w-full
+          min-w-0
+          overflow-hidden
           rounded-none
           border-x-0
           border-t-0
-          px-4
-          py-3
+          px-2
+          py-2
+          sm:px-4
+          sm:py-3
           md:px-6
         "
       >
@@ -188,17 +192,31 @@ function Navbar() {
             mx-auto
             flex
             h-12
+            w-full
+            min-w-0
             max-w-7xl
             items-center
-            gap-4
+            gap-1
+            sm:gap-3
+            md:gap-4
           "
         >
           {/* ================================= */}
           {/* Left Section */}
           {/* ================================= */}
 
-          <div className="flex items-center gap-3">
+          <div
+            className="
+              flex
+              min-w-0
+              shrink-0
+              items-center
+              gap-1
+              sm:gap-3
+            "
+          >
             {/* Mobile Menu */}
+
             <Button
               variant="ghost"
               size="icon"
@@ -208,6 +226,9 @@ function Navbar() {
               aria-label="Open navigation menu"
               aria-expanded={isMobileMenuOpen}
               className="
+                h-9
+                w-9
+                shrink-0
                 rounded-xl
                 transition-all
                 duration-200
@@ -221,13 +242,15 @@ function Navbar() {
             </Button>
 
             {/* Logo */}
+
             <Link
               to="/feed"
               className="
                 group
                 flex
+                shrink-0
                 items-center
-                gap-2.5
+                gap-2
                 outline-none
               "
             >
@@ -236,6 +259,7 @@ function Navbar() {
                   flex
                   h-9
                   w-9
+                  shrink-0
                   items-center
                   justify-center
                   rounded-xl
@@ -282,10 +306,12 @@ function Navbar() {
           <div
             className="
               hidden
+              min-w-0
               flex-1
               justify-center
-              px-6
+              px-4
               md:flex
+              lg:px-6
             "
           >
             <div className="w-full max-w-xl">
@@ -301,34 +327,45 @@ function Navbar() {
             className="
               ml-auto
               flex
+              shrink-0
               items-center
-              gap-1.5
-              sm:gap-2
+              gap-0.5
+              sm:gap-1.5
+              md:gap-2
             "
           >
             {/* Mobile Search */}
+
             <Button
               variant="ghost"
               size="icon"
               className="
+                hidden
+                h-9
+                w-9
+                shrink-0
                 rounded-xl
                 transition-all
                 duration-200
                 hover:bg-primary/10
                 hover:text-primary
                 active:scale-95
+                min-[400px]:inline-flex
                 md:hidden
               "
+              onClick={() => navigate("/search")}
             >
               <Search className="h-5 w-5" />
             </Button>
 
             {/* Create Post */}
+
             <Button
               onClick={() => navigate("/feed")}
               className="
                 hidden
                 h-10
+                shrink-0
                 gap-2
                 rounded-full
                 bg-primary
@@ -349,10 +386,14 @@ function Navbar() {
             </Button>
 
             {/* Mobile Create Post */}
+
             <Button
               onClick={() => navigate("/feed")}
               size="icon"
               className="
+                h-9
+                w-9
+                shrink-0
                 rounded-full
                 bg-primary
                 text-primary-foreground
@@ -376,6 +417,9 @@ function Navbar() {
               size="icon"
               className="
                 relative
+                h-9
+                w-9
+                shrink-0
                 rounded-xl
                 transition-all
                 duration-200
@@ -422,7 +466,9 @@ function Navbar() {
             {/* Appearance */}
             {/* ================================= */}
 
-            <AppearanceMenu />
+            <div className="shrink-0">
+              <AppearanceMenu />
+            </div>
 
             {/* ================================= */}
             {/* Profile Dropdown */}
@@ -434,8 +480,9 @@ function Navbar() {
                 aria-label="Open profile menu"
                 className="
                   flex
-                  h-10
-                  w-10
+                  h-9
+                  w-9
+                  shrink-0
                   items-center
                   justify-center
                   rounded-full
@@ -450,15 +497,19 @@ function Navbar() {
                   focus-visible:ring-ring
                   focus-visible:ring-offset-2
                   active:scale-95
+                  sm:h-10
+                  sm:w-10
                 "
               >
                 <Avatar
                   className="
-                    h-9
-                    w-9
+                    h-8
+                    w-8
                     border
                     border-primary/20
                     shadow-sm
+                    sm:h-9
+                    sm:w-9
                   "
                 >
                   <AvatarImage

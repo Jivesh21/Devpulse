@@ -1,9 +1,5 @@
 import { useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import {
-  Loader2,
-  UserRound,
-} from "lucide-react";
 
 import DashboardLayout from "@/layouts/DashboardLayout";
 
@@ -16,6 +12,7 @@ import PortfolioSection from "@/components/profile/portfolio/PortfolioSection";
 import EditProfileDialog from "@/components/profile/EditProfileDialog";
 import FollowListDialog from "@/components/profile/FollowListDialog";
 import AddProjectDialog from "@/components/profile/portfolio/AddProjectDialog";
+import ResumeLayoutDialog from "@/components/profile/resume/ResumeLayoutDialog";
 
 import { useAuthContext } from "@/context/AuthContext";
 
@@ -43,6 +40,10 @@ function ProfilePage() {
   const coverInputRef =
     useRef(null);
 
+  // ====================================
+  // Dialog State
+  // ====================================
+
   const [editOpen, setEditOpen] =
     useState(false);
 
@@ -53,6 +54,9 @@ function ProfilePage() {
     useState(false);
 
   const [projectDialogOpen, setProjectDialogOpen] =
+    useState(false);
+
+  const [resumeOpen, setResumeOpen] =
     useState(false);
 
   // ====================================
@@ -163,38 +167,8 @@ function ProfilePage() {
   if (profileLoading) {
     return (
       <DashboardLayout>
-        <div className="flex min-h-[60vh] items-center justify-center">
-          <div
-            className="
-              flex
-              flex-col
-              items-center
-              gap-3
-              rounded-2xl
-              border
-              border-border/60
-              bg-background/80
-              px-8
-              py-10
-              shadow-sm
-              backdrop-blur-xl
-            "
-          >
-            <div
-              className="
-                flex
-                h-12
-                w-12
-                items-center
-                justify-center
-                rounded-2xl
-                bg-primary/10
-                text-primary
-              "
-            >
-              <Loader2 className="h-6 w-6 animate-spin" />
-            </div>
-
+        <main className="mx-auto w-full max-w-6xl px-4 py-6">
+          <div className="flex min-h-[60vh] items-center justify-center">
             <div className="text-center">
               <p className="font-semibold">
                 Loading profile
@@ -205,7 +179,7 @@ function ProfilePage() {
               </p>
             </div>
           </div>
-        </div>
+        </main>
       </DashboardLayout>
     );
   }
@@ -217,56 +191,27 @@ function ProfilePage() {
   if (!profile) {
     return (
       <DashboardLayout>
-        <div className="flex min-h-[60vh] items-center justify-center">
-          <div
-            className="
-              flex
-              max-w-md
-              flex-col
-              items-center
-              rounded-2xl
-              border
-              border-border/60
-              bg-background/80
-              p-10
-              text-center
-              shadow-sm
-              backdrop-blur-xl
-            "
-          >
-            <div
-              className="
-                flex
-                h-14
-                w-14
-                items-center
-                justify-center
-                rounded-2xl
-                bg-muted
-                text-muted-foreground
-              "
-            >
-              <UserRound className="h-7 w-7" />
+        <main className="mx-auto w-full max-w-6xl px-4 py-6">
+          <div className="flex min-h-[60vh] items-center justify-center">
+            <div className="text-center">
+              <h2 className="mt-5 text-xl font-bold">
+                Profile not found
+              </h2>
+
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                We couldn't find a developer
+                with this username.
+              </p>
             </div>
-
-            <h2 className="mt-5 text-xl font-bold">
-              Profile not found
-            </h2>
-
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              We couldn't find a developer
-              with this username.
-            </p>
           </div>
-        </div>
+        </main>
       </DashboardLayout>
     );
   }
 
   return (
     <DashboardLayout>
-      <main className="page-enter space-y-6">
-
+      <main className="mx-auto w-full max-w-6xl px-4 py-6">
         {/* ================================= */}
         {/* Profile Header */}
         {/* ================================= */}
@@ -292,9 +237,14 @@ function ProfilePage() {
           onEditClick={() =>
             setEditOpen(true)
           }
+          onDownloadResume={() =>
+            setResumeOpen(true)
+          }
         />
 
+        {/* ================================= */}
         {/* Upload Inputs */}
+        {/* ================================= */}
 
         <input
           ref={avatarInputRef}
@@ -316,8 +266,7 @@ function ProfilePage() {
         {/* Profile Sections */}
         {/* ================================= */}
 
-        <div className="space-y-5">
-
+        <div className="mt-5 space-y-5">
           <ProfileSkills
             skills={profile.skills || []}
           />
@@ -337,17 +286,22 @@ function ProfilePage() {
             posts={posts}
             isLoading={postsLoading}
           />
-
         </div>
       </main>
 
-      {/* Dialogs */}
+      {/* ================================= */}
+      {/* Edit Profile */}
+      {/* ================================= */}
 
       <EditProfileDialog
         open={editOpen}
         onOpenChange={setEditOpen}
         profile={profile}
       />
+
+      {/* ================================= */}
+      {/* Followers */}
+      {/* ================================= */}
 
       <FollowListDialog
         open={followersOpen}
@@ -356,6 +310,10 @@ function ProfilePage() {
         type="followers"
       />
 
+      {/* ================================= */}
+      {/* Following */}
+      {/* ================================= */}
+
       <FollowListDialog
         open={followingOpen}
         onOpenChange={setFollowingOpen}
@@ -363,10 +321,24 @@ function ProfilePage() {
         type="following"
       />
 
+      {/* ================================= */}
+      {/* Add Project */}
+      {/* ================================= */}
+
       <AddProjectDialog
         open={projectDialogOpen}
         onOpenChange={setProjectDialogOpen}
         userId={profile._id}
+      />
+
+      {/* ================================= */}
+      {/* Resume Layout */}
+      {/* ================================= */}
+
+      <ResumeLayoutDialog
+        open={resumeOpen}
+        onOpenChange={setResumeOpen}
+        profile={profile}
       />
     </DashboardLayout>
   );

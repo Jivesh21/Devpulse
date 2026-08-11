@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
-  ExternalLink,
   FolderGit2,
   Star,
   Trash2,
@@ -9,6 +8,7 @@ import {
 } from "lucide-react";
 
 import EditProjectDialog from "./EditProjectDialog";
+import ProjectDetailsDialog from "./ProjectDetailsDialog";
 
 import {
   Dialog,
@@ -27,8 +27,13 @@ function PortfolioCard({
   project,
   isOwner,
 }) {
-  const [open, setOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] =
+    useState(false);
+
   const [editOpen, setEditOpen] =
+    useState(false);
+
+  const [detailsOpen, setDetailsOpen] =
     useState(false);
 
   const deleteProject =
@@ -37,7 +42,7 @@ function PortfolioCard({
   function handleDelete() {
     deleteProject.mutate(project._id, {
       onSuccess: () => {
-        setOpen(false);
+        setDeleteOpen(false);
       },
     });
   }
@@ -47,7 +52,7 @@ function PortfolioCard({
       <motion.div
         initial={{
           opacity: 0,
-          y: 25,
+          y: 10,
         }}
         whileInView={{
           opacity: 1,
@@ -57,148 +62,258 @@ function PortfolioCard({
           once: true,
         }}
         whileHover={{
-          y: -8,
-          transition: {
-            duration: 0.2,
-          },
+          y: -3,
         }}
+        transition={{
+          duration: 0.2,
+        }}
+        className="w-full"
       >
-        <Card className="overflow-hidden rounded-2xl">
-          {/* Cover Image */}
-          <div className="aspect-video overflow-hidden bg-muted">
-            {project.coverImage ? (
+        <Card
+          onClick={() =>
+            setDetailsOpen(true)
+          }
+          className="
+            group
+            cursor-pointer
+            overflow-hidden
+            rounded-xl
+            border-border/60
+            bg-card
+            shadow-sm
+            transition-all
+            duration-200
+            hover:border-primary/30
+            hover:shadow-md
+          "
+        >
+          {/* ================================= */}
+          {/* Compact Preview */}
+          {/* ================================= */}
+
+          {project.coverImage ? (
+            <div className="h-24 overflow-hidden">
               <img
                 src={project.coverImage}
                 alt={project.title}
-                className="h-full w-full object-cover transition-transform duration-300 hover:scale-110"
+                className="
+                  h-full
+                  w-full
+                  object-cover
+                  transition-transform
+                  duration-300
+                  group-hover:scale-105
+                "
               />
-            ) : (
-              <div className="flex h-full flex-col items-center justify-center bg-gradient-to-br from-primary/10 via-background to-primary/5 text-muted-foreground">
-                <FolderGit2 className="mb-3 h-12 w-12 text-primary" />
+            </div>
+          ) : (
+            <div
+              className="
+                flex
+                h-24
+                items-center
+                justify-center
+                bg-muted/30
+              "
+            >
+              <FolderGit2
+                className="
+                  h-6
+                  w-6
+                  text-muted-foreground/60
+                "
+              />
+            </div>
+          )}
 
-                <p className="font-medium">
-                  No Preview Available
-                </p>
-
-                <span className="mt-1 text-xs">
-                  Upload a cover image
-                  for this project.
-                </span>
-              </div>
-            )}
-          </div>
-
+          {/* ================================= */}
           {/* Content */}
-          <div className="space-y-4 p-5">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold">
+          {/* ================================= */}
+
+          <div className="p-3.5">
+            {/* Title */}
+
+            <div className="flex items-center gap-2">
+              <h3
+                className="
+                  min-w-0
+                  flex-1
+                  truncate
+                  text-sm
+                  font-semibold
+                "
+              >
                 {project.title}
               </h3>
 
               {project.featured && (
-                <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                <Star
+                  className="
+                    h-3.5
+                    w-3.5
+                    shrink-0
+                    fill-yellow-400
+                    text-yellow-400
+                  "
+                />
               )}
             </div>
 
-            <p className="text-sm text-muted-foreground">
+            {/* Short description */}
+
+            <p
+              className="
+                mt-1
+                line-clamp-2
+                text-xs
+                leading-4
+                text-muted-foreground
+              "
+            >
               {project.description}
             </p>
 
-            {project.techStack?.length >
-              0 && (
-              <div className="flex flex-wrap gap-2">
-                {project.techStack.map(
-                  (tech) => (
+            {/* Tech stack */}
+
+            {project.techStack?.length > 0 && (
+              <div className="mt-2.5 flex flex-wrap gap-1">
+                {project.techStack
+                  .slice(0, 3)
+                  .map((tech) => (
                     <span
                       key={tech}
-                      className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
+                      className="
+                        rounded-md
+                        bg-primary/10
+                        px-1.5
+                        py-0.5
+                        text-[9px]
+                        font-medium
+                        text-primary
+                      "
                     >
                       {tech}
                     </span>
-                  )
+                  ))}
+
+                {project.techStack.length > 3 && (
+                  <span
+                    className="
+                      rounded-md
+                      bg-muted
+                      px-1.5
+                      py-0.5
+                      text-[9px]
+                      text-muted-foreground
+                    "
+                  >
+                    +{project.techStack.length - 3}
+                  </span>
                 )}
               </div>
             )}
 
-            <div className="flex gap-3 pt-2">
-              {project.githubUrl && (
-                <Button
-                  asChild
-                  variant="outline"
-                  className="flex-1"
-                >
-                  <a
-                    href={
-                      project.githubUrl
-                    }
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center justify-center"
-                  >
-                    <FolderGit2 className="mr-2 h-4 w-4" />
-                    GitHub
-                  </a>
-                </Button>
-              )}
+            {/* ================================= */}
+            {/* Footer */}
+            {/* ================================= */}
 
-              {project.liveUrl && (
-                <Button
-                  asChild
-                  className="flex-1"
+            <div
+              className="
+                mt-3
+                flex
+                items-center
+                justify-between
+                border-t
+                border-border/50
+                pt-2.5
+              "
+            >
+              <button
+                type="button"
+                className="
+                  text-[11px]
+                  font-medium
+                  text-primary
+                  transition-opacity
+                  hover:opacity-70
+                "
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setDetailsOpen(true);
+                }}
+              >
+                View project →
+              </button>
+
+              {isOwner && (
+                <div
+                  className="flex items-center gap-0.5"
+                  onClick={(event) =>
+                    event.stopPropagation()
+                  }
                 >
-                  <a
-                    href={project.liveUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center justify-center"
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() =>
+                      setEditOpen(true)
+                    }
                   >
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    Live Demo
-                  </a>
-                </Button>
+                    <Pencil className="h-3 w-3" />
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="
+                      h-6
+                      w-6
+                      text-destructive
+                      hover:text-destructive
+                    "
+                    onClick={() =>
+                      setDeleteOpen(true)
+                    }
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
               )}
             </div>
-
-            {isOwner && (
-              <div className="flex justify-end gap-2 pt-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setEditOpen(true)
-                  }
-                >
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Edit
-                </Button>
-
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() =>
-                    setOpen(true)
-                  }
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </Button>
-              </div>
-            )}
           </div>
         </Card>
       </motion.div>
 
-      <EditProjectDialog
-        open={editOpen}
-        onOpenChange={
-          setEditOpen
-        }
+      {/* ================================= */}
+      {/* Project Details */}
+      {/* ================================= */}
+
+      <ProjectDetailsDialog
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
         project={project}
       />
 
+      {/* ================================= */}
+      {/* Edit */}
+      {/* ================================= */}
+
+      <EditProjectDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        project={project}
+      />
+
+      {/* ================================= */}
+      {/* Delete */}
+      {/* ================================= */}
+
       <Dialog
-        open={open}
-        onOpenChange={setOpen}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
       >
         <DialogContent>
           <DialogHeader>
@@ -208,17 +323,16 @@ function PortfolioCard({
           </DialogHeader>
 
           <p className="text-sm text-muted-foreground">
-            Are you sure you want
-            to delete this project?
-            This action cannot be
-            undone.
+            Are you sure you want to delete
+            this project? This action cannot
+            be undone.
           </p>
 
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() =>
-                setOpen(false)
+                setDeleteOpen(false)
               }
             >
               Cancel
@@ -226,9 +340,7 @@ function PortfolioCard({
 
             <Button
               variant="destructive"
-              onClick={
-                handleDelete
-              }
+              onClick={handleDelete}
               disabled={
                 deleteProject.isPending
               }

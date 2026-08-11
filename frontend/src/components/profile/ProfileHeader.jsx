@@ -6,6 +6,7 @@ import {
   ExternalLink,
   GitBranch,
   Link as LinkIcon,
+  Download,
 } from "lucide-react";
 
 import {
@@ -32,6 +33,7 @@ function ProfileHeader({
   onAvatarClick,
   onCoverClick,
   onEditClick,
+  onDownloadResume,
 }) {
   const { data: followStatusData } =
     useFollowStatus(profile._id);
@@ -209,7 +211,7 @@ function ProfileHeader({
         </div>
 
         {/* ================================= */}
-        {/* Identity + Action */}
+        {/* Identity + Actions */}
         {/* ================================= */}
 
         <div
@@ -330,25 +332,35 @@ function ProfileHeader({
           </div>
 
           {/* ================================= */}
-          {/* Action */}
+          {/* Actions */}
           {/* ================================= */}
 
-          <div className="shrink-0">
+          <div
+            className="
+              flex
+              shrink-0
+              flex-wrap
+              gap-2
+            "
+          >
+            {/* Owner Actions */}
+
             {isOwner ? (
               <Button
                 onClick={onEditClick}
+                variant="outline"
                 className="
                   h-10
                   gap-2
                   rounded-xl
-                  px-5
-                  shadow-sm
+                  px-4
                 "
               >
                 <Edit3 className="h-4 w-4" />
                 Edit Profile
               </Button>
             ) : (
+              /* Visitor Follow Button */
               <Button
                 onClick={() =>
                   toggleFollowMutation.mutate()
@@ -374,6 +386,23 @@ function ProfileHeader({
                     : "Follow"}
               </Button>
             )}
+
+            {/* Resume Button */}
+
+            <Button
+              type="button"
+              onClick={onDownloadResume}
+              variant="outline"
+              className="
+                h-10
+                gap-2
+                rounded-xl
+                px-4
+              "
+            >
+              <Download className="h-4 w-4" />
+              Resume
+            </Button>
           </div>
         </div>
 

@@ -555,3 +555,44 @@
     transition-duration: 0.01ms !important;
   }
 }
+/* =========================================
+   DevPulse Rich Text Editor
+   ========================================= */
+
+.rich-text-editor .ql-container.ql-snow {
+  border: none !important;
+  font-family: inherit;
+}
+
+.rich-text-editor .ql-editor {
+  min-height: 160px;
+  padding: 16px;
+  color: hsl(var(--foreground));
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.rich-text-editor .ql-editor.ql-blank::before {
+  left: 16px;
+  right: 16px;
+  color: hsl(var(--muted-foreground));
+  font-style: normal;
+  opacity: 0.8;
+}
+
+.rich-text-editor .ql-editor h1,
+.rich-text-editor .ql-editor h2,
+.rich-text-editor .ql-editor h3 {
+  color: hsl(var(--foreground));
+}
+
+.rich-text-editor .ql-editor a {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+}
+
+.rich-text-editor .ql-editor ul,
+.rich-text-editor .ql-editor ol {
+  padding-left: 1.5rem;
+}

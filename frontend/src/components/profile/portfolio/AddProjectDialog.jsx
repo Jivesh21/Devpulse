@@ -10,7 +10,8 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+
+import RichTextEditor from "@/components/ui/RichTextEditor";
 
 import { useCreatePortfolio } from "@/hooks/usePortfolio";
 
@@ -18,9 +19,11 @@ function AddProjectDialog({
   open,
   onOpenChange,
 }) {
-  const createProject = useCreatePortfolio();
+  const createProject =
+    useCreatePortfolio();
 
-  const imageInputRef = useRef(null);
+  const imageInputRef =
+    useRef(null);
 
   const [coverImage, setCoverImage] =
     useState(null);
@@ -34,6 +37,10 @@ function AddProjectDialog({
       liveUrl: "",
     });
 
+  // ====================================
+  // Input Change
+  // ====================================
+
   function handleChange(e) {
     setFormData({
       ...formData,
@@ -41,20 +48,58 @@ function AddProjectDialog({
     });
   }
 
+  // ====================================
+  // Description Change
+  // ====================================
+
+  function handleDescriptionChange(
+    value
+  ) {
+    setFormData({
+      ...formData,
+      description: value,
+    });
+  }
+
+  // ====================================
+  // Image Change
+  // ====================================
+
   function handleImageChange(e) {
-    const file = e.target.files?.[0];
+    const file =
+      e.target.files?.[0];
 
     if (!file) return;
 
     setCoverImage(file);
   }
 
+  // ====================================
+  // Submit
+  // ====================================
+
   async function handleSubmit(e) {
     e.preventDefault();
 
-    const data = new FormData();
+    if (!formData.title.trim()) {
+      return;
+    }
 
-    data.append("title", formData.title);
+    if (
+      !formData.description ||
+      formData.description === "<p><br></p>"
+    ) {
+      return;
+    }
+
+    const data =
+      new FormData();
+
+    data.append(
+      "title",
+      formData.title.trim()
+    );
+
     data.append(
       "description",
       formData.description
@@ -62,20 +107,25 @@ function AddProjectDialog({
 
     formData.techStack
       .split(",")
-      .map((item) => item.trim())
+      .map((item) =>
+        item.trim()
+      )
       .filter(Boolean)
       .forEach((tech) => {
-        data.append("techStack", tech);
+        data.append(
+          "techStack",
+          tech
+        );
       });
 
     data.append(
       "githubUrl",
-      formData.githubUrl
+      formData.githubUrl.trim()
     );
 
     data.append(
       "liveUrl",
-      formData.liveUrl
+      formData.liveUrl.trim()
     );
 
     if (coverImage) {
@@ -85,19 +135,37 @@ function AddProjectDialog({
       );
     }
 
-    await createProject.mutateAsync(data);
+    try {
+      await createProject.mutateAsync(
+        data
+      );
 
-    onOpenChange(false);
+      // Close dialog
 
-    setFormData({
-      title: "",
-      description: "",
-      techStack: "",
-      githubUrl: "",
-      liveUrl: "",
-    });
+      onOpenChange(false);
 
-    setCoverImage(null);
+      // Reset form
+
+      setFormData({
+        title: "",
+        description: "",
+        techStack: "",
+        githubUrl: "",
+        liveUrl: "",
+      });
+
+      setCoverImage(null);
+
+      if (imageInputRef.current) {
+        imageInputRef.current.value =
+          "";
+      }
+    } catch (error) {
+      console.error(
+        "Failed to create project:",
+        error
+      );
+    }
   }
 
   return (
@@ -105,7 +173,14 @@ function AddProjectDialog({
       open={open}
       onOpenChange={onOpenChange}
     >
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent
+        className="
+          max-h-[90vh]
+          overflow-y-auto
+          rounded-2xl
+          sm:max-w-xl
+        "
+      >
         <DialogHeader>
           <DialogTitle>
             Add Project
@@ -114,72 +189,132 @@ function AddProjectDialog({
 
         <form
           onSubmit={handleSubmit}
-          className="space-y-4"
+          className="space-y-5"
         >
+          {/* ================================= */}
+          {/* Project Title */}
+          {/* ================================= */}
+
           <Input
             placeholder="Project Title"
             name="title"
             value={formData.title}
             onChange={handleChange}
+            required
           />
 
-          <Textarea
-            rows={4}
-            placeholder="Project Description"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-          />
+          {/* ================================= */}
+          {/* Project Description */}
+          {/* ================================= */}
+
+          <div className="space-y-2">
+            <label
+              className="
+                text-sm
+                font-medium
+              "
+            >
+              Project Description
+            </label>
+
+            <RichTextEditor
+              value={
+                formData.description
+              }
+              onChange={
+                handleDescriptionChange
+              }
+              placeholder="Describe what you built, the problem it solves, and your role..."
+            />
+          </div>
+
+          {/* ================================= */}
+          {/* Tech Stack */}
+          {/* ================================= */}
 
           <Input
-            placeholder="React, Node, MongoDB"
+            placeholder="React, Node.js, MongoDB"
             name="techStack"
-            value={formData.techStack}
+            value={
+              formData.techStack
+            }
             onChange={handleChange}
           />
 
-          <input
-            ref={imageInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleImageChange}
-          />
+          {/* ================================= */}
+          {/* Cover Image */}
+          {/* ================================= */}
 
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={() =>
-              imageInputRef.current?.click()
-            }
-          >
-            Choose Cover Image
-          </Button>
-
-          {coverImage && (
-            <img
-              src={URL.createObjectURL(
-                coverImage
-              )}
-              alt="Preview"
-              className="h-48 w-full rounded-xl object-cover"
+          <div className="space-y-3">
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={
+                handleImageChange
+              }
             />
-          )}
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() =>
+                imageInputRef.current?.click()
+              }
+            >
+              Choose Cover Image
+            </Button>
+
+            {coverImage && (
+              <div className="overflow-hidden rounded-xl border">
+                <img
+                  src={URL.createObjectURL(
+                    coverImage
+                  )}
+                  alt="Project preview"
+                  className="
+                    h-48
+                    w-full
+                    object-cover
+                  "
+                />
+              </div>
+            )}
+          </div>
+
+          {/* ================================= */}
+          {/* GitHub */}
+          {/* ================================= */}
 
           <Input
             placeholder="GitHub URL"
             name="githubUrl"
-            value={formData.githubUrl}
+            type="url"
+            value={
+              formData.githubUrl
+            }
             onChange={handleChange}
           />
+
+          {/* ================================= */}
+          {/* Live Demo */}
+          {/* ================================= */}
 
           <Input
             placeholder="Live Demo URL"
             name="liveUrl"
-            value={formData.liveUrl}
+            type="url"
+            value={
+              formData.liveUrl
+            }
             onChange={handleChange}
           />
+
+          {/* ================================= */}
+          {/* Footer */}
+          {/* ================================= */}
 
           <DialogFooter>
             <Button
@@ -187,6 +322,7 @@ function AddProjectDialog({
               disabled={
                 createProject.isPending
               }
+              className="rounded-xl"
             >
               {createProject.isPending
                 ? "Saving..."

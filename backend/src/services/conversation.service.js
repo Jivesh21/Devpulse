@@ -1,103 +1,120 @@
 import Conversation from "../models/conversation.model.js";
+import Message from "../models/message.model.js";
 import User from "../models/user.model.js";
 import ApiError from "../utils/ApiError.js";
 
 // ====================================
 // Create or Get Direct Conversation
 // ====================================
-export const createOrGetConversationService = async (
-  currentUserId,
-  targetUserId
-) => {
-  // ====================================
-  // Prevent Self Conversation
-  // ====================================
 
-  if (
-    currentUserId.toString() ===
-    targetUserId.toString()
-  ) {
-    throw new ApiError(
-      400,
-      "You cannot start a conversation with yourself"
-    );
-  }
+export const createOrGetConversationService =
+  async (
+    currentUserId,
+    targetUserId
+  ) => {
+    // ====================================
+    // Prevent Self Conversation
+    // ====================================
 
-  // ====================================
-  // Check Target User Exists
-  // ====================================
+    if (
+      currentUserId.toString() ===
+      targetUserId.toString()
+    ) {
+      throw new ApiError(
+        400,
+        "You cannot start a conversation with yourself"
+      );
+    }
 
-  const targetUser =
-    await User.findById(targetUserId);
+    // ====================================
+    // Check Target User Exists
+    // ====================================
 
-  if (!targetUser) {
-    throw new ApiError(
-      404,
-      "User not found"
-    );
-  }
+    const targetUser =
+      await User.findById(targetUserId);
 
-  // ====================================
-  // Check Existing Conversation
-  // ====================================
+    if (!targetUser) {
+      throw new ApiError(
+        404,
+        "User not found"
+      );
+    }
 
-  const existingConversation =
-    await Conversation.findOne({
-      participants: {
-        $all: [
+    // ====================================
+    // Check Existing Conversation
+    // ====================================
+
+    const existingConversation =
+      await Conversation.findOne({
+        participants: {
+          $all: [
+            currentUserId,
+            targetUserId,
+          ],
+        },
+      })
+        .populate(
+          "participants",
+          "fullName username avatar"
+        )
+        .populate(
+          "lastMessage",
+          "sender content createdAt readBy"
+        );
+
+    // ====================================
+    // Return Existing Conversation
+    // ====================================
+
+    if (existingConversation) {
+      return {
+        conversation:
+          existingConversation,
+        created: false,
+      };
+    }
+
+    // ====================================
+    // Create New Conversation
+    // ====================================
+
+    const conversation =
+      await Conversation.create({
+        participants: [
           currentUserId,
           targetUserId,
         ],
-      },
-    }).populate(
+      });
+
+    // ====================================
+    // Populate Participants
+    // ====================================
+
+    await conversation.populate(
       "participants",
       "fullName username avatar"
     );
 
-  // ====================================
-  // Return Existing Conversation
-  // ====================================
-
-  if (existingConversation) {
     return {
-      conversation:
-        existingConversation,
-      created: false,
+      conversation,
+      created: true,
     };
-  }
-
-  // ====================================
-  // Create New Conversation
-  // ====================================
-
-  const conversation =
-    await Conversation.create({
-      participants: [
-        currentUserId,
-        targetUserId,
-      ],
-    });
-
-  // ====================================
-  // Populate Participants
-  // ====================================
-
-  await conversation.populate(
-    "participants",
-    "fullName username avatar"
-  );
-
-  return {
-    conversation,
-    created: true,
   };
-};
 
 // ====================================
 // Get User Conversations
 // ====================================
+
 export const getUserConversationsService =
-  async (userId, page = 1, limit = 20) => {
+  async (
+    userId,
+    page = 1,
+    limit = 20
+  ) => {
+    // ====================================
+    // Verify User
+    // ====================================
+
     const user =
       await User.findById(userId);
 
@@ -107,6 +124,10 @@ export const getUserConversationsService =
         "User not found"
       );
     }
+
+    // ====================================
+    // Pagination
+    // ====================================
 
     const pageNumber =
       Math.max(Number(page), 1);
@@ -120,6 +141,10 @@ export const getUserConversationsService =
     const skip =
       (pageNumber - 1) *
       limitNumber;
+
+    // ====================================
+    // Fetch Conversations
+    // ====================================
 
     const conversations =
       await Conversation.find({
@@ -140,30 +165,79 @@ export const getUserConversationsService =
         .skip(skip)
         .limit(limitNumber);
 
+    // ====================================
+    // Calculate Unread Counts
+    // ====================================
+
+    const conversationsWithUnreadCount =
+      await Promise.all(
+        conversations.map(
+          async (conversation) => {
+            const unreadCount =
+              await Message.countDocuments({
+                conversation:
+                  conversation._id,
+
+                sender: {
+                  $ne: userId,
+                },
+
+                readBy: {
+                  $ne: userId,
+                },
+              });
+
+            return {
+              ...conversation.toObject(),
+              unreadCount,
+            };
+          }
+        )
+      );
+
+    // ====================================
+    // Total Conversations
+    // ====================================
+
     const totalConversations =
       await Conversation.countDocuments({
         participants: userId,
       });
 
+    // ====================================
+    // Return Conversations
+    // ====================================
+
     return {
-      conversations,
+      conversations:
+        conversationsWithUnreadCount,
+
       totalConversations,
-      currentPage: pageNumber,
-      totalPages: Math.ceil(
-        totalConversations /
-          limitNumber
-      ),
+
+      currentPage:
+        pageNumber,
+
+      totalPages:
+        Math.ceil(
+          totalConversations /
+            limitNumber
+        ),
     };
   };
 
 // ====================================
 // Get Single Conversation
 // ====================================
+
 export const getConversationService =
   async (
     currentUserId,
     conversationId
   ) => {
+    // ====================================
+    // Find Conversation
+    // ====================================
+
     const conversation =
       await Conversation.findOne({
         _id: conversationId,
@@ -185,5 +259,30 @@ export const getConversationService =
       );
     }
 
-    return conversation;
+    // ====================================
+    // Calculate Unread Count
+    // ====================================
+
+    const unreadCount =
+      await Message.countDocuments({
+        conversation:
+          conversationId,
+
+        sender: {
+          $ne: currentUserId,
+        },
+
+        readBy: {
+          $ne: currentUserId,
+        },
+      });
+
+    // ====================================
+    // Return Conversation
+    // ====================================
+
+    return {
+      ...conversation.toObject(),
+      unreadCount,
+    };
   };

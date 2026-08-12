@@ -19,6 +19,7 @@ import {
 import {
   getConversationMessages,
   sendMessage,
+  markConversationAsRead,
 } from "@/services/message.service";
 
 import { socket } from "@/socket/socket";
@@ -333,7 +334,6 @@ export default function ChatPage() {
       return [];
     }
 
-    // Never show the currently logged-in user
     return users.filter(
       (developer) =>
         developer?._id?.toString() !==
@@ -343,6 +343,123 @@ export default function ChatPage() {
     searchData,
     user?._id,
   ]);
+
+  // ====================================
+  // Check If Message Is Read
+  // ====================================
+
+  const isMessageRead = (
+    message
+  ) => {
+    if (
+      !Array.isArray(message?.readBy) ||
+      !activeParticipant?._id
+    ) {
+      return false;
+    }
+
+    return message.readBy.some(
+      (reader) => {
+        const readerId =
+          reader?._id || reader;
+
+        return (
+          readerId?.toString() ===
+          activeParticipant._id.toString()
+        );
+      }
+    );
+  };
+
+  // ====================================
+  // Mark Conversation As Read
+  // ====================================
+
+  const handleMarkConversationAsRead =
+    async (conversationId) => {
+      if (!conversationId) {
+        return;
+      }
+
+      try {
+        await markConversationAsRead(
+          conversationId
+        );
+
+        // Immediately remove unread badge.
+        setConversations(
+          (previousConversations) =>
+            previousConversations.map(
+              (conversation) =>
+                conversation?._id?.toString() ===
+                conversationId.toString()
+                  ? {
+                      ...conversation,
+                      unreadCount: 0,
+                    }
+                  : conversation
+            )
+        );
+
+        // Also update currently loaded
+        // messages so read receipts turn blue
+        // immediately when this conversation
+        // is opened.
+        setMessages(
+          (previousMessages) =>
+            previousMessages.map(
+              (message) => {
+                const senderId =
+                  message.sender?._id ||
+                  message.sender;
+
+                // Only incoming messages need
+                // the current user's read status.
+                if (
+                  senderId?.toString() ===
+                  user?._id?.toString()
+                ) {
+                  return message;
+                }
+
+                const alreadyRead =
+                  Array.isArray(
+                    message.readBy
+                  ) &&
+                  message.readBy.some(
+                    (reader) => {
+                      const readerId =
+                        reader?._id ||
+                        reader;
+
+                      return (
+                        readerId?.toString() ===
+                        user?._id?.toString()
+                      );
+                    }
+                  );
+
+                if (alreadyRead) {
+                  return message;
+                }
+
+                return {
+                  ...message,
+                  readBy: [
+                    ...(message.readBy || []),
+                    user._id,
+                  ],
+                };
+              }
+            )
+        );
+      } catch (error) {
+        console.error(
+          "❌ Failed to mark conversation as read:",
+          error
+        );
+      }
+    };
 
   // ====================================
   // Select Conversation
@@ -365,12 +482,20 @@ export default function ChatPage() {
         const conversationData =
           unwrapResponse(response);
 
-        setSelectedConversation(
+        const openedConversation =
           conversationData ||
-            conversation
+          conversation;
+
+        setSelectedConversation(
+          openedConversation
         );
 
         setShowConversationList(false);
+
+        // Mark conversation as read.
+        await handleMarkConversationAsRead(
+          conversation._id
+        );
 
         setTimeout(() => {
           inputRef.current?.focus();
@@ -386,6 +511,10 @@ export default function ChatPage() {
         );
 
         setShowConversationList(false);
+
+        await handleMarkConversationAsRead(
+          conversation?._id
+        );
       }
     };
 
@@ -432,8 +561,6 @@ export default function ChatPage() {
           return;
         }
 
-        // Add conversation if it isn't
-        // already in the list.
         setConversations(
           (previousConversations) => {
             const exists =
@@ -444,21 +571,32 @@ export default function ChatPage() {
               );
 
             if (exists) {
-              return previousConversations;
+              return previousConversations.map(
+                (item) =>
+                  item?._id?.toString() ===
+                  conversation._id.toString()
+                    ? {
+                        ...item,
+                        ...conversation,
+                        unreadCount: 0,
+                      }
+                    : item
+              );
             }
 
             return [
-              conversation,
+              {
+                ...conversation,
+                unreadCount: 0,
+              },
               ...previousConversations,
             ];
           }
         );
 
-        // Close modal
         setNewChatOpen(false);
         setNewChatSearch("");
 
-        // Open conversation
         await handleSelectConversation(
           conversation
         );
@@ -601,10 +739,7 @@ export default function ChatPage() {
         message
       );
 
-      if (
-        !selectedConversation?._id ||
-        !message
-      ) {
+      if (!message) {
         return;
       }
 
@@ -616,32 +751,94 @@ export default function ChatPage() {
         return;
       }
 
+      const conversationId =
+        messageConversationId.toString();
+
+      const activeConversationId =
+        selectedConversation?._id?.toString();
+
+      // ====================================
+      // Message belongs to active chat
+      // ====================================
+
       if (
-        messageConversationId.toString() !==
-        selectedConversation._id.toString()
+        activeConversationId ===
+        conversationId
       ) {
+        setMessages(
+          (previousMessages) => {
+            const messageId =
+              message._id?.toString();
+
+            const alreadyExists =
+              previousMessages.some(
+                (existingMessage) =>
+                  existingMessage._id?.toString() ===
+                  messageId
+              );
+
+            if (alreadyExists) {
+              return previousMessages;
+            }
+
+            return [
+              ...previousMessages,
+              message,
+            ];
+          }
+        );
+
+        // Active conversation is already open,
+        // so incoming message is immediately read.
+        handleMarkConversationAsRead(
+          conversationId
+        );
+
         return;
       }
 
-      setMessages(
-        (previousMessages) => {
-          const messageId =
-            message._id?.toString();
+      // ====================================
+      // Message belongs to another chat
+      // ====================================
 
-          const alreadyExists =
-            previousMessages.some(
-              (existingMessage) =>
-                existingMessage._id?.toString() ===
-                messageId
+      setConversations(
+        (previousConversations) => {
+          const existingConversation =
+            previousConversations.find(
+              (conversation) =>
+                conversation?._id?.toString() ===
+                conversationId
             );
 
-          if (alreadyExists) {
-            return previousMessages;
+          if (!existingConversation) {
+            fetchConversations();
+
+            return previousConversations;
           }
 
+          const updatedConversation = {
+            ...existingConversation,
+
+            lastMessage: message,
+
+            lastMessageAt:
+              message.createdAt,
+
+            unreadCount:
+              Number(
+                existingConversation.unreadCount ||
+                  0
+              ) + 1,
+          };
+
           return [
-            ...previousMessages,
-            message,
+            updatedConversation,
+
+            ...previousConversations.filter(
+              (conversation) =>
+                conversation?._id?.toString() !==
+                conversationId
+            ),
           ];
         }
       );
@@ -658,7 +855,9 @@ export default function ChatPage() {
         handleNewMessage
       );
     };
-  }, [selectedConversation]);
+  }, [
+    selectedConversation,
+  ]);
 
   // ====================================
   // Send Message
@@ -716,12 +915,36 @@ export default function ChatPage() {
 
         setContent("");
 
+        // Update conversation locally.
+        setConversations(
+          (previousConversations) => {
+            const conversationId =
+              selectedConversation._id.toString();
+
+            const updated =
+              previousConversations.map(
+                (conversation) =>
+                  conversation?._id?.toString() ===
+                  conversationId
+                    ? {
+                        ...conversation,
+                        lastMessage:
+                          sentMessage,
+                        lastMessageAt:
+                          sentMessage?.createdAt,
+                        unreadCount: 0,
+                      }
+                    : conversation
+              );
+
+            return updated;
+          }
+        );
+
         setTimeout(() => {
           inputRef.current?.focus();
         }, 0);
 
-        // Refresh conversation list so
-        // latest message can appear.
         fetchConversations();
       } catch (error) {
         console.error(
@@ -872,6 +1095,7 @@ export default function ChatPage() {
                 "
               >
                 <Plus className="h-4 w-4" />
+
                 <span className="hidden sm:inline">
                   New chat
                 </span>
@@ -995,6 +1219,12 @@ export default function ChatPage() {
                       conversation.lastMessage
                         ?.createdAt;
 
+                    const unreadCount =
+                      Number(
+                        conversation?.unreadCount ||
+                          0
+                      );
+
                     return (
                       <button
                         key={
@@ -1071,26 +1301,53 @@ export default function ChatPage() {
                                 ${
                                   isActive
                                     ? "font-semibold text-primary"
-                                    : "font-medium"
+                                    : unreadCount > 0
+                                      ? "font-semibold"
+                                      : "font-medium"
                                 }
                               `}
                             >
                               {participantName}
                             </p>
 
-                            {lastMessageTime && (
-                              <span
-                                className="
-                                  shrink-0
-                                  text-[10px]
-                                  text-muted-foreground
-                                "
-                              >
-                                {formatTime(
-                                  lastMessageTime
-                                )}
-                              </span>
-                            )}
+                            <div className="flex shrink-0 items-center gap-2">
+                              {lastMessageTime && (
+                                <span
+                                  className="
+                                    text-[10px]
+                                    text-muted-foreground
+                                  "
+                                >
+                                  {formatTime(
+                                    lastMessageTime
+                                  )}
+                                </span>
+                              )}
+
+                              {/* Unread Badge */}
+
+                              {unreadCount > 0 && (
+                                <span
+                                  className="
+                                    flex
+                                    h-5
+                                    min-w-5
+                                    items-center
+                                    justify-center
+                                    rounded-full
+                                    bg-primary
+                                    px-1.5
+                                    text-[10px]
+                                    font-bold
+                                    text-primary-foreground
+                                  "
+                                >
+                                  {unreadCount > 99
+                                    ? "99+"
+                                    : unreadCount}
+                                </span>
+                              )}
+                            </div>
                           </div>
 
                           <p className="truncate text-xs text-muted-foreground">
@@ -1101,12 +1358,16 @@ export default function ChatPage() {
 
                           {lastMessage && (
                             <p
-                              className="
+                              className={`
                                 mt-1
                                 truncate
                                 text-xs
-                                text-muted-foreground
-                              "
+                                ${
+                                  unreadCount > 0
+                                    ? "font-medium text-foreground"
+                                    : "text-muted-foreground"
+                                }
+                              `}
                             >
                               {lastMessage}
                             </p>
@@ -1390,6 +1651,12 @@ export default function ChatPage() {
                           ?.toString() ===
                         user?._id?.toString();
 
+                      const read =
+                        isOwnMessage &&
+                        isMessageRead(
+                          message
+                        );
+
                       return (
                         <div
                           key={
@@ -1438,24 +1705,54 @@ export default function ChatPage() {
                               {message.content}
                             </div>
 
-                            <p
+                            {/* ====================================
+                                Message Time + Read Receipt
+                            ==================================== */}
+
+                            <div
                               className={`
                                 mt-1
+                                flex
+                                items-center
+                                gap-1
                                 px-1
                                 text-[10px]
                                 text-muted-foreground
 
                                 ${
                                   isOwnMessage
-                                    ? "text-right"
-                                    : "text-left"
+                                    ? "justify-end"
+                                    : "justify-start"
                                 }
                               `}
                             >
-                              {formatTime(
-                                message.createdAt
+                              <span>
+                                {formatTime(
+                                  message.createdAt
+                                )}
+                              </span>
+
+                              {isOwnMessage && (
+                                <span
+                                  title={
+                                    read
+                                      ? "Read"
+                                      : "Delivered"
+                                  }
+                                  className={`
+                                    font-semibold
+                                    tracking-[-2px]
+                                    ${
+                                      read
+                                        ? "text-blue-500"
+                                        : "text-muted-foreground"
+                                    }
+                                  `}
+                                >
+                                  ✓✓
+                                </span>
                               )}
-                            </p>
+                            </div>
                           </div>
                         </div>
                       );

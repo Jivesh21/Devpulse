@@ -4,13 +4,15 @@ import ApiResponse from "../utils/ApiResponse.js";
 import {
   sendMessageService,
   getConversationMessagesService,
+  markConversationAsReadService,
 } from "../services/message.service.js";
 
 // ====================================
 // Send Message
 // ====================================
-export const sendMessage = asyncHandler(
-  async (req, res) => {
+
+export const sendMessage =
+  asyncHandler(async (req, res) => {
     const {
       conversationId,
       content,
@@ -38,16 +40,17 @@ export const sendMessage = asyncHandler(
         "Message sent successfully"
       )
     );
-  }
-);
+  });
 
 // ====================================
 // Get Conversation Messages
 // ====================================
+
 export const getConversationMessages =
   asyncHandler(async (req, res) => {
-    const { conversationId } =
-      req.params;
+    const {
+      conversationId,
+    } = req.params;
 
     const {
       page = 1,
@@ -67,6 +70,31 @@ export const getConversationMessages =
         200,
         result,
         "Messages fetched successfully"
+      )
+    );
+  });
+
+// ====================================
+// Mark Conversation As Read
+// ====================================
+
+export const markConversationAsRead =
+  asyncHandler(async (req, res) => {
+    const {
+      conversationId,
+    } = req.params;
+
+    const result =
+      await markConversationAsReadService(
+        req.user._id,
+        conversationId
+      );
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        result,
+        "Conversation marked as read"
       )
     );
   });

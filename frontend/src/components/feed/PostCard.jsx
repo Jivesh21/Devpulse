@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import {
   Avatar,
@@ -51,6 +51,8 @@ import EditPostDialog from "./EditPostDialog";
 import DeletePostDialog from "./DeletePostDialog";
 
 function PostCard({ post }) {
+  const navigate = useNavigate();
+
   const [showComments, setShowComments] =
     useState(false);
 
@@ -64,6 +66,20 @@ function PostCard({ post }) {
 
   const isOwner =
     user?._id === post.author?._id;
+
+  // ====================================
+  // Author
+  // ====================================
+
+  const authorId = post.author?._id;
+  const authorUsername =
+    post.author?.username;
+console.log("POST AUTHOR DATA:", post.author);
+console.log("AUTHOR ID:", authorId);
+console.log("AUTHOR USERNAME:", authorUsername);
+  const authorName =
+    post.author?.fullName ||
+    "Developer";
 
   // ====================================
   // Like
@@ -103,8 +119,6 @@ function PostCard({ post }) {
   // Follow
   // ====================================
 
-  const authorId = post.author?._id;
-
   const {
     data: followStatusData,
   } = useFollowStatus(authorId);
@@ -115,6 +129,31 @@ function PostCard({ post }) {
   const isFollowing =
     followStatusData?.data?.isFollowing ||
     false;
+
+  // ====================================
+  // Author Navigation
+  // ====================================
+
+  const handleAuthorClick = (event) => {
+    event.stopPropagation();
+
+    if (!authorUsername) {
+      event.preventDefault();
+
+      console.error(
+        "Cannot open profile: author username is missing.",
+        post.author
+      );
+
+      return;
+    }
+
+    navigate(
+      `/profile/${encodeURIComponent(
+        authorUsername
+      )}`
+    );
+  };
 
   // ====================================
   // Render
@@ -152,15 +191,22 @@ function PostCard({ post }) {
         "
       >
         {/* ================================= */}
-        {/* Author + Profile Link */}
+        {/* Author */}
         {/* ================================= */}
 
         <Link
-          to={`/profile/${post.author?.username}`}
+          to={
+            authorUsername
+              ? `/profile/${encodeURIComponent(
+                  authorUsername
+                )}`
+              : "#"
+          }
+          onClick={handleAuthorClick}
           className="
             group/author
             relative
-            z-10
+            z-30
             flex
             min-w-0
             flex-1
@@ -189,10 +235,7 @@ function PostCard({ post }) {
           >
             <AvatarImage
               src={post.author?.avatar}
-              alt={
-                post.author?.fullName ||
-                "Developer"
-              }
+              alt={authorName}
             />
 
             <AvatarFallback
@@ -202,7 +245,7 @@ function PostCard({ post }) {
                 text-primary
               "
             >
-              {post.author?.fullName
+              {authorName
                 ?.charAt(0)
                 ?.toUpperCase() || "U"}
             </AvatarFallback>
@@ -218,7 +261,7 @@ function PostCard({ post }) {
                 group-hover/author:text-primary
               "
             >
-              {post.author?.fullName}
+              {authorName}
             </h3>
 
             <p
@@ -228,7 +271,7 @@ function PostCard({ post }) {
                 text-muted-foreground
               "
             >
-              @{post.author?.username}
+              @{authorUsername || "developer"}
             </p>
           </div>
         </Link>
@@ -240,14 +283,14 @@ function PostCard({ post }) {
         <div
           className="
             relative
-            z-20
+            z-40
             flex
             shrink-0
             items-center
             gap-2
           "
         >
-          {/* Follow Button */}
+          {/* Follow */}
 
           {!isOwner && authorId && (
             <Button
@@ -260,6 +303,8 @@ function PostCard({ post }) {
               }
               className="
                 interactive
+                relative
+                z-50
                 h-9
                 rounded-xl
                 px-3
@@ -299,6 +344,8 @@ function PostCard({ post }) {
                   variant="ghost"
                   size="icon"
                   className="
+                    relative
+                    z-50
                     h-8
                     w-8
                     rounded-lg

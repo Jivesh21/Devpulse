@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Camera,
   Edit3,
@@ -7,7 +8,11 @@ import {
   GitBranch,
   Link as LinkIcon,
   Download,
+  MessageCircle,
+  Loader2,
 } from "lucide-react";
+
+import { useNavigate } from "react-router-dom";
 
 import {
   Avatar,
@@ -22,6 +27,8 @@ import {
   useToggleFollow,
 } from "@/hooks/useFollow";
 
+import { createOrGetConversation } from "@/services/conversation.service";
+
 function ProfileHeader({
   profile,
   isOwner,
@@ -35,6 +42,11 @@ function ProfileHeader({
   onEditClick,
   onDownloadResume,
 }) {
+  const navigate = useNavigate();
+
+  const [startingChat, setStartingChat] =
+    useState(false);
+
   const { data: followStatusData } =
     useFollowStatus(profile._id);
 
@@ -42,7 +54,8 @@ function ProfileHeader({
     useToggleFollow(profile._id);
 
   const isFollowing =
-    followStatusData?.data?.isFollowing || false;
+    followStatusData?.data?.isFollowing ||
+    false;
 
   // ====================================
   // GitHub Integration
@@ -66,6 +79,55 @@ function ProfileHeader({
     profile.website ||
     githubUrl ||
     profile.linkedin;
+
+  // ====================================
+  // Start Chat
+  // ====================================
+
+  const handleStartChat = async () => {
+    if (startingChat || !profile?._id) {
+      return;
+    }
+
+    try {
+      setStartingChat(true);
+
+      const response =
+        await createOrGetConversation(
+          profile._id
+        );
+
+      console.log(
+        "💬 Conversation response:",
+        response
+      );
+
+      const conversationId =
+        response?.data?.conversation?._id;
+
+      if (!conversationId) {
+        console.error(
+          "❌ Conversation ID not found:",
+          response
+        );
+
+        return;
+      }
+
+      navigate("/messages", {
+        state: {
+          conversationId,
+        },
+      });
+    } catch (error) {
+      console.error(
+        "❌ Failed to start conversation:",
+        error
+      );
+    } finally {
+      setStartingChat(false);
+    }
+  };
 
   return (
     <section
@@ -140,8 +202,6 @@ function ProfileHeader({
           </>
         )}
 
-        {/* Change Cover */}
-
         {isOwner && (
           <Button
             size="icon"
@@ -175,7 +235,9 @@ function ProfileHeader({
 
       <div className="px-5 pb-5 sm:px-7 sm:pb-6">
 
+        {/* ================================= */}
         {/* Avatar */}
+        {/* ================================= */}
 
         <div className="relative -mt-14 w-fit sm:-mt-16">
           <Avatar
@@ -208,8 +270,6 @@ function ProfileHeader({
                 ?.toUpperCase() || "U"}
             </AvatarFallback>
           </Avatar>
-
-          {/* Change Avatar */}
 
           {isOwner && (
             <Button
@@ -248,7 +308,9 @@ function ProfileHeader({
             sm:justify-between
           "
         >
+          {/* ================================= */}
           {/* Identity */}
+          {/* ================================= */}
 
           <div className="min-w-0">
 
@@ -266,8 +328,6 @@ function ProfileHeader({
             <p className="mt-1 text-sm text-muted-foreground">
               @{profile.username}
             </p>
-
-            {/* Bio */}
 
             {profile.bio && (
               <p
@@ -290,8 +350,6 @@ function ProfileHeader({
             {hasSocialLinks && (
               <div className="mt-3 flex flex-wrap gap-2">
 
-                {/* Website */}
-
                 {profile.website && (
                   <ProfileLink
                     href={profile.website}
@@ -301,8 +359,6 @@ function ProfileHeader({
                     label="Website"
                   />
                 )}
-
-                {/* GitHub */}
 
                 {githubUrl && (
                   <ProfileLink
@@ -318,8 +374,6 @@ function ProfileHeader({
                   />
                 )}
 
-                {/* LinkedIn */}
-
                 {profile.linkedin && (
                   <ProfileLink
                     href={profile.linkedin}
@@ -333,7 +387,9 @@ function ProfileHeader({
               </div>
             )}
 
+            {/* ================================= */}
             {/* Joined */}
+            {/* ================================= */}
 
             {profile.createdAt && (
               <div
@@ -376,8 +432,6 @@ function ProfileHeader({
               gap-2
             "
           >
-            {/* Owner Actions */}
-
             {isOwner ? (
               <Button
                 onClick={onEditClick}
@@ -393,33 +447,85 @@ function ProfileHeader({
                 Edit Profile
               </Button>
             ) : (
-              <Button
-                onClick={() =>
-                  toggleFollowMutation.mutate()
-                }
-                disabled={
-                  toggleFollowMutation.isPending
-                }
-                variant={
-                  isFollowing
-                    ? "secondary"
-                    : "default"
-                }
-                className="
-                  h-10
-                  min-w-28
-                  rounded-xl
-                "
-              >
-                {toggleFollowMutation.isPending
-                  ? "Loading..."
-                  : isFollowing
-                    ? "Following"
-                    : "Follow"}
-              </Button>
+              <>
+                {/* ================================= */}
+                {/* Follow */}
+                {/* ================================= */}
+
+                <Button
+                  type="button"
+                  onClick={() =>
+                    toggleFollowMutation.mutate()
+                  }
+                  disabled={
+                    toggleFollowMutation.isPending
+                  }
+                  variant={
+                    isFollowing
+                      ? "secondary"
+                      : "default"
+                  }
+                  className="
+                    h-10
+                    min-w-28
+                    rounded-xl
+                  "
+                >
+                  {toggleFollowMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Updating...
+                    </>
+                  ) : isFollowing ? (
+                    "Following"
+                  ) : (
+                    "Follow"
+                  )}
+                </Button>
+
+                {/* ================================= */}
+                {/* Start a Chat */}
+                {/* ================================= */}
+
+                <Button
+                  type="button"
+                  onClick={handleStartChat}
+                  disabled={startingChat}
+                  variant="outline"
+                  className="
+                    h-10
+                    gap-2
+                    rounded-xl
+                    border-primary/20
+                    bg-primary/5
+                    px-4
+                    text-primary
+                    transition-all
+                    duration-200
+                    hover:border-primary/40
+                    hover:bg-primary/10
+                    hover:text-primary
+                    active:scale-[0.98]
+                  "
+                >
+                  {startingChat ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Opening...
+                    </>
+                  ) : (
+                    <>
+                      <MessageCircle className="h-4 w-4" />
+                      Start a chat
+                    </>
+                  )}
+                </Button>
+              </>
             )}
 
-            {/* Resume Button */}
+            {/* ================================= */}
+            {/* Resume */}
+            {/* ================================= */}
 
             <Button
               type="button"

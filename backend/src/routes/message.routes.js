@@ -3,6 +3,7 @@ import { Router } from "express";
 import {
   sendMessage,
   getConversationMessages,
+  markConversationAsRead,
 } from "../controllers/message.controller.js";
 
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -25,6 +26,13 @@ router.get(
   "/:conversationId",
   verifyJWT,
   getConversationMessages
+);
+
+// Mark conversation as read
+router.patch(
+  "/:conversationId/read",
+  verifyJWT,
+  markConversationAsRead
 );
 
 export default router;

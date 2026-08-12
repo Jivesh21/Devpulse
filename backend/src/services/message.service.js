@@ -7,9 +7,6 @@ import { getIO } from "../socket/index.js";
 // Send Message
 // ====================================
 
-// ====================================
-// Send Message
-// ====================================
 export const sendMessageService = async (
   currentUserId,
   conversationId,
@@ -26,7 +23,8 @@ export const sendMessageService = async (
     );
   }
 
-  const trimmedContent = content.trim();
+  const trimmedContent =
+    content.trim();
 
   // ====================================
   // Find Conversation
@@ -196,5 +194,64 @@ export const getConversationMessagesService =
         totalMessages /
           limitNumber
       ),
+    };
+  };
+
+// ====================================
+// Mark Conversation As Read
+// ====================================
+
+export const markConversationAsReadService =
+  async (
+    currentUserId,
+    conversationId
+  ) => {
+    // ====================================
+    // Verify Conversation Access
+    // ====================================
+
+    const conversation =
+      await Conversation.findOne({
+        _id: conversationId,
+        participants: currentUserId,
+      });
+
+    if (!conversation) {
+      throw new ApiError(
+        404,
+        "Conversation not found"
+      );
+    }
+
+    // ====================================
+    // Mark Received Messages As Read
+    // ====================================
+
+    const result =
+      await Message.updateMany(
+        {
+          conversation:
+            conversationId,
+
+          sender: {
+            $ne: currentUserId,
+          },
+
+          readBy: {
+            $ne: currentUserId,
+          },
+        },
+        {
+          $addToSet: {
+            readBy: currentUserId,
+          },
+        }
+      );
+
+    return {
+      conversationId,
+
+      markedAsRead:
+        result.modifiedCount,
     };
   };

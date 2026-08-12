@@ -7,6 +7,7 @@ import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileSkills from "@/components/profile/ProfileSkills";
 import ProfileCareer from "@/components/profile/ProfileCareer";
 import ProfilePosts from "@/components/profile/ProfilePosts";
+import ProfileGitHub from "@/components/profile/ProfileGitHub";
 import PortfolioSection from "@/components/profile/portfolio/PortfolioSection";
 
 import EditProfileDialog from "@/components/profile/EditProfileDialog";
@@ -212,6 +213,7 @@ function ProfilePage() {
   return (
     <DashboardLayout>
       <main className="mx-auto w-full max-w-6xl px-4 py-6">
+
         {/* ================================= */}
         {/* Profile Header */}
         {/* ================================= */}
@@ -267,12 +269,25 @@ function ProfilePage() {
         {/* ================================= */}
 
         <div className="mt-5 space-y-5">
+
           <ProfileSkills
             skills={profile.skills || []}
           />
 
           <ProfileCareer
             profile={profile}
+          />
+
+          {/* ================================= */}
+          {/* Public GitHub */}
+          {/* ================================= */}
+
+          <ProfileGitHub
+            username={
+              profile.githubIntegration?.connected
+                ? profile.githubIntegration.username
+                : null
+            }
           />
 
           <PortfolioSection

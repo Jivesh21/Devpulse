@@ -7,6 +7,7 @@ import {
 import {
   connectGithub,
   getConnectedGithub,
+  getPublicGithubProfile,
   disconnectGithub,
 } from "@/services/github.service";
 
@@ -33,6 +34,25 @@ export const useConnectedGithub = () => {
 };
 
 // ====================================
+// Public GitHub Profile
+// ====================================
+
+export const usePublicGithubProfile = (
+  username
+) => {
+  return useQuery({
+    queryKey: [
+      "github-public-profile",
+      username,
+    ],
+    queryFn: () =>
+      getPublicGithubProfile(username),
+    enabled: !!username,
+    retry: false,
+  });
+};
+
+// ====================================
 // Disconnect GitHub
 // ====================================
 
@@ -46,6 +66,10 @@ export const useDisconnectGithub = () => {
     onSuccess: () => {
       queryClient.removeQueries({
         queryKey: ["github-connected"],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["profile"],
       });
     },
   });

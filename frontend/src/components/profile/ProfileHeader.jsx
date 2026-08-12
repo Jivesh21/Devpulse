@@ -44,6 +44,29 @@ function ProfileHeader({
   const isFollowing =
     followStatusData?.data?.isFollowing || false;
 
+  // ====================================
+  // GitHub Integration
+  // ====================================
+
+  const githubUsername =
+    profile.githubIntegration?.connected &&
+    profile.githubIntegration?.username
+      ? profile.githubIntegration.username
+      : null;
+
+  const githubUrl = githubUsername
+    ? `https://github.com/${githubUsername}`
+    : profile.github || "";
+
+  // ====================================
+  // Social Links
+  // ====================================
+
+  const hasSocialLinks =
+    profile.website ||
+    githubUrl ||
+    profile.linkedin;
+
   return (
     <section
       className="
@@ -260,12 +283,14 @@ function ProfileHeader({
               </p>
             )}
 
-            {/* Links */}
+            {/* ================================= */}
+            {/* Social Links */}
+            {/* ================================= */}
 
-            {(profile.website ||
-              profile.github ||
-              profile.linkedin) && (
+            {hasSocialLinks && (
               <div className="mt-3 flex flex-wrap gap-2">
+
+                {/* Website */}
 
                 {profile.website && (
                   <ProfileLink
@@ -277,15 +302,23 @@ function ProfileHeader({
                   />
                 )}
 
-                {profile.github && (
+                {/* GitHub */}
+
+                {githubUrl && (
                   <ProfileLink
-                    href={profile.github}
+                    href={githubUrl}
                     icon={
                       <GitBranch className="h-3.5 w-3.5" />
                     }
-                    label="GitHub"
+                    label={
+                      githubUsername
+                        ? `GitHub @${githubUsername}`
+                        : "GitHub"
+                    }
                   />
                 )}
+
+                {/* LinkedIn */}
 
                 {profile.linkedin && (
                   <ProfileLink
@@ -360,7 +393,6 @@ function ProfileHeader({
                 Edit Profile
               </Button>
             ) : (
-              /* Visitor Follow Button */
               <Button
                 onClick={() =>
                   toggleFollowMutation.mutate()

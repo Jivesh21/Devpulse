@@ -25,6 +25,20 @@ export const getConnectedGithub = async () => {
 };
 
 // ====================================
+// Get Public GitHub Profile
+// ====================================
+
+export const getPublicGithubProfile = async (
+  username
+) => {
+  const { data } = await api.get(
+    `/github/${username}`
+  );
+
+  return data;
+};
+
+// ====================================
 // Disconnect GitHub
 // ====================================
 

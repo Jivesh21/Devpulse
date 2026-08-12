@@ -8,6 +8,7 @@ import {
 import {
   createPost,
   getAllPosts,
+  getPostById,
   updatePost,
   deletePost,
   toggleLike,
@@ -39,7 +40,16 @@ export function usePosts() {
     queryFn: getAllPosts,
   });
 }
-
+// ================================
+// Get Single Post
+// ================================
+export function usePost(postId) {
+  return useQuery({
+    queryKey: ["post", postId],
+    queryFn: () => getPostById(postId),
+    enabled: !!postId,
+  });
+}
 // ================================
 // Update Post
 // ================================

@@ -15,14 +15,16 @@ import {
   UserPlus,
 } from "lucide-react";
 
+import { useNavigate } from "react-router-dom";
+
 import {
   useMarkAsRead,
   useDeleteNotification,
 } from "@/hooks/useNotification";
 
-function NotificationItem({
-  notification,
-}) {
+function NotificationItem({ notification }) {
+  const navigate = useNavigate();
+
   const markAsReadMutation =
     useMarkAsRead();
 
@@ -30,6 +32,10 @@ function NotificationItem({
     useDeleteNotification();
 
   const sender = notification.sender;
+
+  // ====================================
+  // Notification Information
+  // ====================================
 
   const getNotificationInfo = () => {
     switch (notification.type) {
@@ -64,7 +70,69 @@ function NotificationItem({
     icon: Icon,
   } = getNotificationInfo();
 
-  const handleMarkAsRead = () => {
+  // ====================================
+  // Notification Navigation
+  // ====================================
+
+  const getNotificationPath = () => {
+    // Follow → sender profile
+    if (
+      notification.type === "follow" &&
+      sender?.username
+    ) {
+      return `/profile/${encodeURIComponent(
+        sender.username
+      )}`;
+    }
+
+    // Like / Comment → related post
+    if (
+      (notification.type === "like" ||
+        notification.type === "comment") &&
+      notification.post?._id
+    ) {
+      return `/posts/${notification.post._id}`;
+    }
+
+    return null;
+  };
+
+  // ====================================
+  // Click Notification
+  // ====================================
+
+  const handleNotificationClick = async () => {
+    const path =
+      getNotificationPath();
+
+    // Mark unread notification as read
+    if (!notification.isRead) {
+      try {
+        await markAsReadMutation.mutateAsync(
+          notification._id
+        );
+      } catch (error) {
+        console.error(
+          "Failed to mark notification as read:",
+          error
+        );
+      }
+    }
+
+    // Navigate if destination exists
+    if (path) {
+      navigate(path);
+    }
+  };
+
+  // ====================================
+  // Mark As Read
+  // ====================================
+
+  const handleMarkAsRead = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
     if (
       notification.isRead ||
       markAsReadMutation.isPending
@@ -76,6 +144,10 @@ function NotificationItem({
       notification._id
     );
   };
+
+  // ====================================
+  // Delete
+  // ====================================
 
   const handleDelete = (event) => {
     event.preventDefault();
@@ -104,15 +176,20 @@ function NotificationItem({
         transition-all
         duration-200
         sm:px-6
+
         ${
           notification.isRead
             ? "bg-background/20"
             : "bg-primary/[0.06]"
         }
+
         hover:bg-muted/30
       `}
     >
+      {/* ================================= */}
       {/* Unread Indicator */}
+      {/* ================================= */}
+
       {!notification.isRead && (
         <span
           className="
@@ -134,7 +211,7 @@ function NotificationItem({
 
       <button
         type="button"
-        onClick={handleMarkAsRead}
+        onClick={handleNotificationClick}
         disabled={
           markAsReadMutation.isPending
         }
@@ -149,7 +226,10 @@ function NotificationItem({
           disabled:cursor-default
         "
       >
+        {/* ================================= */}
         {/* Avatar */}
+        {/* ================================= */}
+
         <div className="relative shrink-0">
           <Avatar
             className="
@@ -180,6 +260,7 @@ function NotificationItem({
           </Avatar>
 
           {/* Notification Type */}
+
           <span
             className="
               absolute
@@ -201,12 +282,16 @@ function NotificationItem({
           </span>
         </div>
 
+        {/* ================================= */}
         {/* Content */}
+        {/* ================================= */}
+
         <div className="min-w-0 flex-1">
           <p
             className={`
               text-sm
               leading-6
+
               ${
                 notification.isRead
                   ? "text-muted-foreground"
@@ -245,7 +330,15 @@ function NotificationItem({
                 text-primary
               "
             >
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+              <span
+                className="
+                  h-1.5
+                  w-1.5
+                  rounded-full
+                  bg-primary
+                "
+              />
+
               Unread
             </div>
           )}
@@ -269,6 +362,7 @@ function NotificationItem({
         "
       >
         {/* Mark as read */}
+
         {!notification.isRead && (
           <Button
             type="button"
@@ -293,6 +387,7 @@ function NotificationItem({
         )}
 
         {/* Delete */}
+
         <Button
           type="button"
           variant="ghost"
@@ -318,9 +413,9 @@ function NotificationItem({
   );
 }
 
-/* ====================================
-   Date Formatting
-==================================== */
+// ====================================
+// Date Formatting
+// ====================================
 
 function formatNotificationDate(date) {
   if (!date) {
@@ -377,7 +472,8 @@ function formatNotificationDate(date) {
     "en-US",
     {
       month: "short",
-      day: "numeric",
+      day:
+        "numeric",
       year:
         notificationDate.getFullYear() !==
         now.getFullYear()

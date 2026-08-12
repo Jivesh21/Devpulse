@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useAuthContext } from "@/context/AuthContext";
-
+import { useUnreadCount } from "@/hooks/useNotification";
 import {
   Home,
   User,
@@ -19,7 +19,11 @@ function LeftSidebar() {
   const { user } = useAuthContext();
   const location = useLocation();
   const navigate = useNavigate();
+const { data: unreadData } =
+  useUnreadCount();
 
+const unreadCount =
+  unreadData?.data?.unreadCount || 0;
   const NAV_ITEMS = [
     {
       icon: Home,
@@ -181,25 +185,56 @@ function LeftSidebar() {
                       />
                     )}
 
-                    <Icon
-                      className={`
-                        h-5
-                        w-5
-                        shrink-0
-                        transition-transform
-                        duration-200
-                        group-hover:scale-105
+                  <div className="relative shrink-0">
+  <Icon
+    className={`
+      h-5
+      w-5
+      transition-transform
+      duration-200
+      group-hover:scale-105
 
-                        ${
-                          isActive
-                            ? "text-primary"
-                            : ""
-                        }
-                      `}
-                      strokeWidth={
-                        isActive ? 2.5 : 2
-                      }
-                    />
+      ${
+        isActive
+          ? "text-primary"
+          : ""
+      }
+    `}
+    strokeWidth={
+      isActive ? 2.5 : 2
+    }
+  />
+
+  {label === "Notifications" &&
+    unreadCount > 0 && (
+      <span
+        className="
+          absolute
+          -right-2
+          -top-2
+          flex
+          min-h-4
+          min-w-4
+          items-center
+          justify-center
+          rounded-full
+          bg-primary
+          px-1
+          text-[9px]
+          font-bold
+          leading-none
+          text-primary-foreground
+          shadow-sm
+          ring-2
+          ring-background
+        "
+      >
+        {unreadCount > 99
+          ? "99+"
+          : unreadCount}
+      </span>
+    )}
+</div>
 
                     <span className="hidden flex-1 text-left xl:block">
                       {label}

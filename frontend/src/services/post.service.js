@@ -21,7 +21,16 @@ export const getAllPosts = async ({ page = 1, limit = 10 } = {}) => {
 
   return data;
 };
+// ================================
+// Get Single Post
+// ================================
+export const getPostById = async (postId) => {
+  const { data } = await api.get(
+    `/posts/${postId}`
+  );
 
+  return data;
+};
 // ================================
 // Update Post
 // ================================

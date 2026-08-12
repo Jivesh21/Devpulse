@@ -9,7 +9,7 @@ import RegisterPage from "@/pages/auth/RegisterPage";
 import ResetPasswordPage from "@/pages/auth/ResetPasswordPage";
 import VerifyTwoFactorPage from "@/pages/auth/VerifyTwoFactorPage";
 import VerifyEmailPage from "@/pages/VerifyEmailPage";
-
+import PostPage from "@/pages/post/PostPage";
 import NotificationsPage from "@/pages/NotificationsPage";
 import FeedPage from "@/pages/feed/FeedPage";
 import ProfilePage from "@/pages/profile/ProfilePage";
@@ -94,7 +94,14 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
-
+{
+  path: "/posts/:postId",
+  element: (
+    <ProtectedRoute>
+      <PostPage />
+    </ProtectedRoute>
+  ),
+},
   {
     path: "/network",
     element: (

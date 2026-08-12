@@ -176,7 +176,7 @@ function Navbar() {
           z-50
           w-full
           min-w-0
-          overflow-hidden
+          overflow-visible
           rounded-none
           border-x-0
           border-t-0

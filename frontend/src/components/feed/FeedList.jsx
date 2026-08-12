@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 import {
   Loader2,
@@ -9,6 +10,7 @@ import {
   Trash2,
   Check,
   X,
+  UserPlus,
 } from "lucide-react";
 
 import {
@@ -31,9 +33,90 @@ import {
   useBookmarkStatus,
 } from "@/hooks/useBookmark";
 
+import {
+  useFollowStatus,
+  useToggleFollow,
+} from "@/hooks/useFollow";
+
 import { useAuthContext } from "@/context/AuthContext";
 
 import CommentSection from "@/components/feed/CommentSection";
+
+// ====================================
+// Follow Button
+// ====================================
+
+function FollowButton({ authorId, isOwner }) {
+  const {
+    data: followStatusData,
+  } = useFollowStatus(authorId);
+
+  const toggleFollowMutation =
+    useToggleFollow(authorId);
+
+  if (isOwner || !authorId) {
+    return null;
+  }
+
+  const isFollowing =
+    followStatusData?.data?.isFollowing ||
+    false;
+
+  return (
+    <button
+      type="button"
+      disabled={
+        toggleFollowMutation.isPending
+      }
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        toggleFollowMutation.mutate();
+      }}
+      className="
+        relative
+        z-20
+        flex
+        shrink-0
+        items-center
+        gap-1.5
+        rounded-lg
+        bg-primary/10
+        px-3
+        py-2
+        text-xs
+        font-medium
+        text-primary
+        transition-colors
+        hover:bg-primary/15
+        disabled:pointer-events-none
+        disabled:opacity-50
+      "
+    >
+      {toggleFollowMutation.isPending ? (
+        <Loader2
+          className="
+            h-4
+            w-4
+            animate-spin
+          "
+        />
+      ) : isFollowing ? (
+        "Following"
+      ) : (
+        <>
+          <UserPlus className="h-4 w-4" />
+          Follow
+        </>
+      )}
+    </button>
+  );
+}
+
+// ====================================
+// Feed List
+// ====================================
 
 function FeedList() {
   const {
@@ -381,51 +464,117 @@ function FeedList() {
               {/* Post Header */}
               {/* ================================= */}
 
-              <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+              <div
+                className="
+                  flex
+                  min-w-0
+                  items-center
+                  gap-2.5
+                  sm:gap-3
+                "
+              >
+                {/* ================================= */}
+                {/* Author Profile */}
+                {/* ================================= */}
 
-                <Avatar
+                <Link
+                  to={`/profile/${encodeURIComponent(
+                    authorUsername
+                  )}`}
                   className="
-                    h-9
-                    w-9
-                    shrink-0
-                    border
-                    border-border/60
-                    sm:h-10
-                    sm:w-10
+                    group
+                    flex
+                    min-w-0
+                    flex-1
+                    cursor-pointer
+                    items-center
+                    gap-2.5
+                    rounded-xl
+                    outline-none
+                    transition-opacity
+                    hover:opacity-90
+                    focus-visible:ring-2
+                    focus-visible:ring-primary
+                    sm:gap-3
                   "
                 >
-                  <AvatarImage
-                    src={authorAvatar}
-                    alt={authorName}
-                  />
-
-                  <AvatarFallback
+                  <Avatar
                     className="
-                      bg-primary/10
-                      text-primary
+                      h-9
+                      w-9
+                      shrink-0
+                      border
+                      border-border/60
+                      sm:h-10
+                      sm:w-10
                     "
                   >
-                    {authorName
-                      ?.charAt(0)
-                      ?.toUpperCase() || "U"}
-                  </AvatarFallback>
-                </Avatar>
+                    <AvatarImage
+                      src={authorAvatar}
+                      alt={authorName}
+                    />
 
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">
-                    {authorName}
-                  </p>
+                    <AvatarFallback
+                      className="
+                        bg-primary/10
+                        text-primary
+                      "
+                    >
+                      {authorName
+                        ?.charAt(0)
+                        ?.toUpperCase() ||
+                        "U"}
+                    </AvatarFallback>
+                  </Avatar>
 
-                  <p className="truncate text-xs text-muted-foreground">
-                    @{authorUsername}
-                  </p>
-                </div>
+                  <div className="min-w-0">
+                    <p
+                      className="
+                        truncate
+                        text-sm
+                        font-semibold
+                        transition-colors
+                        group-hover:text-primary
+                      "
+                    >
+                      {authorName}
+                    </p>
 
+                    <p
+                      className="
+                        truncate
+                        text-xs
+                        text-muted-foreground
+                      "
+                    >
+                      @{authorUsername}
+                    </p>
+                  </div>
+                </Link>
+
+                {/* ================================= */}
+                {/* Follow */}
+                {/* ================================= */}
+
+                <FollowButton
+                  authorId={authorId}
+                  isOwner={isOwner}
+                />
+
+                {/* ================================= */}
                 {/* Owner Actions */}
+                {/* ================================= */}
 
                 {isOwner && !isEditing && (
-                  <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
-
+                  <div
+                    className="
+                      flex
+                      shrink-0
+                      items-center
+                      gap-0.5
+                      sm:gap-1
+                    "
+                  >
                     <button
                       type="button"
                       onClick={() =>
@@ -485,7 +634,6 @@ function FeedList() {
                         <Trash2 className="h-4 w-4" />
                       )}
                     </button>
-
                   </div>
                 )}
               </div>
@@ -496,7 +644,6 @@ function FeedList() {
 
               {isEditing ? (
                 <div className="mt-4">
-
                   <textarea
                     value={editContent}
                     onChange={(e) =>
@@ -687,7 +834,6 @@ function FeedList() {
                   sm:gap-2
                 "
               >
-
                 {/* Like */}
 
                 <button
@@ -815,7 +961,6 @@ function FeedList() {
                   postId={postId}
                   isEditing={isEditing}
                 />
-
               </div>
             </div>
 

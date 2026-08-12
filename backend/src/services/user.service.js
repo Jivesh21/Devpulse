@@ -1,6 +1,7 @@
 import User from "../models/user.model.js";
 import ApiError from "../utils/ApiError.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+
 // ====================================
 // Update User Profile
 // ====================================
@@ -19,26 +20,32 @@ export const updateProfileService = async (
     certificates,
   } = profileData;
 
-  const updatedUser = await User.findByIdAndUpdate(
-    userId,
-    {
-      bio,
-      skills,
-      github,
-      linkedin,
-      website,
-      experience,
-      education,
-      certificates,
-    },
-    {
-      new: true,
-      runValidators: true,
-    }
-  ).select("-password -refreshToken");
+  const updatedUser =
+    await User.findByIdAndUpdate(
+      userId,
+      {
+        bio,
+        skills,
+        github,
+        linkedin,
+        website,
+        experience,
+        education,
+        certificates,
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    ).select(
+      "-password -refreshToken"
+    );
 
   if (!updatedUser) {
-    throw new ApiError(404, "User not found");
+    throw new ApiError(
+      404,
+      "User not found"
+    );
   }
 
   return updatedUser;
@@ -47,95 +54,109 @@ export const updateProfileService = async (
 // ====================================
 // Get Public User Profile
 // ====================================
-export const getUserProfileService = async (
-  username
-) => {
-  const user = await User.findOne({
-    username: username.toLowerCase(),
-  }).select("-password -refreshToken");
+export const getUserProfileService =
+  async (username) => {
+    const user =
+      await User.findOne({
+        username:
+          username.toLowerCase(),
+      }).select(
+        "-password -refreshToken"
+      );
 
-  if (!user) {
-    throw new ApiError(404, "User not found");
-  }
+    if (!user) {
+      throw new ApiError(
+        404,
+        "User not found"
+      );
+    }
 
-  return user;
-};
+    return user;
+  };
 
 // ====================================
 // Search Users
 // ====================================
-export const searchUsersService = async (
-  query
-) => {
-  if (!query?.trim()) {
-    return [];
-  }
+export const searchUsersService =
+  async (query) => {
+    if (!query?.trim()) {
+      return [];
+    }
 
-  const users = await User.find({
-    $or: [
-      {
-        fullName: {
-          $regex: query,
-          $options: "i",
+    const users = await User.find({
+      $or: [
+        {
+          fullName: {
+            $regex: query,
+            $options: "i",
+          },
         },
-      },
-      {
-        username: {
-          $regex: query,
-          $options: "i",
+        {
+          username: {
+            $regex: query,
+            $options: "i",
+          },
         },
-      },
-    ],
-  })
-    .select(
-      "fullName username avatar bio"
-    )
-    .limit(10);
+      ],
+    })
+      .select(
+        "fullName username avatar bio"
+      )
+      .limit(10);
 
-  return users;
-};
+    return users;
+  };
 
 // ====================================
 // Update Avatar
 // ====================================
-export const updateAvatarService = async (
-  userId,
-  avatarLocalPath
-) => {
-  if (!avatarLocalPath) {
-    throw new ApiError(
-      400,
-      "Avatar image is required"
-    );
-  }
-
-  const avatar = await uploadOnCloudinary(
-    avatarLocalPath
-  );
-
-  if (!avatar) {
-    throw new ApiError(
-      500,
-      "Failed to upload avatar"
-    );
-  }
-
-  const updatedUser = await User.findByIdAndUpdate(
+export const updateAvatarService =
+  async (
     userId,
-    {
-      avatar: avatar.secure_url,
-    },
-    {
-      new: true,
+    avatarLocalPath
+  ) => {
+    if (!avatarLocalPath) {
+      throw new ApiError(
+        400,
+        "Avatar image is required"
+      );
     }
-  ).select("-password -refreshToken");
 
-  if (!updatedUser) {
-    throw new ApiError(404, "User not found");
-  }
+    const avatar =
+      await uploadOnCloudinary(
+        avatarLocalPath
+      );
 
-  return updatedUser;
-};
+    if (!avatar) {
+      throw new ApiError(
+        500,
+        "Failed to upload avatar"
+      );
+    }
+
+    const updatedUser =
+      await User.findByIdAndUpdate(
+        userId,
+        {
+          avatar:
+            avatar.secure_url,
+        },
+        {
+          new: true,
+        }
+      ).select(
+        "-password -refreshToken"
+      );
+
+    if (!updatedUser) {
+      throw new ApiError(
+        404,
+        "User not found"
+      );
+    }
+
+    return updatedUser;
+  };
 
 // ====================================
 // Update Cover Image
@@ -193,11 +214,12 @@ export const updateCoverImageService =
 // ====================================
 export const getCurrentUserService =
   async (userId) => {
-    const user = await User.findById(
-      userId
-    ).select(
-      "-password -refreshToken"
-    );
+    const user =
+      await User.findById(
+        userId
+      ).select(
+        "-password -refreshToken"
+      );
 
     if (!user) {
       throw new ApiError(
@@ -208,13 +230,17 @@ export const getCurrentUserService =
 
     return user;
   };
- // ====================================
+
+// ====================================
 // Suggested Developers
 // ====================================
 export const getSuggestedDevelopersService =
   async (currentUserId) => {
-    // Show every other registered developer. The client displays whether
-    // each person is already followed through the follow-status endpoint.
+    // Show other registered developers.
+    // The client displays whether each person
+    // is already followed through the
+    // follow-status endpoint.
+
     const users = await User.find({
       _id: {
         $ne: currentUserId,
@@ -226,7 +252,7 @@ export const getSuggestedDevelopersService =
       .sort({
         createdAt: -1,
       })
-      .limit(5);
+      .limit(20);
 
     return users;
   };

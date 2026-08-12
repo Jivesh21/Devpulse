@@ -16,33 +16,15 @@ import ProfilePage from "@/pages/profile/ProfilePage";
 import SettingsPage from "@/pages/settings/SettingsPage";
 import BookmarksPage from "@/pages/BookmarksPage";
 import NetworkPage from "@/pages/NetworkPage";
+import ChatPage from "@/pages/ChatPage";
 
 import ProtectedRoute from "./ProtectedRoute";
 import DashboardLayout from "@/layouts/DashboardLayout";
 
 // ====================================
-// Placeholder Page
-// ====================================
-function PlaceholderPage({ title }) {
-  return (
-    <DashboardLayout>
-      <div className="py-8">
-        <h1 className="text-2xl font-bold">
-          {title} Page
-        </h1>
-
-        <p className="mt-2 text-muted-foreground">
-          This feature is currently under construction.
-          Stay tuned!
-        </p>
-      </div>
-    </DashboardLayout>
-  );
-}
-
-// ====================================
 // Router
 // ====================================
+
 const router = createBrowserRouter([
   // ====================================
   // Public Routes
@@ -145,6 +127,21 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <SettingsPage />
+      </ProtectedRoute>
+    ),
+  },
+
+  // ====================================
+  // Messages
+  // ====================================
+
+  {
+    path: "/messages",
+    element: (
+      <ProtectedRoute>
+        <DashboardLayout>
+          <ChatPage />
+        </DashboardLayout>
       </ProtectedRoute>
     ),
   },

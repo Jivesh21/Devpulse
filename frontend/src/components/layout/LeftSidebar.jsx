@@ -7,6 +7,7 @@ import {
   Home,
   User,
   Users,
+  MessageCircle,
   Bookmark,
   Bell,
   Settings,
@@ -28,12 +29,19 @@ function LeftSidebar() {
     {
       icon: User,
       label: "Profile",
-      path: user ? `/profile/${user.username}` : "/feed",
+      path: user
+        ? `/profile/${user.username}`
+        : "/feed",
     },
     {
       icon: Users,
       label: "Network",
       path: "/network",
+    },
+    {
+      icon: MessageCircle,
+      label: "Messages",
+      path: "/messages",
     },
     {
       icon: Bookmark,
@@ -69,7 +77,8 @@ function LeftSidebar() {
     user?.certificates?.length > 0,
   ];
 
-  const completedFields = profileFields.filter(Boolean).length;
+  const completedFields =
+    profileFields.filter(Boolean).length;
 
   const profileCompletion = Math.round(
     (completedFields / profileFields.length) * 100

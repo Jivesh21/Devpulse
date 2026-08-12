@@ -1,8 +1,19 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
+import {
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 
 import {
   getUserConversations,
   getConversation,
+  createOrGetConversation,
 } from "@/services/conversation.service";
 
 import {
@@ -13,6 +24,8 @@ import {
 import { socket } from "@/socket/socket";
 
 import { useAuthContext } from "@/context/AuthContext";
+
+import { useSearchDevelopers } from "@/hooks/useSearchDevelopers";
 
 import {
   Avatar,
@@ -30,6 +43,8 @@ import {
   Send,
   Loader2,
   MoreVertical,
+  Plus,
+  X,
 } from "lucide-react";
 
 // ====================================
@@ -90,6 +105,9 @@ const formatTime = (date) => {
 export default function ChatPage() {
   const { user } = useAuthContext();
 
+  const location = useLocation();
+  const navigate = useNavigate();
+
   // ====================================
   // Conversations
   // ====================================
@@ -107,6 +125,30 @@ export default function ChatPage() {
 
   const [showConversationList, setShowConversationList] =
     useState(true);
+
+  // ====================================
+  // New Chat
+  // ====================================
+
+  const [newChatOpen, setNewChatOpen] =
+    useState(false);
+
+  const [newChatSearch, setNewChatSearch] =
+    useState("");
+
+  const [startingNewChat, setStartingNewChat] =
+    useState(false);
+
+  // ====================================
+  // Developer Search
+  // ====================================
+
+  const {
+    data: searchData,
+    isLoading: searchingDevelopers,
+  } = useSearchDevelopers(
+    newChatSearch
+  );
 
   // ====================================
   // Messages
@@ -158,8 +200,8 @@ export default function ChatPage() {
   // Fetch Conversations
   // ====================================
 
-  useEffect(() => {
-    const fetchConversations = async () => {
+  const fetchConversations =
+    async () => {
       try {
         setLoadingConversations(true);
         setError("");
@@ -175,7 +217,9 @@ export default function ChatPage() {
         const conversationList =
           getConversationList(response);
 
-        setConversations(conversationList);
+        setConversations(
+          conversationList
+        );
       } catch (error) {
         console.error(
           "❌ Failed to fetch conversations:",
@@ -190,6 +234,7 @@ export default function ChatPage() {
       }
     };
 
+  useEffect(() => {
     fetchConversations();
   }, []);
 
@@ -262,6 +307,224 @@ export default function ChatPage() {
     conversations,
     conversationSearch,
     user?._id,
+  ]);
+
+  // ====================================
+  // Search Developer Results
+  // ====================================
+
+  const developerResults = useMemo(() => {
+    const data =
+      unwrapResponse(searchData);
+
+    let users = [];
+
+    if (Array.isArray(data)) {
+      users = data;
+    } else {
+      users =
+        data?.users ||
+        data?.results ||
+        data?.data ||
+        [];
+    }
+
+    if (!Array.isArray(users)) {
+      return [];
+    }
+
+    // Never show the currently logged-in user
+    return users.filter(
+      (developer) =>
+        developer?._id?.toString() !==
+        user?._id?.toString()
+    );
+  }, [
+    searchData,
+    user?._id,
+  ]);
+
+  // ====================================
+  // Select Conversation
+  // ====================================
+
+  const handleSelectConversation =
+    async (conversation) => {
+      try {
+        if (!conversation?._id) {
+          return;
+        }
+
+        setError("");
+
+        const response =
+          await getConversation(
+            conversation._id
+          );
+
+        const conversationData =
+          unwrapResponse(response);
+
+        setSelectedConversation(
+          conversationData ||
+            conversation
+        );
+
+        setShowConversationList(false);
+
+        setTimeout(() => {
+          inputRef.current?.focus();
+        }, 100);
+      } catch (error) {
+        console.error(
+          "❌ Failed to open conversation:",
+          error
+        );
+
+        setSelectedConversation(
+          conversation
+        );
+
+        setShowConversationList(false);
+      }
+    };
+
+  // ====================================
+  // Start New Chat
+  // ====================================
+
+  const handleStartNewChat =
+    async (developer) => {
+      if (
+        !developer?._id ||
+        startingNewChat
+      ) {
+        return;
+      }
+
+      try {
+        setStartingNewChat(true);
+        setError("");
+
+        const response =
+          await createOrGetConversation(
+            developer._id
+          );
+
+        console.log(
+          "💬 New chat response:",
+          response
+        );
+
+        const conversation =
+          response?.data?.conversation;
+
+        if (!conversation?._id) {
+          console.error(
+            "❌ Conversation not found:",
+            response
+          );
+
+          setError(
+            "Could not open this conversation."
+          );
+
+          return;
+        }
+
+        // Add conversation if it isn't
+        // already in the list.
+        setConversations(
+          (previousConversations) => {
+            const exists =
+              previousConversations.some(
+                (item) =>
+                  item?._id?.toString() ===
+                  conversation._id.toString()
+              );
+
+            if (exists) {
+              return previousConversations;
+            }
+
+            return [
+              conversation,
+              ...previousConversations,
+            ];
+          }
+        );
+
+        // Close modal
+        setNewChatOpen(false);
+        setNewChatSearch("");
+
+        // Open conversation
+        await handleSelectConversation(
+          conversation
+        );
+      } catch (error) {
+        console.error(
+          "❌ Failed to start new chat:",
+          error
+        );
+
+        setError(
+          "Failed to start conversation."
+        );
+      } finally {
+        setStartingNewChat(false);
+      }
+    };
+
+  // ====================================
+  // Open Conversation From Profile
+  // ====================================
+
+  useEffect(() => {
+    const conversationId =
+      location.state?.conversationId;
+
+    if (
+      !conversationId ||
+      loadingConversations ||
+      !conversations.length
+    ) {
+      return;
+    }
+
+    const conversation =
+      conversations.find(
+        (item) =>
+          item?._id?.toString() ===
+          conversationId.toString()
+      );
+
+    if (!conversation) {
+      console.warn(
+        "Conversation from navigation was not found:",
+        conversationId
+      );
+
+      navigate("/messages", {
+        replace: true,
+        state: {},
+      });
+
+      return;
+    }
+
+    handleSelectConversation(
+      conversation
+    );
+
+    navigate("/messages", {
+      replace: true,
+      state: {},
+    });
+  }, [
+    conversations,
+    loadingConversations,
+    location.state?.conversationId,
   ]);
 
   // ====================================
@@ -398,48 +661,6 @@ export default function ChatPage() {
   }, [selectedConversation]);
 
   // ====================================
-  // Select Conversation
-  // ====================================
-
-  const handleSelectConversation =
-    async (conversation) => {
-      try {
-        setError("");
-
-        const response =
-          await getConversation(
-            conversation._id
-          );
-
-        const conversationData =
-          unwrapResponse(response);
-
-        setSelectedConversation(
-          conversationData ||
-            conversation
-        );
-
-        // Mobile: open chat
-        setShowConversationList(false);
-
-        setTimeout(() => {
-          inputRef.current?.focus();
-        }, 100);
-      } catch (error) {
-        console.error(
-          "❌ Failed to open conversation:",
-          error
-        );
-
-        setSelectedConversation(
-          conversation
-        );
-
-        setShowConversationList(false);
-      }
-    };
-
-  // ====================================
   // Send Message
   // ====================================
 
@@ -498,6 +719,10 @@ export default function ChatPage() {
         setTimeout(() => {
           inputRef.current?.focus();
         }, 0);
+
+        // Refresh conversation list so
+        // latest message can appear.
+        fetchConversations();
       } catch (error) {
         console.error(
           "❌ Failed to send message:",
@@ -549,6 +774,7 @@ export default function ChatPage() {
   return (
     <div
       className="
+        relative
         h-[calc(100vh-8rem)]
         min-h-[600px]
         overflow-hidden
@@ -596,38 +822,63 @@ export default function ChatPage() {
               sm:px-5
             "
           >
-            <div className="flex items-center gap-3">
-              <div
+            <div className="flex items-center justify-between gap-3">
+
+              <div className="flex min-w-0 items-center gap-3">
+                <div
+                  className="
+                    flex
+                    h-10
+                    w-10
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-xl
+                    bg-primary/10
+                    text-primary
+                  "
+                >
+                  <MessageCircle className="h-5 w-5" />
+                </div>
+
+                <div className="min-w-0">
+                  <h1 className="font-semibold">
+                    Messages
+                  </h1>
+
+                  <p className="text-xs text-muted-foreground">
+                    {conversations.length}{" "}
+                    {conversations.length === 1
+                      ? "conversation"
+                      : "conversations"}
+                  </p>
+                </div>
+              </div>
+
+              {/* New Chat */}
+
+              <Button
+                type="button"
+                size="sm"
+                onClick={() =>
+                  setNewChatOpen(true)
+                }
                 className="
-                  flex
-                  h-10
-                  w-10
+                  h-9
                   shrink-0
-                  items-center
-                  justify-center
+                  gap-1.5
                   rounded-xl
-                  bg-primary/10
-                  text-primary
+                  px-3
                 "
               >
-                <MessageCircle className="h-5 w-5" />
-              </div>
-
-              <div className="min-w-0">
-                <h1 className="font-semibold">
-                  Messages
-                </h1>
-
-                <p className="text-xs text-muted-foreground">
-                  {conversations.length}{" "}
-                  {conversations.length === 1
-                    ? "conversation"
-                    : "conversations"}
-                </p>
-              </div>
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">
+                  New chat
+                </span>
+              </Button>
             </div>
 
-            {/* Search */}
+            {/* Search Conversations */}
 
             <div className="relative mt-4">
               <Search
@@ -779,38 +1030,37 @@ export default function ChatPage() {
                           }
                         `}
                       >
-                        <div className="relative shrink-0">
-                          <Avatar
+                        <Avatar
+                          className="
+                            h-11
+                            w-11
+                            shrink-0
+                            border
+                            border-border/60
+                          "
+                        >
+                          <AvatarImage
+                            src={
+                              participant?.avatar
+                            }
+                            alt={
+                              participantName
+                            }
+                          />
+
+                          <AvatarFallback
                             className="
-                              h-11
-                              w-11
-                              border
-                              border-border/60
+                              bg-primary/10
+                              font-semibold
+                              text-primary
                             "
                           >
-                            <AvatarImage
-                              src={
-                                participant?.avatar
-                              }
-                              alt={
-                                participantName
-                              }
-                            />
-
-                            <AvatarFallback
-                              className="
-                                bg-primary/10
-                                font-semibold
-                                text-primary
-                              "
-                            >
-                              {participantName
-                                ?.charAt(0)
-                                ?.toUpperCase() ||
-                                "D"}
-                            </AvatarFallback>
-                          </Avatar>
-                        </div>
+                            {participantName
+                              ?.charAt(0)
+                              ?.toUpperCase() ||
+                              "D"}
+                          </AvatarFallback>
+                        </Avatar>
 
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-2">
@@ -930,9 +1180,24 @@ export default function ChatPage() {
                   text-muted-foreground
                 "
               >
-                Select a conversation to view
-                messages and start chatting.
+                Select a conversation or
+                start a new chat.
               </p>
+
+              <Button
+                type="button"
+                onClick={() =>
+                  setNewChatOpen(true)
+                }
+                className="
+                  mt-5
+                  gap-2
+                  rounded-xl
+                "
+              >
+                <Plus className="h-4 w-4" />
+                Start a new chat
+              </Button>
             </div>
           ) : (
             <>
@@ -954,8 +1219,6 @@ export default function ChatPage() {
                   sm:py-4
                 "
               >
-                {/* Mobile Back */}
-
                 <Button
                   type="button"
                   variant="ghost"
@@ -1142,10 +1405,10 @@ export default function ChatPage() {
                           `}
                         >
                           <div
-                            className={`
+                            className="
                               max-w-[82%]
                               sm:max-w-[70%]
-                            `}
+                            "
                           >
                             <div
                               className={`
@@ -1286,17 +1549,318 @@ export default function ChatPage() {
       </div>
 
       {/* ====================================
+          New Chat Modal
+      ==================================== */}
+
+      {newChatOpen && (
+        <div
+          className="
+            absolute
+            inset-0
+            z-50
+            flex
+            items-center
+            justify-center
+            bg-background/70
+            p-4
+            backdrop-blur-sm
+          "
+        >
+          <div
+            className="
+              flex
+              max-h-[80%]
+              w-full
+              max-w-md
+              flex-col
+              overflow-hidden
+              rounded-2xl
+              border
+              border-border/60
+              bg-background
+              shadow-2xl
+            "
+          >
+            {/* Modal Header */}
+
+            <div
+              className="
+                flex
+                items-center
+                justify-between
+                border-b
+                border-border/60
+                px-5
+                py-4
+              "
+            >
+              <div>
+                <h2 className="font-semibold">
+                  Start a new chat
+                </h2>
+
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Find a developer to message
+                </p>
+              </div>
+
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setNewChatOpen(false);
+                  setNewChatSearch("");
+                }}
+                className="
+                  h-9
+                  w-9
+                  rounded-xl
+                "
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Search */}
+
+            <div className="px-5 py-4">
+              <div className="relative">
+                <Search
+                  className="
+                    pointer-events-none
+                    absolute
+                    left-3
+                    top-1/2
+                    h-4
+                    w-4
+                    -translate-y-1/2
+                    text-muted-foreground
+                  "
+                />
+
+                <Input
+                  autoFocus
+                  value={newChatSearch}
+                  onChange={(event) =>
+                    setNewChatSearch(
+                      event.target.value
+                    )
+                  }
+                  placeholder="Search developers..."
+                  className="
+                    h-11
+                    rounded-xl
+                    bg-muted/30
+                    pl-9
+                  "
+                />
+              </div>
+            </div>
+
+            {/* Results */}
+
+            <div
+              className="
+                min-h-0
+                flex-1
+                overflow-y-auto
+                px-3
+                pb-3
+              "
+            >
+              {!newChatSearch.trim() && (
+                <div
+                  className="
+                    px-4
+                    py-10
+                    text-center
+                  "
+                >
+                  <div
+                    className="
+                      mx-auto
+                      mb-3
+                      flex
+                      h-12
+                      w-12
+                      items-center
+                      justify-center
+                      rounded-2xl
+                      bg-primary/10
+                      text-primary
+                    "
+                  >
+                    <Search className="h-5 w-5" />
+                  </div>
+
+                  <p className="text-sm font-medium">
+                    Find a developer
+                  </p>
+
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Type at least 2 characters
+                    to search.
+                  </p>
+                </div>
+              )}
+
+              {newChatSearch.trim().length >= 2 &&
+                searchingDevelopers && (
+                  <div className="flex items-center justify-center py-10">
+                    <Loader2
+                      className="
+                        h-5
+                        w-5
+                        animate-spin
+                        text-primary
+                      "
+                    />
+                  </div>
+                )}
+
+              {newChatSearch.trim().length >= 2 &&
+                !searchingDevelopers &&
+                developerResults.length === 0 && (
+                  <div
+                    className="
+                      px-4
+                      py-10
+                      text-center
+                    "
+                  >
+                    <p className="text-sm font-medium">
+                      No developers found
+                    </p>
+
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Try another name or
+                      username.
+                    </p>
+                  </div>
+                )}
+
+              <div className="space-y-1">
+                {developerResults.map(
+                  (developer) => (
+                    <button
+                      key={
+                        developer._id
+                      }
+                      type="button"
+                      disabled={
+                        startingNewChat
+                      }
+                      onClick={() =>
+                        handleStartNewChat(
+                          developer
+                        )
+                      }
+                      className="
+                        flex
+                        w-full
+                        items-center
+                        gap-3
+                        rounded-xl
+                        p-3
+                        text-left
+                        transition-colors
+                        hover:bg-muted/60
+                        disabled:cursor-not-allowed
+                        disabled:opacity-60
+                      "
+                    >
+                      <Avatar
+                        className="
+                          h-11
+                          w-11
+                          shrink-0
+                          border
+                          border-border/60
+                        "
+                      >
+                        <AvatarImage
+                          src={
+                            developer.avatar
+                          }
+                          alt={
+                            developer.fullName ||
+                            developer.username
+                          }
+                        />
+
+                        <AvatarFallback
+                          className="
+                            bg-primary/10
+                            font-semibold
+                            text-primary
+                          "
+                        >
+                          {developer.fullName
+                            ?.charAt(0)
+                            ?.toUpperCase() ||
+                            developer.username
+                              ?.charAt(0)
+                              ?.toUpperCase() ||
+                            "D"}
+                        </AvatarFallback>
+                      </Avatar>
+
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">
+                          {developer.fullName ||
+                            developer.username ||
+                            "Developer"}
+                        </p>
+
+                        {developer.username && (
+                          <p className="truncate text-xs text-muted-foreground">
+                            @{developer.username}
+                          </p>
+                        )}
+                      </div>
+
+                      {startingNewChat ? (
+                        <Loader2
+                          className="
+                            h-4
+                            w-4
+                            shrink-0
+                            animate-spin
+                            text-primary
+                          "
+                        />
+                      ) : (
+                        <MessageCircle
+                          className="
+                            h-4
+                            w-4
+                            shrink-0
+                            text-muted-foreground
+                          "
+                        />
+                      )}
+                    </button>
+                  )
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ====================================
           Error
       ==================================== */}
 
       {error && (
         <div
           className="
-            fixed
+            absolute
             bottom-5
             left-1/2
-            z-50
-            max-w-[90vw]
+            z-[60]
+            max-w-[90%]
             -translate-x-1/2
             rounded-xl
             border

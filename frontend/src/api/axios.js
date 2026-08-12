@@ -5,6 +5,16 @@ const api = axios.create({
   withCredentials: true,
 });
 
+// ====================================
+// Refresh State
+// ====================================
+
+let refreshPromise = null;
+
+// ====================================
+// Response Interceptor
+// ====================================
+
 api.interceptors.response.use(
   (response) => response,
 
@@ -14,9 +24,14 @@ api.interceptors.response.use(
     const authEndpointPattern =
       /\/auth\/(login|register|refresh-token|2fa\/verify)$/;
 
-    const isAuthRequest = authEndpointPattern.test(
-      originalRequest?.url || ""
-    );
+    const isAuthRequest =
+      authEndpointPattern.test(
+        originalRequest?.url || ""
+      );
+
+    // ====================================
+    // Handle Unauthorized Requests
+    // ====================================
 
     if (
       error.response?.status === 401 &&
@@ -27,11 +42,29 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        await api.post("/auth/refresh-token");
+        // ====================================
+        // Reuse an existing refresh request
+        // ====================================
+
+        if (!refreshPromise) {
+          refreshPromise = api
+            .post("/auth/refresh-token")
+            .finally(() => {
+              refreshPromise = null;
+            });
+        }
+
+        await refreshPromise;
+
+        // ====================================
+        // Retry Original Request
+        // ====================================
 
         return api(originalRequest);
       } catch (refreshError) {
-        return Promise.reject(refreshError);
+        return Promise.reject(
+          refreshError
+        );
       }
     }
 

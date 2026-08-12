@@ -1,5 +1,15 @@
-import { createContext, useContext } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+} from "react";
+
 import { useCurrentUser } from "@/hooks/useAuth";
+
+import {
+  connectSocket,
+  disconnectSocket,
+} from "@/socket/socket";
 
 const AuthContext = createContext(null);
 
@@ -11,9 +21,37 @@ export function AuthProvider({ children }) {
     refetch,
   } = useCurrentUser();
 
+  const user = data?.data || null;
+
+  const isAuthenticated = !!user;
+
+  // ====================================
+  // Socket Connection
+  // ====================================
+
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+
+    if (isAuthenticated) {
+      connectSocket();
+    } else {
+      disconnectSocket();
+    }
+
+    return () => {
+      disconnectSocket();
+    };
+  }, [isAuthenticated, isLoading]);
+
+  // ====================================
+  // Auth Context
+  // ====================================
+
   const value = {
-    user: data?.data || null,
-    isAuthenticated: !!data?.data,
+    user,
+    isAuthenticated,
     isLoading,
     isError,
     refetch,

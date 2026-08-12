@@ -296,7 +296,7 @@ export const forgotPassword =
         new ApiResponse(
           200,
           result,
-          "If an account exists with this email, a password reset link has been sent."
+          "If an account exists, a password reset link has been sent."
         )
       );
     }

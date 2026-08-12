@@ -45,8 +45,7 @@ function DeveloperCard({ user }) {
       .toUpperCase() || "U";
 
   return (
-    <Link
-      to={`/profile/${user.username}`}
+    <div
       className="
         glass-card
         glass-hover
@@ -57,19 +56,41 @@ function DeveloperCard({ user }) {
         flex-col
         rounded-2xl
         p-5
-        outline-none
         transition-all
         duration-300
-        focus-visible:ring-2
-        focus-visible:ring-primary
       "
     >
       {/* ================================= */}
-      {/* Developer */}
+      {/* Developer Header */}
       {/* ================================= */}
 
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
+      <div
+        className="
+          flex
+          min-w-0
+          items-center
+          gap-3
+        "
+      >
+        {/* Profile Link */}
+
+        <Link
+          to={`/profile/${user.username}`}
+          className="
+            group/profile
+            flex
+            min-w-0
+            flex-1
+            items-center
+            gap-3
+            rounded-xl
+            outline-none
+            transition-opacity
+            hover:opacity-90
+            focus-visible:ring-2
+            focus-visible:ring-primary
+          "
+        >
           <Avatar
             className="
               h-12
@@ -80,7 +101,7 @@ function DeveloperCard({ user }) {
               shadow-sm
               transition-transform
               duration-300
-              group-hover:scale-105
+              group-hover/profile:scale-105
             "
           >
             <AvatarImage
@@ -105,44 +126,68 @@ function DeveloperCard({ user }) {
                 truncate
                 font-semibold
                 transition-colors
-                group-hover:text-primary
+                group-hover/profile:text-primary
               "
             >
               {user.fullName}
             </h3>
 
-            <p className="truncate text-sm text-muted-foreground">
+            <p
+              className="
+                truncate
+                text-sm
+                text-muted-foreground
+              "
+            >
               @{user.username}
             </p>
           </div>
-        </div>
+        </Link>
 
-        <div
+        {/* ================================= */}
+        {/* Follow Button */}
+        {/* ================================= */}
+
+        <Button
+          type="button"
+          size="sm"
+          variant={
+            isFollowing
+              ? "secondary"
+              : "default"
+          }
           className="
-            flex
-            h-8
-            w-8
+            interactive
+            h-9
             shrink-0
-            items-center
-            justify-center
-            rounded-lg
-            bg-primary/10
-            text-primary
-            opacity-80
-            transition-all
-            duration-200
-            group-hover:opacity-100
+            rounded-xl
+            px-4
           "
+          disabled={
+            toggleFollow.isPending
+          }
+          onClick={() =>
+            toggleFollow.mutate()
+          }
         >
-          <UserPlus className="h-4 w-4" />
-        </div>
+          {toggleFollow.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : isFollowing ? (
+            "Following"
+          ) : (
+            <>
+              <UserPlus className="mr-1.5 h-4 w-4" />
+              Follow
+            </>
+          )}
+        </Button>
       </div>
 
       {/* ================================= */}
       {/* Bio */}
       {/* ================================= */}
 
-      <div className="mt-4 min-h-[48px]">
+      <div className="mt-5 min-h-[48px]">
         {user.bio ? (
           <p
             className="
@@ -222,47 +267,7 @@ function DeveloperCard({ user }) {
           </span>
         )}
       </div>
-
-      {/* ================================= */}
-      {/* Follow */}
-      {/* ================================= */}
-
-      <Button
-        type="button"
-        className="
-          interactive
-          mt-auto
-          h-10
-          w-full
-          rounded-xl
-        "
-        variant={
-          isFollowing
-            ? "secondary"
-            : "default"
-        }
-        disabled={
-          toggleFollow.isPending
-        }
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-
-          toggleFollow.mutate();
-        }}
-      >
-        {toggleFollow.isPending ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Updating...
-          </>
-        ) : isFollowing ? (
-          "Following"
-        ) : (
-          "Follow"
-        )}
-      </Button>
-    </Link>
+    </div>
   );
 }
 
@@ -296,6 +301,8 @@ export default function NetworkPage() {
             sm:p-8
           "
         >
+          {/* Background decoration */}
+
           <div
             className="
               pointer-events-none
@@ -550,7 +557,10 @@ export default function NetworkPage() {
                 (user, index) => (
                   <div
                     key={user._id}
-                    className="page-enter h-full"
+                    className="
+                      page-enter
+                      h-full
+                    "
                     style={{
                       animationDelay: `${Math.min(
                         index * 60,
@@ -594,6 +604,8 @@ function DeveloperSkeleton() {
           <div className="h-3 w-28 rounded-full bg-muted" />
           <div className="h-2.5 w-20 rounded-full bg-muted" />
         </div>
+
+        <div className="h-9 w-20 rounded-xl bg-muted" />
       </div>
 
       <div className="mt-5 space-y-2">
@@ -606,8 +618,6 @@ function DeveloperSkeleton() {
         <div className="h-6 w-20 rounded-full bg-muted" />
         <div className="h-6 w-14 rounded-full bg-muted" />
       </div>
-
-      <div className="mt-5 h-10 rounded-xl bg-muted" />
     </div>
   );
 }

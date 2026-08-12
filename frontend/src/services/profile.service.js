@@ -3,14 +3,19 @@ import api from "@/api/axios";
 // ================================
 // Get Profile
 // ================================
+
 export const getProfile = async (username) => {
-  const { data } = await api.get(`/users/${username}`);
+  const { data } = await api.get(
+    `/users/${username}`
+  );
+
   return data;
 };
 
 // ================================
 // Search Users
 // ================================
+
 export const searchUsers = async (query) => {
   const { data } = await api.get(
     `/users/search?q=${query}`
@@ -22,15 +27,22 @@ export const searchUsers = async (query) => {
 // ================================
 // Get User Posts
 // ================================
+
 export const getUserPosts = async (username) => {
-  const { data } = await api.get(`/posts/user/${username}`);
+  const { data } = await api.get(
+    `/posts/user/${username}`
+  );
+
   return data;
 };
 
 // ================================
 // Update Profile
 // ================================
-export const updateProfile = async (profileData) => {
+
+export const updateProfile = async (
+  profileData
+) => {
   const { data } = await api.patch(
     "/users/profile",
     profileData
@@ -42,13 +54,17 @@ export const updateProfile = async (profileData) => {
 // ================================
 // Update Avatar
 // ================================
-export const updateAvatar = async (formData) => {
+
+export const updateAvatar = async (
+  formData
+) => {
   const { data } = await api.patch(
     "/users/avatar",
     formData,
     {
       headers: {
-        "Content-Type": "multipart/form-data",
+        "Content-Type":
+          "multipart/form-data",
       },
     }
   );
@@ -57,8 +73,21 @@ export const updateAvatar = async (formData) => {
 };
 
 // ================================
+// Remove Avatar
+// ================================
+
+export const removeAvatar = async () => {
+  const { data } = await api.delete(
+    "/users/avatar"
+  );
+
+  return data;
+};
+
+// ================================
 // Update Cover Image
 // ================================
+
 export const updateCoverImage = async (
   formData
 ) => {
@@ -67,9 +96,22 @@ export const updateCoverImage = async (
     formData,
     {
       headers: {
-        "Content-Type": "multipart/form-data",
+        "Content-Type":
+          "multipart/form-data",
       },
     }
+  );
+
+  return data;
+};
+
+// ================================
+// Remove Cover Image
+// ================================
+
+export const removeCoverImage = async () => {
+  const { data } = await api.delete(
+    "/users/cover-image"
   );
 
   return data;

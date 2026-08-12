@@ -5,6 +5,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 // ====================================
 // Update User Profile
 // ====================================
+
 export const updateProfileService = async (
   userId,
   profileData
@@ -54,6 +55,7 @@ export const updateProfileService = async (
 // ====================================
 // Get Public User Profile
 // ====================================
+
 export const getUserProfileService =
   async (username) => {
     const user =
@@ -77,32 +79,34 @@ export const getUserProfileService =
 // ====================================
 // Search Users
 // ====================================
+
 export const searchUsersService =
   async (query) => {
     if (!query?.trim()) {
       return [];
     }
 
-    const users = await User.find({
-      $or: [
-        {
-          fullName: {
-            $regex: query,
-            $options: "i",
+    const users =
+      await User.find({
+        $or: [
+          {
+            fullName: {
+              $regex: query,
+              $options: "i",
+            },
           },
-        },
-        {
-          username: {
-            $regex: query,
-            $options: "i",
+          {
+            username: {
+              $regex: query,
+              $options: "i",
+            },
           },
-        },
-      ],
-    })
-      .select(
-        "fullName username avatar bio"
-      )
-      .limit(10);
+        ],
+      })
+        .select(
+          "fullName username avatar bio"
+        )
+        .limit(10);
 
     return users;
   };
@@ -110,6 +114,7 @@ export const searchUsersService =
 // ====================================
 // Update Avatar
 // ====================================
+
 export const updateAvatarService =
   async (
     userId,
@@ -159,8 +164,40 @@ export const updateAvatarService =
   };
 
 // ====================================
+// Remove Avatar
+// ====================================
+
+export const removeAvatarService =
+  async (userId) => {
+    const updatedUser =
+      await User.findByIdAndUpdate(
+        userId,
+        {
+          $set: {
+            avatar: null,
+          },
+        },
+        {
+          new: true,
+        }
+      ).select(
+        "-password -refreshToken"
+      );
+
+    if (!updatedUser) {
+      throw new ApiError(
+        404,
+        "User not found"
+      );
+    }
+
+    return updatedUser;
+  };
+
+// ====================================
 // Update Cover Image
 // ====================================
+
 export const updateCoverImageService =
   async (
     userId,
@@ -210,8 +247,40 @@ export const updateCoverImageService =
   };
 
 // ====================================
+// Remove Cover Image
+// ====================================
+
+export const removeCoverImageService =
+  async (userId) => {
+    const updatedUser =
+      await User.findByIdAndUpdate(
+        userId,
+        {
+          $set: {
+            coverImage: null,
+          },
+        },
+        {
+          new: true,
+        }
+      ).select(
+        "-password -refreshToken"
+      );
+
+    if (!updatedUser) {
+      throw new ApiError(
+        404,
+        "User not found"
+      );
+    }
+
+    return updatedUser;
+  };
+
+// ====================================
 // Get Current User
 // ====================================
+
 export const getCurrentUserService =
   async (userId) => {
     const user =
@@ -234,6 +303,7 @@ export const getCurrentUserService =
 // ====================================
 // Suggested Developers
 // ====================================
+
 export const getSuggestedDevelopersService =
   async (currentUserId) => {
     // Show other registered developers.
@@ -241,18 +311,19 @@ export const getSuggestedDevelopersService =
     // is already followed through the
     // follow-status endpoint.
 
-    const users = await User.find({
-      _id: {
-        $ne: currentUserId,
-      },
-    })
-      .select(
-        "fullName username avatar bio skills"
-      )
-      .sort({
-        createdAt: -1,
+    const users =
+      await User.find({
+        _id: {
+          $ne: currentUserId,
+        },
       })
-      .limit(20);
+        .select(
+          "fullName username avatar bio skills"
+        )
+        .sort({
+          createdAt: -1,
+        })
+        .limit(20);
 
     return users;
   };

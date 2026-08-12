@@ -11,11 +11,14 @@ import {
   updateProfile,
   updateAvatar,
   updateCoverImage,
+  removeAvatar,
+  removeCoverImage,
 } from "@/services/profile.service";
 
 // ====================================
 // Get Profile
 // ====================================
+
 export const useProfile = (username) => {
   return useQuery({
     queryKey: ["profile", username],
@@ -27,6 +30,7 @@ export const useProfile = (username) => {
 // ====================================
 // Search Users
 // ====================================
+
 export const useSearchUsers = (query) => {
   return useQuery({
     queryKey: ["search-users", query],
@@ -38,6 +42,7 @@ export const useSearchUsers = (query) => {
 // ====================================
 // Get User Posts
 // ====================================
+
 export const useUserPosts = (username) => {
   return useQuery({
     queryKey: ["user-posts", username],
@@ -49,11 +54,10 @@ export const useUserPosts = (username) => {
 // ====================================
 // Update Profile
 // ====================================
-// ====================================
-// Update Profile
-// ====================================
+
 export const useUpdateProfile = () => {
-  const queryClient = useQueryClient();
+  const queryClient =
+    useQueryClient();
 
   return useMutation({
     mutationFn: updateProfile,
@@ -75,8 +79,12 @@ export const useUpdateProfile = () => {
 // ====================================
 // Update Avatar
 // ====================================
-export const useUpdateAvatar = (username) => {
-  const queryClient = useQueryClient();
+
+export const useUpdateAvatar = (
+  username
+) => {
+  const queryClient =
+    useQueryClient();
 
   return useMutation({
     mutationFn: updateAvatar,
@@ -99,12 +107,46 @@ export const useUpdateAvatar = (username) => {
 };
 
 // ====================================
+// Remove Avatar
+// ====================================
+
+export const useRemoveAvatar = (
+  username
+) => {
+  const queryClient =
+    useQueryClient();
+
+  return useMutation({
+    mutationFn: removeAvatar,
+
+    onSuccess: () => {
+      // Refresh current logged-in user
+      queryClient.invalidateQueries({
+        queryKey: ["current-user"],
+      });
+
+      // Refresh profile
+      if (username) {
+        queryClient.invalidateQueries({
+          queryKey: [
+            "profile",
+            username,
+          ],
+        });
+      }
+    },
+  });
+};
+
+// ====================================
 // Update Cover Image
 // ====================================
+
 export const useUpdateCoverImage = (
   username
 ) => {
-  const queryClient = useQueryClient();
+  const queryClient =
+    useQueryClient();
 
   return useMutation({
     mutationFn: updateCoverImage,
@@ -114,6 +156,38 @@ export const useUpdateCoverImage = (
         queryKey: ["current-user"],
       });
 
+      if (username) {
+        queryClient.invalidateQueries({
+          queryKey: [
+            "profile",
+            username,
+          ],
+        });
+      }
+    },
+  });
+};
+
+// ====================================
+// Remove Cover Image
+// ====================================
+
+export const useRemoveCoverImage = (
+  username
+) => {
+  const queryClient =
+    useQueryClient();
+
+  return useMutation({
+    mutationFn: removeCoverImage,
+
+    onSuccess: () => {
+      // Refresh current logged-in user
+      queryClient.invalidateQueries({
+        queryKey: ["current-user"],
+      });
+
+      // Refresh profile
       if (username) {
         queryClient.invalidateQueries({
           queryKey: [

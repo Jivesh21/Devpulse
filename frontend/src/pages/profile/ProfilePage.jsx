@@ -22,6 +22,8 @@ import {
   useUserPosts,
   useUpdateAvatar,
   useUpdateCoverImage,
+  useRemoveAvatar,
+  useRemoveCoverImage,
 } from "@/hooks/useProfile";
 
 import {
@@ -112,6 +114,12 @@ function ProfilePage() {
   const updateCover =
     useUpdateCoverImage(username);
 
+  const removeAvatar =
+    useRemoveAvatar(username);
+
+  const removeCover =
+    useRemoveCoverImage(username);
+
   const isOwner =
     currentUser?._id === profile?._id;
 
@@ -139,6 +147,20 @@ function ProfilePage() {
   }
 
   // ====================================
+  // Remove Avatar
+  // ====================================
+
+  function handleAvatarRemove() {
+    if (
+      removeAvatar.isPending
+    ) {
+      return;
+    }
+
+    removeAvatar.mutate();
+  }
+
+  // ====================================
   // Cover
   // ====================================
 
@@ -159,6 +181,20 @@ function ProfilePage() {
     updateCover.mutate(formData);
 
     e.target.value = "";
+  }
+
+  // ====================================
+  // Remove Cover
+  // ====================================
+
+  function handleCoverRemove() {
+    if (
+      removeCover.isPending
+    ) {
+      return;
+    }
+
+    removeCover.mutate();
   }
 
   // ====================================
@@ -214,9 +250,9 @@ function ProfilePage() {
     <DashboardLayout>
       <main className="mx-auto w-full max-w-6xl px-4 py-6">
 
-        {/* ================================= */}
-        {/* Profile Header */}
-        {/* ================================= */}
+        {/* ====================================
+            Profile Header
+        ==================================== */}
 
         <ProfileHeader
           profile={profile}
@@ -224,29 +260,43 @@ function ProfilePage() {
           postsCount={posts.length}
           followers={followers}
           following={following}
+
           onFollowersClick={() =>
             setFollowersOpen(true)
           }
+
           onFollowingClick={() =>
             setFollowingOpen(true)
           }
+
           onAvatarClick={() =>
             avatarInputRef.current?.click()
           }
+
+          onAvatarRemove={
+            handleAvatarRemove
+          }
+
           onCoverClick={() =>
             coverInputRef.current?.click()
           }
+
+          onCoverRemove={
+            handleCoverRemove
+          }
+
           onEditClick={() =>
             setEditOpen(true)
           }
+
           onDownloadResume={() =>
             setResumeOpen(true)
           }
         />
 
-        {/* ================================= */}
-        {/* Upload Inputs */}
-        {/* ================================= */}
+        {/* ====================================
+            Upload Inputs
+        ==================================== */}
 
         <input
           ref={avatarInputRef}
@@ -264,9 +314,9 @@ function ProfilePage() {
           onChange={handleCoverChange}
         />
 
-        {/* ================================= */}
-        {/* Profile Sections */}
-        {/* ================================= */}
+        {/* ====================================
+            Profile Sections
+        ==================================== */}
 
         <div className="mt-5 space-y-5">
 
@@ -278,9 +328,9 @@ function ProfilePage() {
             profile={profile}
           />
 
-          {/* ================================= */}
-          {/* Public GitHub */}
-          {/* ================================= */}
+          {/* ====================================
+              Public GitHub
+          ==================================== */}
 
           <ProfileGitHub
             username={
@@ -301,12 +351,13 @@ function ProfilePage() {
             posts={posts}
             isLoading={postsLoading}
           />
+
         </div>
       </main>
 
-      {/* ================================= */}
-      {/* Edit Profile */}
-      {/* ================================= */}
+      {/* ====================================
+          Edit Profile
+      ==================================== */}
 
       <EditProfileDialog
         open={editOpen}
@@ -314,9 +365,9 @@ function ProfilePage() {
         profile={profile}
       />
 
-      {/* ================================= */}
-      {/* Followers */}
-      {/* ================================= */}
+      {/* ====================================
+          Followers
+      ==================================== */}
 
       <FollowListDialog
         open={followersOpen}
@@ -325,9 +376,9 @@ function ProfilePage() {
         type="followers"
       />
 
-      {/* ================================= */}
-      {/* Following */}
-      {/* ================================= */}
+      {/* ====================================
+          Following
+      ==================================== */}
 
       <FollowListDialog
         open={followingOpen}
@@ -336,9 +387,9 @@ function ProfilePage() {
         type="following"
       />
 
-      {/* ================================= */}
-      {/* Add Project */}
-      {/* ================================= */}
+      {/* ====================================
+          Add Project
+      ==================================== */}
 
       <AddProjectDialog
         open={projectDialogOpen}
@@ -346,15 +397,16 @@ function ProfilePage() {
         userId={profile._id}
       />
 
-      {/* ================================= */}
-      {/* Resume Layout */}
-      {/* ================================= */}
+      {/* ====================================
+          Resume Layout
+      ==================================== */}
 
       <ResumeLayoutDialog
         open={resumeOpen}
         onOpenChange={setResumeOpen}
         profile={profile}
       />
+
     </DashboardLayout>
   );
 }

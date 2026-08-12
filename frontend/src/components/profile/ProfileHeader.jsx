@@ -10,6 +10,8 @@ import {
   Download,
   MessageCircle,
   Loader2,
+  Trash2,
+  ImagePlus,
 } from "lucide-react";
 
 import { useNavigate } from "react-router-dom";
@@ -39,6 +41,8 @@ function ProfileHeader({
   onFollowingClick,
   onAvatarClick,
   onCoverClick,
+  onAvatarRemove,
+  onCoverRemove,
   onEditClick,
   onDownloadResume,
 }) {
@@ -46,6 +50,9 @@ function ProfileHeader({
 
   const [startingChat, setStartingChat] =
     useState(false);
+
+  const [openImageMenu, setOpenImageMenu] =
+    useState(null);
 
   const { data: followStatusData } =
     useFollowStatus(profile._id);
@@ -129,6 +136,54 @@ function ProfileHeader({
     }
   };
 
+  // ====================================
+  // Close Image Menu
+  // ====================================
+
+  const closeImageMenu = () => {
+    setOpenImageMenu(null);
+  };
+
+  // ====================================
+  // Handle Change
+  // ====================================
+
+  const handleAvatarChange = () => {
+    closeImageMenu();
+
+    if (onAvatarClick) {
+      onAvatarClick();
+    }
+  };
+
+  const handleCoverChange = () => {
+    closeImageMenu();
+
+    if (onCoverClick) {
+      onCoverClick();
+    }
+  };
+
+  // ====================================
+  // Handle Remove
+  // ====================================
+
+  const handleAvatarRemove = () => {
+    closeImageMenu();
+
+    if (onAvatarRemove) {
+      onAvatarRemove();
+    }
+  };
+
+  const handleCoverRemove = () => {
+    closeImageMenu();
+
+    if (onCoverRemove) {
+      onCoverRemove();
+    }
+  };
+
   return (
     <section
       className="
@@ -202,30 +257,53 @@ function ProfileHeader({
           </>
         )}
 
+        {/* ================================= */}
+        {/* Cover Image Menu */}
+        {/* ================================= */}
+
         {isOwner && (
-          <Button
-            size="icon"
-            variant="secondary"
-            onClick={onCoverClick}
-            className="
-              absolute
-              right-4
-              top-4
-              h-9
-              w-9
-              rounded-xl
-              border
-              border-white/20
-              bg-black/25
-              text-white
-              shadow-md
-              backdrop-blur-md
-              hover:bg-black/40
-            "
-            aria-label="Change cover image"
-          >
-            <Camera className="h-4 w-4" />
-          </Button>
+          <div className="absolute right-4 top-4">
+            <Button
+              size="icon"
+              variant="secondary"
+              onClick={() =>
+                setOpenImageMenu(
+                  openImageMenu === "cover"
+                    ? null
+                    : "cover"
+                )
+              }
+              className="
+                h-9
+                w-9
+                rounded-xl
+                border
+                border-white/20
+                bg-black/25
+                text-white
+                shadow-md
+                backdrop-blur-md
+                hover:bg-black/40
+              "
+              aria-label="Cover image options"
+            >
+              <Camera className="h-4 w-4" />
+            </Button>
+
+            {openImageMenu === "cover" && (
+              <ImageActionMenu
+                hasImage={Boolean(
+                  profile.coverImage
+                )}
+                onChange={
+                  handleCoverChange
+                }
+                onRemove={
+                  handleCoverRemove
+                }
+              />
+            )}
+          </div>
         )}
       </div>
 
@@ -271,25 +349,49 @@ function ProfileHeader({
             </AvatarFallback>
           </Avatar>
 
+          {/* ================================= */}
+          {/* Avatar Image Menu */}
+          {/* ================================= */}
+
           {isOwner && (
-            <Button
-              size="icon"
-              onClick={onAvatarClick}
-              className="
-                absolute
-                bottom-0
-                right-0
-                h-9
-                w-9
-                rounded-full
-                border-2
-                border-background
-                shadow-md
-              "
-              aria-label="Change profile picture"
-            >
-              <Camera className="h-4 w-4" />
-            </Button>
+            <div className="absolute bottom-0 right-0">
+              <Button
+                size="icon"
+                onClick={() =>
+                  setOpenImageMenu(
+                    openImageMenu === "avatar"
+                      ? null
+                      : "avatar"
+                  )
+                }
+                className="
+                  h-9
+                  w-9
+                  rounded-full
+                  border-2
+                  border-background
+                  shadow-md
+                "
+                aria-label="Profile picture options"
+              >
+                <Camera className="h-4 w-4" />
+              </Button>
+
+              {openImageMenu === "avatar" && (
+                <ImageActionMenu
+                  hasImage={Boolean(
+                    profile.avatar
+                  )}
+                  onChange={
+                    handleAvatarChange
+                  }
+                  onRemove={
+                    handleAvatarRemove
+                  }
+                  align="right"
+                />
+              )}
+            </div>
           )}
         </div>
 
@@ -579,6 +681,106 @@ function ProfileHeader({
         </div>
       </div>
     </section>
+  );
+}
+
+/* ====================================
+   Image Action Menu
+==================================== */
+
+function ImageActionMenu({
+  hasImage,
+  onChange,
+  onRemove,
+  align = "left",
+}) {
+  return (
+    <div
+      className={`
+        absolute
+        top-11
+        z-50
+        w-44
+        overflow-hidden
+        rounded-xl
+        border
+        border-border/60
+        bg-background
+        p-1.5
+        shadow-xl
+        backdrop-blur-xl
+
+        ${
+          align === "right"
+            ? "right-0"
+            : "right-0"
+        }
+      `}
+    >
+      {/* ====================================
+          Change Image
+      ==================================== */}
+
+      <button
+        type="button"
+        onClick={onChange}
+        className="
+          flex
+          w-full
+          items-center
+          gap-2.5
+          rounded-lg
+          px-3
+          py-2.5
+          text-left
+          text-sm
+          font-medium
+          transition-colors
+          hover:bg-primary/10
+          hover:text-primary
+        "
+      >
+        <ImagePlus className="h-4 w-4" />
+
+        <span>
+          {hasImage
+            ? "Change photo"
+            : "Add photo"}
+        </span>
+      </button>
+
+      {/* ====================================
+          Remove Image
+      ==================================== */}
+
+      {hasImage && (
+        <button
+          type="button"
+          onClick={onRemove}
+          className="
+            flex
+            w-full
+            items-center
+            gap-2.5
+            rounded-lg
+            px-3
+            py-2.5
+            text-left
+            text-sm
+            font-medium
+            text-red-500
+            transition-colors
+            hover:bg-red-500/10
+          "
+        >
+          <Trash2 className="h-4 w-4" />
+
+          <span>
+            Remove photo
+          </span>
+        </button>
+      )}
+    </div>
   );
 }
 

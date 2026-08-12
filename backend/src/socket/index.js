@@ -47,6 +47,62 @@ export const initializeSocket = (server) => {
     );
 
     // ====================================
+    // Typing Started
+    // ====================================
+
+    socket.on(
+      "typing_start",
+      ({ conversationId }) => {
+        if (!conversationId) {
+          return;
+        }
+
+        console.log(
+          `⌨️ ${socket.user.username} started typing in ${conversationId}`
+        );
+
+        // Find the other participant later
+        // from the conversation room/event.
+        socket.broadcast.emit(
+          "user_typing",
+          {
+            conversationId,
+            userId:
+              socket.user._id.toString(),
+            username:
+              socket.user.username,
+          }
+        );
+      }
+    );
+
+    // ====================================
+    // Typing Stopped
+    // ====================================
+
+    socket.on(
+      "typing_stop",
+      ({ conversationId }) => {
+        if (!conversationId) {
+          return;
+        }
+
+        console.log(
+          `⌨️ ${socket.user.username} stopped typing in ${conversationId}`
+        );
+
+        socket.broadcast.emit(
+          "user_stopped_typing",
+          {
+            conversationId,
+            userId:
+              socket.user._id.toString(),
+          }
+        );
+      }
+    );
+
+    // ====================================
     // Disconnect
     // ====================================
 
@@ -57,7 +113,9 @@ export const initializeSocket = (server) => {
     });
   });
 
-  console.log("⚡ Socket.IO initialized");
+  console.log(
+    "⚡ Socket.IO initialized"
+  );
 
   return io;
 };

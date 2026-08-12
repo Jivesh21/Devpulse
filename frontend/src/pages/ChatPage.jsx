@@ -39,12 +39,15 @@ import { Input } from "@/components/ui/input";
 
 import {
   ArrowLeft,
-  MessageCircle,
-  Search,
-  Send,
+  CheckCheck,
+  Code2,
   Loader2,
+  MessageCircle,
   MoreVertical,
   Plus,
+  Search,
+  Send,
+  Sparkles,
   X,
 } from "lucide-react";
 
@@ -100,6 +103,21 @@ const formatTime = (date) => {
 };
 
 // ====================================
+// Initials
+// ====================================
+
+const getInitials = (name) => {
+  if (!name) return "D";
+
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+};
+
+// ====================================
 // Chat Page
 // ====================================
 
@@ -121,11 +139,15 @@ export default function ChatPage() {
     setSelectedConversation,
   ] = useState(null);
 
-  const [conversationSearch, setConversationSearch] =
-    useState("");
+  const [
+    conversationSearch,
+    setConversationSearch,
+  ] = useState("");
 
-  const [showConversationList, setShowConversationList] =
-    useState(true);
+  const [
+    showConversationList,
+    setShowConversationList,
+  ] = useState(true);
 
   // ====================================
   // New Chat
@@ -166,6 +188,20 @@ export default function ChatPage() {
     useState("");
 
   // ====================================
+  // Typing State
+  // ====================================
+
+  const [
+    isOtherUserTyping,
+    setIsOtherUserTyping,
+  ] = useState(false);
+
+  const [
+    typingUsername,
+    setTypingUsername,
+  ] = useState("");
+
+  // ====================================
   // Loading States
   // ====================================
 
@@ -197,6 +233,9 @@ export default function ChatPage() {
 
   const inputRef = useRef(null);
 
+  const typingTimeoutRef =
+    useRef(null);
+
   // ====================================
   // Fetch Conversations
   // ====================================
@@ -209,11 +248,6 @@ export default function ChatPage() {
 
         const response =
           await getUserConversations();
-
-        console.log(
-          "📨 Conversations response:",
-          response
-        );
 
         const conversationList =
           getConversationList(response);
@@ -261,90 +295,6 @@ export default function ChatPage() {
   };
 
   // ====================================
-  // Filter Conversations
-  // ====================================
-
-  const filteredConversations = useMemo(() => {
-    const search =
-      conversationSearch
-        .trim()
-        .toLowerCase();
-
-    if (!search) {
-      return conversations;
-    }
-
-    return conversations.filter(
-      (conversation) => {
-        const participant =
-          getOtherParticipant(
-            conversation
-          );
-
-        const name =
-          participant?.fullName || "";
-
-        const username =
-          participant?.username || "";
-
-        const lastMessage =
-          conversation?.lastMessage
-            ?.content || "";
-
-        return (
-          name
-            .toLowerCase()
-            .includes(search) ||
-          username
-            .toLowerCase()
-            .includes(search) ||
-          lastMessage
-            .toLowerCase()
-            .includes(search)
-        );
-      }
-    );
-  }, [
-    conversations,
-    conversationSearch,
-    user?._id,
-  ]);
-
-  // ====================================
-  // Search Developer Results
-  // ====================================
-
-  const developerResults = useMemo(() => {
-    const data =
-      unwrapResponse(searchData);
-
-    let users = [];
-
-    if (Array.isArray(data)) {
-      users = data;
-    } else {
-      users =
-        data?.users ||
-        data?.results ||
-        data?.data ||
-        [];
-    }
-
-    if (!Array.isArray(users)) {
-      return [];
-    }
-
-    return users.filter(
-      (developer) =>
-        developer?._id?.toString() !==
-        user?._id?.toString()
-    );
-  }, [
-    searchData,
-    user?._id,
-  ]);
-
-  // ====================================
   // Active Participant
   // ====================================
 
@@ -354,7 +304,93 @@ export default function ChatPage() {
     );
 
   // ====================================
-  // Check If Message Is Read
+  // Filter Conversations
+  // ====================================
+
+  const filteredConversations =
+    useMemo(() => {
+      const search =
+        conversationSearch
+          .trim()
+          .toLowerCase();
+
+      if (!search) {
+        return conversations;
+      }
+
+      return conversations.filter(
+        (conversation) => {
+          const participant =
+            getOtherParticipant(
+              conversation
+            );
+
+          const name =
+            participant?.fullName || "";
+
+          const username =
+            participant?.username || "";
+
+          const lastMessage =
+            conversation?.lastMessage
+              ?.content || "";
+
+          return (
+            name
+              .toLowerCase()
+              .includes(search) ||
+            username
+              .toLowerCase()
+              .includes(search) ||
+            lastMessage
+              .toLowerCase()
+              .includes(search)
+          );
+        }
+      );
+    }, [
+      conversations,
+      conversationSearch,
+      user?._id,
+    ]);
+
+  // ====================================
+  // Developer Search Results
+  // ====================================
+
+  const developerResults =
+    useMemo(() => {
+      const data =
+        unwrapResponse(searchData);
+
+      let users = [];
+
+      if (Array.isArray(data)) {
+        users = data;
+      } else {
+        users =
+          data?.users ||
+          data?.results ||
+          data?.data ||
+          [];
+      }
+
+      if (!Array.isArray(users)) {
+        return [];
+      }
+
+      return users.filter(
+        (developer) =>
+          developer?._id?.toString() !==
+          user?._id?.toString()
+      );
+    }, [
+      searchData,
+      user?._id,
+    ]);
+
+  // ====================================
+  // Read Receipt
   // ====================================
 
   const isMessageRead = (
@@ -395,10 +431,6 @@ export default function ChatPage() {
           conversationId
         );
 
-        // ====================================
-        // Remove Unread Badge
-        // ====================================
-
         setConversations(
           (previousConversations) =>
             previousConversations.map(
@@ -412,11 +444,6 @@ export default function ChatPage() {
                   : conversation
             )
         );
-
-        // ====================================
-        // Immediately Mark Incoming Messages
-        // As Read Locally
-        // ====================================
 
         setMessages(
           (previousMessages) =>
@@ -485,6 +512,9 @@ export default function ChatPage() {
 
         setError("");
 
+        setIsOtherUserTyping(false);
+        setTypingUsername("");
+
         const response =
           await getConversation(
             conversation._id
@@ -509,7 +539,7 @@ export default function ChatPage() {
 
         setTimeout(() => {
           inputRef.current?.focus();
-        }, 100);
+        }, 150);
       } catch (error) {
         console.error(
           "❌ Failed to open conversation:",
@@ -550,20 +580,10 @@ export default function ChatPage() {
             developer._id
           );
 
-        console.log(
-          "💬 New chat response:",
-          response
-        );
-
         const conversation =
           response?.data?.conversation;
 
         if (!conversation?._id) {
-          console.error(
-            "❌ Conversation not found:",
-            response
-          );
-
           setError(
             "Could not open this conversation."
           );
@@ -648,11 +668,6 @@ export default function ChatPage() {
       );
 
     if (!conversation) {
-      console.warn(
-        "Conversation from navigation was not found:",
-        conversationId
-      );
-
       navigate("/messages", {
         replace: true,
         state: {},
@@ -695,11 +710,6 @@ export default function ChatPage() {
             selectedConversation._id
           );
 
-        console.log(
-          "💬 Messages response:",
-          response
-        );
-
         const messageList =
           getMessageList(response);
 
@@ -736,19 +746,17 @@ export default function ChatPage() {
   }, [
     messages,
     selectedConversation,
+    isOtherUserTyping,
   ]);
 
   // ====================================
-  // Socket - Incoming Messages
+  // Socket - New Messages
   // ====================================
 
   useEffect(() => {
-    const handleNewMessage = (message) => {
-      console.log(
-        "💬 ChatPage received:",
-        message
-      );
-
+    const handleNewMessage = (
+      message
+    ) => {
       if (!message) {
         return;
       }
@@ -766,10 +774,6 @@ export default function ChatPage() {
 
       const activeConversationId =
         selectedConversation?._id?.toString();
-
-      // ====================================
-      // Message belongs to active chat
-      // ====================================
 
       if (
         activeConversationId ===
@@ -798,16 +802,15 @@ export default function ChatPage() {
           }
         );
 
+        setIsOtherUserTyping(false);
+        setTypingUsername("");
+
         handleMarkConversationAsRead(
           conversationId
         );
 
         return;
       }
-
-      // ====================================
-      // Message belongs to another chat
-      // ====================================
 
       setConversations(
         (previousConversations) => {
@@ -826,12 +829,9 @@ export default function ChatPage() {
 
           const updatedConversation = {
             ...existingConversation,
-
             lastMessage: message,
-
             lastMessageAt:
               message.createdAt,
-
             unreadCount:
               Number(
                 existingConversation.unreadCount ||
@@ -841,7 +841,6 @@ export default function ChatPage() {
 
           return [
             updatedConversation,
-
             ...previousConversations.filter(
               (conversation) =>
                 conversation?._id?.toString() !==
@@ -875,11 +874,6 @@ export default function ChatPage() {
     const handleMessagesRead = (
       data
     ) => {
-      console.log(
-        "👁️ Messages read event received:",
-        data
-      );
-
       if (!data?.conversationId) {
         return;
       }
@@ -889,10 +883,6 @@ export default function ChatPage() {
 
       const activeConversationId =
         selectedConversation?._id?.toString();
-
-      // ====================================
-      // Ignore Other Conversations
-      // ====================================
 
       if (
         activeConversationId !==
@@ -908,10 +898,6 @@ export default function ChatPage() {
         return;
       }
 
-      // ====================================
-      // Update Own Messages
-      // ====================================
-
       setMessages(
         (previousMessages) =>
           previousMessages.map(
@@ -920,9 +906,6 @@ export default function ChatPage() {
                 message.sender?._id ||
                 message.sender;
 
-              // Only our messages should
-              // receive the recipient's
-              // read status.
               if (
                 senderId?.toString() !==
                 user?._id?.toString()
@@ -953,7 +936,6 @@ export default function ChatPage() {
 
               return {
                 ...message,
-
                 readBy: [
                   ...(message.readBy || []),
                   readerId,
@@ -981,6 +963,208 @@ export default function ChatPage() {
   ]);
 
   // ====================================
+  // Socket - Typing
+  // ====================================
+
+  useEffect(() => {
+    const handleUserTyping = (
+      data
+    ) => {
+      if (!data?.conversationId) {
+        return;
+      }
+
+      const conversationId =
+        data.conversationId.toString();
+
+      const activeConversationId =
+        selectedConversation?._id?.toString();
+
+      if (
+        activeConversationId !==
+        conversationId
+      ) {
+        return;
+      }
+
+      if (
+        data.userId?.toString() ===
+        user?._id?.toString()
+      ) {
+        return;
+      }
+
+      setIsOtherUserTyping(true);
+
+      setTypingUsername(
+        data.username || ""
+      );
+    };
+
+    const handleUserStoppedTyping = (
+      data
+    ) => {
+      if (!data?.conversationId) {
+        return;
+      }
+
+      const conversationId =
+        data.conversationId.toString();
+
+      const activeConversationId =
+        selectedConversation?._id?.toString();
+
+      if (
+        activeConversationId !==
+        conversationId
+      ) {
+        return;
+      }
+
+      if (
+        data.userId?.toString() ===
+        user?._id?.toString()
+      ) {
+        return;
+      }
+
+      setIsOtherUserTyping(false);
+      setTypingUsername("");
+    };
+
+    socket.on(
+      "user_typing",
+      handleUserTyping
+    );
+
+    socket.on(
+      "user_stopped_typing",
+      handleUserStoppedTyping
+    );
+
+    return () => {
+      socket.off(
+        "user_typing",
+        handleUserTyping
+      );
+
+      socket.off(
+        "user_stopped_typing",
+        handleUserStoppedTyping
+      );
+    };
+  }, [
+    selectedConversation,
+    user?._id,
+  ]);
+
+  // ====================================
+  // Typing Start
+  // ====================================
+
+  const handleTypingStart = () => {
+    if (
+      !selectedConversation?._id ||
+      !socket.connected
+    ) {
+      return;
+    }
+
+    socket.emit(
+      "typing_start",
+      {
+        conversationId:
+          selectedConversation._id,
+      }
+    );
+  };
+
+  // ====================================
+  // Typing Stop
+  // ====================================
+
+  const handleTypingStop = () => {
+    if (
+      !selectedConversation?._id ||
+      !socket.connected
+    ) {
+      return;
+    }
+
+    socket.emit(
+      "typing_stop",
+      {
+        conversationId:
+          selectedConversation._id,
+      }
+    );
+  };
+
+  // ====================================
+  // Input Change
+  // ====================================
+
+  const handleContentChange = (
+    event
+  ) => {
+    const value =
+      event.target.value;
+
+    setContent(value);
+
+    if (!value.trim()) {
+      handleTypingStop();
+
+      if (typingTimeoutRef.current) {
+        clearTimeout(
+          typingTimeoutRef.current
+        );
+      }
+
+      return;
+    }
+
+    handleTypingStart();
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(
+        typingTimeoutRef.current
+      );
+    }
+
+    typingTimeoutRef.current =
+      setTimeout(() => {
+        handleTypingStop();
+      }, 1500);
+  };
+
+  // ====================================
+  // Cleanup Typing
+  // ====================================
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(
+          typingTimeoutRef.current
+        );
+      }
+
+      if (socket.connected) {
+        socket.emit(
+          "typing_stop",
+          {
+            conversationId:
+              selectedConversation?._id,
+          }
+        );
+      }
+    };
+  }, [
+    selectedConversation?._id,
+  ]);
+
+  // ====================================
   // Send Message
   // ====================================
 
@@ -997,6 +1181,17 @@ export default function ChatPage() {
         sending
       ) {
         return;
+      }
+
+      handleTypingStop();
+
+      if (typingTimeoutRef.current) {
+        clearTimeout(
+          typingTimeoutRef.current
+        );
+
+        typingTimeoutRef.current =
+          null;
       }
 
       try {
@@ -1036,32 +1231,25 @@ export default function ChatPage() {
 
         setContent("");
 
-        // ====================================
-        // Update Conversation Locally
-        // ====================================
-
         setConversations(
           (previousConversations) => {
             const conversationId =
               selectedConversation._id.toString();
 
-            const updated =
-              previousConversations.map(
-                (conversation) =>
-                  conversation?._id?.toString() ===
-                  conversationId
-                    ? {
-                        ...conversation,
-                        lastMessage:
-                          sentMessage,
-                        lastMessageAt:
-                          sentMessage?.createdAt,
-                        unreadCount: 0,
-                      }
-                    : conversation
-              );
-
-            return updated;
+            return previousConversations.map(
+              (conversation) =>
+                conversation?._id?.toString() ===
+                conversationId
+                  ? {
+                      ...conversation,
+                      lastMessage:
+                        sentMessage,
+                      lastMessageAt:
+                        sentMessage?.createdAt,
+                      unreadCount: 0,
+                    }
+                  : conversation
+            );
           }
         );
 
@@ -1088,7 +1276,9 @@ export default function ChatPage() {
   // Enter To Send
   // ====================================
 
-  const handleInputKeyDown = (event) => {
+  const handleInputKeyDown = (
+    event
+  ) => {
     if (
       event.key === "Enter" &&
       !event.shiftKey
@@ -1110,37 +1300,40 @@ export default function ChatPage() {
   // ====================================
 
   return (
-    <div
-      className="
-        relative
-        h-[calc(100vh-8rem)]
-        min-h-[600px]
-        overflow-hidden
-        rounded-2xl
-        border
-        border-border/60
-        bg-background
-        shadow-sm
-      "
-    >
+ <div
+  className="
+    relative
+    h-[calc(100vh-9.5rem)]
+    min-h-[560px]
+    overflow-hidden
+    rounded-[24px]
+    border
+    border-border/60
+    bg-background
+    shadow-lg
+    shadow-black/5
+  "
+>
       <div className="flex h-full min-h-0">
 
         {/* ====================================
-            Conversation List
+            Sidebar
         ==================================== */}
 
         <aside
           className={`
+            relative
             h-full
             w-full
             shrink-0
             border-r
             border-border/60
-            bg-background
+            bg-background/95
+            backdrop-blur-xl
 
             md:block
             md:w-[340px]
-            lg:w-[360px]
+            lg:w-[380px]
 
             ${
               showConversationList
@@ -1149,122 +1342,204 @@ export default function ChatPage() {
             }
           `}
         >
-          {/* Header */}
+          {/* Sidebar Header */}
 
           <div
             className="
+              relative
+              overflow-hidden
               border-b
               border-border/60
-              px-4
-              py-4
-              sm:px-5
+              px-5
+              pb-4
+              pt-5
             "
           >
-            <div className="flex items-center justify-between gap-3">
+            <div
+              className="
+                pointer-events-none
+                absolute
+                -right-16
+                -top-20
+                h-40
+                w-40
+                rounded-full
+                bg-primary/10
+                blur-3xl
+              "
+            />
 
-              <div className="flex min-w-0 items-center gap-3">
-                <div
+            <div className="relative">
+              <div className="flex items-center justify-between gap-3">
+
+                <div className="flex items-center gap-3">
+                  <div
+                    className="
+                      flex
+                      h-11
+                      w-11
+                      items-center
+                      justify-center
+                      rounded-2xl
+                      bg-primary/10
+                      text-primary
+                      ring-1
+                      ring-primary/10
+                    "
+                  >
+                    <MessageCircle className="h-5 w-5" />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h1 className="text-lg font-bold tracking-tight">
+                        Messages
+                      </h1>
+
+                      <span
+                        className="
+                          hidden
+                          rounded-full
+                          bg-primary/10
+                          px-2
+                          py-0.5
+                          text-[9px]
+                          font-bold
+                          uppercase
+                          tracking-wider
+                          text-primary
+                          sm:inline-flex
+                        "
+                      >
+                        DevPulse
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-muted-foreground">
+                      {conversations.length}{" "}
+                      {conversations.length === 1
+                        ? "conversation"
+                        : "conversations"}
+                    </p>
+                  </div>
+                </div>
+
+                <Button
+                  type="button"
+                  size="icon"
+                  onClick={() =>
+                    setNewChatOpen(true)
+                  }
                   className="
-                    flex
-                    h-10
-                    w-10
+                    h-9
+                    w-9
                     shrink-0
-                    items-center
-                    justify-center
                     rounded-xl
-                    bg-primary/10
-                    text-primary
+                    shadow-sm
                   "
+                  title="New conversation"
                 >
-                  <MessageCircle className="h-5 w-5" />
-                </div>
-
-                <div className="min-w-0">
-                  <h1 className="font-semibold">
-                    Messages
-                  </h1>
-
-                  <p className="text-xs text-muted-foreground">
-                    {conversations.length}{" "}
-                    {conversations.length === 1
-                      ? "conversation"
-                      : "conversations"}
-                  </p>
-                </div>
+                  <Plus className="h-4 w-4" />
+                </Button>
               </div>
 
-              <Button
-                type="button"
-                size="sm"
-                onClick={() =>
-                  setNewChatOpen(true)
-                }
-                className="
-                  h-9
-                  shrink-0
-                  gap-1.5
-                  rounded-xl
-                  px-3
-                "
-              >
-                <Plus className="h-4 w-4" />
+              {/* Search */}
 
-                <span className="hidden sm:inline">
-                  New chat
-                </span>
-              </Button>
-            </div>
+              <div className="relative mt-5">
+                <Search
+                  className="
+                    pointer-events-none
+                    absolute
+                    left-3.5
+                    top-1/2
+                    h-4
+                    w-4
+                    -translate-y-1/2
+                    text-muted-foreground
+                  "
+                />
 
-            <div className="relative mt-4">
-              <Search
-                className="
-                  pointer-events-none
-                  absolute
-                  left-3
-                  top-1/2
-                  h-4
-                  w-4
-                  -translate-y-1/2
-                  text-muted-foreground
-                "
-              />
+                <Input
+                  value={conversationSearch}
+                  onChange={(event) =>
+                    setConversationSearch(
+                      event.target.value
+                    )
+                  }
+                  placeholder="Search conversations..."
+                  className="
+                    h-11
+                    rounded-2xl
+                    border-border/50
+                    bg-muted/40
+                    pl-10
+                    pr-10
+                    shadow-none
+                    transition-all
+                    focus:bg-background
+                  "
+                />
 
-              <Input
-                value={conversationSearch}
-                onChange={(event) =>
-                  setConversationSearch(
-                    event.target.value
-                  )
-                }
-                placeholder="Search conversations..."
-                className="
-                  h-10
-                  rounded-xl
-                  bg-muted/40
-                  pl-9
-                "
-              />
+                {conversationSearch && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setConversationSearch("")
+                    }
+                    className="
+                      absolute
+                      right-3
+                      top-1/2
+                      -translate-y-1/2
+                      rounded-md
+                      p-1
+                      text-muted-foreground
+                      transition-colors
+                      hover:bg-muted
+                      hover:text-foreground
+                    "
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
+
+          {/* Conversation List */}
 
           <div
             className="
               h-[calc(100%-145px)]
               overflow-y-auto
-              p-2
-              sm:p-3
+              px-2.5
+              py-3
             "
           >
             {loadingConversations && (
-              <div className="flex items-center justify-center py-12">
-                <Loader2
-                  className="
-                    h-5
-                    w-5
-                    animate-spin
-                    text-primary
-                  "
-                />
+              <div className="space-y-2">
+                {[1, 2, 3, 4, 5].map(
+                  (item) => (
+                    <div
+                      key={item}
+                      className="
+                        flex
+                        animate-pulse
+                        items-center
+                        gap-3
+                        rounded-2xl
+                        p-3
+                      "
+                    >
+                      <div className="h-11 w-11 shrink-0 rounded-full bg-muted" />
+
+                      <div className="flex-1 space-y-2">
+                        <div className="h-3 w-28 rounded-full bg-muted" />
+                        <div className="h-2.5 w-40 rounded-full bg-muted" />
+                      </div>
+                    </div>
+                  )
+                )}
               </div>
             )}
 
@@ -1272,33 +1547,60 @@ export default function ChatPage() {
               filteredConversations.length === 0 && (
                 <div
                   className="
-                    rounded-xl
-                    bg-muted/40
-                    p-6
+                    flex
+                    min-h-[350px]
+                    flex-col
+                    items-center
+                    justify-center
+                    px-5
                     text-center
                   "
                 >
-                  <MessageCircle
+                  <div
                     className="
-                      mx-auto
-                      mb-3
-                      h-8
-                      w-8
-                      text-muted-foreground
+                      flex
+                      h-14
+                      w-14
+                      items-center
+                      justify-center
+                      rounded-2xl
+                      bg-primary/10
+                      text-primary
                     "
-                  />
+                  >
+                    <Search className="h-6 w-6" />
+                  </div>
 
-                  <p className="text-sm font-medium">
+                  <h3 className="mt-4 text-sm font-semibold">
                     {conversationSearch
                       ? "No conversations found"
-                      : "No conversations"}
+                      : "No conversations yet"}
+                  </h3>
+
+                  <p className="mt-1.5 max-w-[240px] text-xs leading-5 text-muted-foreground">
+                    {conversationSearch
+                      ? "Try searching for another developer."
+                      : "Start connecting with developers and your conversations will appear here."}
                   </p>
 
-                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                    {conversationSearch
-                      ? "Try a different name or username."
-                      : "Start a conversation with a developer."}
-                  </p>
+                  {!conversationSearch && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setNewChatOpen(true)
+                      }
+                      className="
+                        mt-5
+                        gap-2
+                        rounded-xl
+                      "
+                    >
+                      <Plus className="h-4 w-4" />
+                      Start a chat
+                    </Button>
+                  )}
                 </div>
               )}
 
@@ -1346,11 +1648,13 @@ export default function ChatPage() {
                           )
                         }
                         className={`
+                          group
+                          relative
                           flex
                           w-full
                           items-center
                           gap-3
-                          rounded-xl
+                          rounded-2xl
                           p-3
                           text-left
                           transition-all
@@ -1360,8 +1664,9 @@ export default function ChatPage() {
                             isActive
                               ? `
                                 bg-primary/10
+                                shadow-sm
                                 ring-1
-                                ring-primary/10
+                                ring-primary/15
                               `
                               : `
                                 hover:bg-muted/60
@@ -1369,37 +1674,71 @@ export default function ChatPage() {
                           }
                         `}
                       >
-                        <Avatar
-                          className="
-                            h-11
-                            w-11
-                            shrink-0
-                            border
-                            border-border/60
-                          "
-                        >
-                          <AvatarImage
-                            src={
-                              participant?.avatar
-                            }
-                            alt={
-                              participantName
-                            }
-                          />
-
-                          <AvatarFallback
+                        {isActive && (
+                          <span
                             className="
-                              bg-primary/10
-                              font-semibold
-                              text-primary
+                              absolute
+                              bottom-3
+                              left-0
+                              top-3
+                              w-0.5
+                              rounded-full
+                              bg-primary
+                            "
+                          />
+                        )}
+
+                        <div className="relative shrink-0">
+                          <Avatar
+                            className="
+                              h-12
+                              w-12
+                              border
+                              border-border/60
+                              shadow-sm
+                              transition-transform
+                              duration-200
+                              group-hover:scale-[1.03]
                             "
                           >
-                            {participantName
-                              ?.charAt(0)
-                              ?.toUpperCase() ||
-                              "D"}
-                          </AvatarFallback>
-                        </Avatar>
+                            <AvatarImage
+                              src={
+                                participant?.avatar
+                              }
+                              alt={
+                                participantName
+                              }
+                            />
+
+                            <AvatarFallback
+                              className="
+                                bg-primary/10
+                                font-semibold
+                                text-primary
+                              "
+                            >
+                              {getInitials(
+                                participantName
+                              )}
+                            </AvatarFallback>
+                          </Avatar>
+
+                          {isActive && (
+                            <span
+                              className="
+                                absolute
+                                bottom-0
+                                right-0
+                                h-3
+                                w-3
+                                rounded-full
+                                border-2
+                                border-background
+                                bg-emerald-500
+                              "
+                            />
+                          )}
+                        </div>
 
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-2">
@@ -1408,65 +1747,44 @@ export default function ChatPage() {
                                 truncate
                                 text-sm
                                 ${
+                                  unreadCount > 0 ||
                                   isActive
-                                    ? "font-semibold text-primary"
-                                    : unreadCount > 0
-                                      ? "font-semibold"
-                                      : "font-medium"
+                                    ? "font-semibold"
+                                    : "font-medium"
                                 }
                               `}
                             >
                               {participantName}
                             </p>
 
-                            <div className="flex shrink-0 items-center gap-2">
-                              {lastMessageTime && (
-                                <span
-                                  className="
-                                    text-[10px]
-                                    text-muted-foreground
-                                  "
-                                >
-                                  {formatTime(
-                                    lastMessageTime
-                                  )}
-                                </span>
-                              )}
-
-                              {unreadCount > 0 && (
-                                <span
-                                  className="
-                                    flex
-                                    h-5
-                                    min-w-5
-                                    items-center
-                                    justify-center
-                                    rounded-full
-                                    bg-primary
-                                    px-1.5
-                                    text-[10px]
-                                    font-bold
-                                    text-primary-foreground
-                                  "
-                                >
-                                  {unreadCount > 99
-                                    ? "99+"
-                                    : unreadCount}
-                                </span>
-                              )}
-                            </div>
+                            {lastMessageTime && (
+                              <span
+                                className={`
+                                  shrink-0
+                                  text-[10px]
+                                  ${
+                                    unreadCount > 0
+                                      ? "font-semibold text-primary"
+                                      : "text-muted-foreground"
+                                  }
+                                `}
+                              >
+                                {formatTime(
+                                  lastMessageTime
+                                )}
+                              </span>
+                            )}
                           </div>
 
-                          <p className="truncate text-xs text-muted-foreground">
+                          <p className="truncate text-[11px] text-muted-foreground">
                             {participant?.username
                               ? `@${participant.username}`
                               : "Developer"}
                           </p>
 
-                          {lastMessage && (
+                          <div className="mt-1 flex items-center justify-between gap-2">
                             <p
                               className={`
-                                mt-1
                                 truncate
                                 text-xs
                                 ${
@@ -1476,9 +1794,34 @@ export default function ChatPage() {
                                 }
                               `}
                             >
-                              {lastMessage}
+                              {lastMessage ||
+                                "Start a conversation"}
                             </p>
-                          )}
+
+                            {unreadCount > 0 && (
+                              <span
+                                className="
+                                  flex
+                                  h-5
+                                  min-w-5
+                                  shrink-0
+                                  items-center
+                                  justify-center
+                                  rounded-full
+                                  bg-primary
+                                  px-1.5
+                                  text-[10px]
+                                  font-bold
+                                  text-primary-foreground
+                                  shadow-sm
+                                "
+                              >
+                                {unreadCount > 99
+                                  ? "99+"
+                                  : unreadCount}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </button>
                     );
@@ -1489,16 +1832,18 @@ export default function ChatPage() {
         </aside>
 
         {/* ====================================
-            Chat Window
+            Chat Area
         ==================================== */}
 
         <main
           className={`
+            relative
             flex
             min-w-0
             flex-1
             flex-col
-            bg-background
+            overflow-hidden
+            bg-muted/[0.12]
 
             ${
               showConversationList
@@ -1510,62 +1855,90 @@ export default function ChatPage() {
           {!selectedConversation ? (
             <div
               className="
+                relative
                 flex
                 flex-1
-                flex-col
                 items-center
                 justify-center
+                overflow-hidden
                 px-6
-                text-center
               "
             >
               <div
                 className="
-                  mb-5
-                  flex
-                  h-16
-                  w-16
-                  items-center
-                  justify-center
-                  rounded-2xl
-                  bg-primary/10
-                  text-primary
+                  pointer-events-none
+                  absolute
+                  left-1/2
+                  top-1/2
+                  h-80
+                  w-80
+                  -translate-x-1/2
+                  -translate-y-1/2
+                  rounded-full
+                  bg-primary/5
+                  blur-3xl
                 "
-              >
-                <MessageCircle className="h-8 w-8" />
+              />
+
+              <div className="relative max-w-md text-center">
+                <div
+                  className="
+                    mx-auto
+                    flex
+                    h-20
+                    w-20
+                    items-center
+                    justify-center
+                    rounded-[28px]
+                    bg-primary/10
+                    text-primary
+                    shadow-sm
+                    ring-1
+                    ring-primary/10
+                  "
+                >
+                  <MessageCircle className="h-9 w-9" />
+                </div>
+
+                <div className="mt-6 flex items-center justify-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+
+                  <span className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                    DevPulse Messages
+                  </span>
+                </div>
+
+                <h2 className="mt-3 text-2xl font-bold tracking-tight">
+                  Your developer network,
+                  <br />
+                  one conversation away.
+                </h2>
+
+                <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-muted-foreground">
+                  Connect with developers,
+                  discuss projects, share ideas,
+                  and build meaningful
+                  professional connections.
+                </p>
+
+                <Button
+                  type="button"
+                  onClick={() =>
+                    setNewChatOpen(true)
+                  }
+                  className="
+                    mt-6
+                    h-11
+                    gap-2
+                    rounded-xl
+                    px-5
+                    shadow-sm
+                  "
+                >
+                  <Plus className="h-4 w-4" />
+                  Start a conversation
+                </Button>
               </div>
-
-              <h2 className="text-lg font-semibold">
-                Your messages
-              </h2>
-
-              <p
-                className="
-                  mt-2
-                  max-w-sm
-                  text-sm
-                  leading-6
-                  text-muted-foreground
-                "
-              >
-                Select a conversation or
-                start a new chat.
-              </p>
-
-              <Button
-                type="button"
-                onClick={() =>
-                  setNewChatOpen(true)
-                }
-                className="
-                  mt-5
-                  gap-2
-                  rounded-xl
-                "
-              >
-                <Plus className="h-4 w-4" />
-                Start a new chat
-              </Button>
             </div>
           ) : (
             <>
@@ -1573,18 +1946,22 @@ export default function ChatPage() {
                   Chat Header
               ==================================== */}
 
-              <div
+              <header
                 className="
+                  relative
+                  z-10
                   flex
                   shrink-0
                   items-center
                   gap-3
                   border-b
                   border-border/60
+                  bg-background/90
                   px-4
                   py-3
+                  shadow-sm
+                  backdrop-blur-xl
                   sm:px-5
-                  sm:py-4
                 "
               >
                 <Button
@@ -1607,58 +1984,120 @@ export default function ChatPage() {
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
 
-                <Avatar
-                  className="
-                    h-10
-                    w-10
-                    shrink-0
-                    border
-                    border-border/60
-                  "
-                >
-                  <AvatarImage
-                    src={
-                      activeParticipant?.avatar
-                    }
-                    alt={
-                      activeParticipant?.fullName ||
-                      "Developer"
-                    }
-                  />
-
-                  <AvatarFallback
+                <div className="relative shrink-0">
+                  <Avatar
                     className="
-                      bg-primary/10
-                      font-semibold
-                      text-primary
+                      h-11
+                      w-11
+                      border
+                      border-border/60
+                      shadow-sm
                     "
                   >
-                    {activeParticipant?.fullName
-                      ?.charAt(0)
-                      ?.toUpperCase() ||
-                      activeParticipant?.username
-                        ?.charAt(0)
-                        ?.toUpperCase() ||
-                      "D"}
-                  </AvatarFallback>
-                </Avatar>
+                    <AvatarImage
+                      src={
+                        activeParticipant?.avatar
+                      }
+                      alt={
+                        activeParticipant?.fullName ||
+                        "Developer"
+                      }
+                    />
 
-                <div className="min-w-0 flex-1">
-                  <h2 className="truncate font-semibold">
-                    {activeParticipant?.fullName ||
-                      activeParticipant?.username ||
-                      "Developer"}
-                  </h2>
-
-                  {activeParticipant?.username && (
-                    <p
+                    <AvatarFallback
                       className="
-                        truncate
-                        text-xs
-                        text-muted-foreground
+                        bg-primary/10
+                        font-semibold
+                        text-primary
                       "
                     >
+                      {getInitials(
+                        activeParticipant?.fullName ||
+                          activeParticipant?.username
+                      )}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  <span
+                    className="
+                      absolute
+                      bottom-0
+                      right-0
+                      h-3
+                      w-3
+                      rounded-full
+                      border-2
+                      border-background
+                      bg-emerald-500
+                    "
+                  />
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h2 className="truncate text-sm font-bold sm:text-base">
+                      {activeParticipant?.fullName ||
+                        activeParticipant?.username ||
+                        "Developer"}
+                    </h2>
+
+                    <span
+                      className="
+                        hidden
+                        rounded-full
+                        bg-emerald-500/10
+                        px-2
+                        py-0.5
+                        text-[9px]
+                        font-bold
+                        uppercase
+                        tracking-wider
+                        text-emerald-600
+                        sm:inline-flex
+                      "
+                    >
+                      Active
+                    </span>
+                  </div>
+
+                  {activeParticipant?.username && (
+                    <p className="truncate text-[11px] text-muted-foreground">
                       @{activeParticipant.username}
+                    </p>
+                  )}
+
+                  {isOtherUserTyping && (
+                    <p
+                      className="
+                        mt-0.5
+                        flex
+                        items-center
+                        gap-1
+                        text-[11px]
+                        font-medium
+                        text-primary
+                      "
+                    >
+                      <span>
+                        {typingUsername ||
+                          activeParticipant?.fullName ||
+                          "Developer"}{" "}
+                        is typing
+                      </span>
+
+                      <span className="flex gap-0.5">
+                        <span className="animate-bounce [animation-delay:-0.3s]">
+                          .
+                        </span>
+
+                        <span className="animate-bounce [animation-delay:-0.15s]">
+                          .
+                        </span>
+
+                        <span className="animate-bounce">
+                          .
+                        </span>
+                      </span>
                     </p>
                   )}
                 </div>
@@ -1668,17 +2107,17 @@ export default function ChatPage() {
                   variant="ghost"
                   size="icon"
                   className="
-                    hidden
                     h-9
                     w-9
                     shrink-0
                     rounded-xl
-                    sm:inline-flex
+                    text-muted-foreground
+                    hover:text-foreground
                   "
                 >
                   <MoreVertical className="h-4 w-4" />
                 </Button>
-              </div>
+              </header>
 
               {/* ====================================
                   Messages
@@ -1686,69 +2125,119 @@ export default function ChatPage() {
 
               <div
                 className="
+                  relative
                   min-h-0
                   flex-1
                   overflow-y-auto
                   px-4
-                  py-5
-                  sm:px-6
-                  sm:py-6
+                  py-6
+                  sm:px-8
+                  sm:py-8
                 "
               >
+                <div
+                  className="
+                    pointer-events-none
+                    absolute
+                    left-1/2
+                    top-0
+                    h-72
+                    w-72
+                    -translate-x-1/2
+                    rounded-full
+                    bg-primary/[0.025]
+                    blur-3xl
+                  "
+                />
+
                 {loadingMessages && (
-                  <div className="flex items-center justify-center py-10">
-                    <Loader2
+                  <div className="relative flex items-center justify-center py-10">
+                    <div
                       className="
-                        h-5
-                        w-5
-                        animate-spin
-                        text-primary
+                        flex
+                        items-center
+                        gap-3
+                        rounded-2xl
+                        border
+                        border-border/50
+                        bg-background/80
+                        px-4
+                        py-3
+                        shadow-sm
+                        backdrop-blur
                       "
-                    />
+                    >
+                      <Loader2
+                        className="
+                          h-4
+                          w-4
+                          animate-spin
+                          text-primary
+                        "
+                      />
+
+                      <span className="text-xs text-muted-foreground">
+                        Loading conversation...
+                      </span>
+                    </div>
                   </div>
                 )}
 
                 {!loadingMessages &&
                   messages.length === 0 && (
-                    <div className="flex h-full min-h-[300px] items-center justify-center">
-                      <div className="text-center">
+                    <div
+                      className="
+                        relative
+                        flex
+                        h-full
+                        min-h-[350px]
+                        items-center
+                        justify-center
+                      "
+                    >
+                      <div className="max-w-sm text-center">
                         <div
                           className="
                             mx-auto
-                            mb-3
                             flex
-                            h-12
-                            w-12
+                            h-16
+                            w-16
                             items-center
                             justify-center
-                            rounded-2xl
-                            bg-muted
+                            rounded-[22px]
+                            bg-background
+                            text-primary
+                            shadow-md
+                            ring-1
+                            ring-border/60
                           "
                         >
-                          <MessageCircle
-                            className="
-                              h-5
-                              w-5
-                              text-muted-foreground
-                            "
-                          />
+                          <Code2 className="h-7 w-7" />
                         </div>
 
-                        <p className="text-sm font-medium">
-                          No messages yet
-                        </p>
+                        <h3 className="mt-5 text-base font-bold">
+                          Start the conversation
+                        </h3>
 
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          Say hello and start the
-                          conversation.
+                        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                          Say hello, discuss a
+                          project, or exchange
+                          some developer ideas.
                         </p>
                       </div>
                     </div>
                   )}
 
-                <div className="mx-auto max-w-3xl space-y-3">
+                <div
+                  className="
+                    relative
+                    mx-auto
+                    max-w-3xl
+                    space-y-4
+                  "
+                >
                   {messages.map(
-                    (message) => {
+                    (message, index) => {
                       const senderId =
                         message.sender?._id ||
                         message.sender;
@@ -1764,6 +2253,18 @@ export default function ChatPage() {
                           message
                         );
 
+                      const previousMessage =
+                        messages[index - 1];
+
+                      const previousSenderId =
+                        previousMessage?.sender?._id ||
+                        previousMessage?.sender;
+
+                      const isSameSender =
+                        previousSenderId
+                          ?.toString() ===
+                        senderId?.toString();
+
                       return (
                         <div
                           key={
@@ -1771,6 +2272,8 @@ export default function ChatPage() {
                           }
                           className={`
                             flex
+                            items-end
+                            gap-2.5
                             ${
                               isOwnMessage
                                 ? "justify-end"
@@ -1778,54 +2281,104 @@ export default function ChatPage() {
                             }
                           `}
                         >
+                          {/* Incoming avatar */}
+
+                          {!isOwnMessage &&
+                            !isSameSender && (
+                              <Avatar
+                                className="
+                                  mb-5
+                                  h-7
+                                  w-7
+                                  shrink-0
+                                  border
+                                  border-border/50
+                                "
+                              >
+                                <AvatarImage
+                                  src={
+                                    activeParticipant?.avatar
+                                  }
+                                  alt=""
+                                />
+
+                                <AvatarFallback
+                                  className="
+                                    bg-primary/10
+                                    text-[9px]
+                                    font-semibold
+                                    text-primary
+                                  "
+                                >
+                                  {getInitials(
+                                    activeParticipant?.fullName ||
+                                      activeParticipant?.username
+                                  )}
+                                </AvatarFallback>
+                              </Avatar>
+                            )}
+
+                          {!isOwnMessage &&
+                            isSameSender && (
+                              <div className="w-7 shrink-0" />
+                            )}
+
                           <div
                             className="
-                              max-w-[82%]
-                              sm:max-w-[70%]
+                              group
+                              max-w-[72%]
+                              sm:max-w-[60%]
                             "
                           >
+                            {/* Message Bubble */}
+
                             <div
                               className={`
-                                rounded-2xl
-                                px-4
-                                py-2.5
+                                relative
+                                px-3.5
+                                py-2
                                 text-sm
-                                leading-6
-                                shadow-sm
-
+                                leading-5
+                                transition-all
+                                duration-200
                                 ${
                                   isOwnMessage
                                     ? `
-                                      rounded-br-md
+                                      rounded-[16px]
+                                      rounded-br-[5px]
                                       bg-primary
                                       text-primary-foreground
+                                      shadow-sm
+                                      shadow-primary/10
                                     `
                                     : `
-                                      rounded-bl-md
+                                      rounded-[16px]
+                                      rounded-bl-[5px]
                                       border
                                       border-border/50
-                                      bg-muted
+                                      bg-background
+                                      text-foreground
+                                      shadow-sm
                                     `
                                 }
                               `}
                             >
-                              {message.content}
+                              <p className="whitespace-pre-wrap break-words">
+                                {message.content}
+                              </p>
                             </div>
 
-                            {/* ====================================
-                                Message Time + Read Receipt
-                            ==================================== */}
+                            {/* Message Meta */}
 
                             <div
                               className={`
                                 mt-1
                                 flex
                                 items-center
-                                gap-1
+                                gap-1.5
                                 px-1
-                                text-[10px]
+                                text-[9px]
                                 text-muted-foreground
-
                                 ${
                                   isOwnMessage
                                     ? "justify-end"
@@ -1840,30 +2393,90 @@ export default function ChatPage() {
                               </span>
 
                               {isOwnMessage && (
-                                <span
-                                  title={
-                                    read
-                                      ? "Read"
-                                      : "Delivered"
-                                  }
+                                <CheckCheck
                                   className={`
-                                    font-semibold
-                                    tracking-[-2px]
+                                    h-3.5
+                                    w-3.5
+                                    transition-colors
                                     ${
                                       read
                                         ? "text-blue-500"
                                         : "text-muted-foreground"
                                     }
                                   `}
-                                >
-                                  ✓✓
-                                </span>
+                                  title={
+                                    read
+                                      ? "Read"
+                                      : "Delivered"
+                                  }
+                                />
                               )}
                             </div>
                           </div>
                         </div>
                       );
                     }
+                  )}
+
+                  {/* ====================================
+                      Typing Bubble
+                  ==================================== */}
+
+                  {isOtherUserTyping && (
+                    <div className="flex items-end gap-2.5">
+                      <Avatar
+                        className="
+                          h-7
+                          w-7
+                          shrink-0
+                          border
+                          border-border/50
+                        "
+                      >
+                        <AvatarImage
+                          src={
+                            activeParticipant?.avatar
+                          }
+                          alt=""
+                        />
+
+                        <AvatarFallback
+                          className="
+                            bg-primary/10
+                            text-[9px]
+                            font-semibold
+                            text-primary
+                          "
+                        >
+                          {getInitials(
+                            activeParticipant?.fullName ||
+                              activeParticipant?.username
+                          )}
+                        </AvatarFallback>
+                      </Avatar>
+
+                      <div
+                        className="
+                          flex
+                          items-center
+                          gap-1
+                          rounded-[16px]
+                          rounded-bl-[5px]
+                          border
+                          border-border/50
+                          bg-background
+                          px-3.5
+                          py-2
+                          shadow-sm
+                        "
+                      >
+                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.3s]" />
+
+                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.15s]" />
+
+                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground" />
+                      </div>
+                    </div>
                   )}
 
                   <div
@@ -1874,17 +2487,21 @@ export default function ChatPage() {
               </div>
 
               {/* ====================================
-                  Send Form
+                  Composer
               ==================================== */}
 
               <div
                 className="
+                  relative
                   shrink-0
                   border-t
                   border-border/60
-                  bg-background
-                  p-3
-                  sm:p-4
+                  bg-background/90
+                  px-3
+                  py-3
+                  backdrop-blur-xl
+                  sm:px-5
+                  sm:py-4
                 "
               >
                 <form
@@ -1893,58 +2510,108 @@ export default function ChatPage() {
                   }
                   className="
                     mx-auto
-                    flex
                     max-w-3xl
-                    items-center
-                    gap-2
                   "
                 >
-                  <Input
-                    ref={inputRef}
-                    value={content}
-                    onChange={(event) =>
-                      setContent(
-                        event.target.value
-                      )
-                    }
-                    onKeyDown={
-                      handleInputKeyDown
-                    }
-                    placeholder="Write a message..."
-                    disabled={sending}
+                  <div
                     className="
-                      h-11
-                      rounded-xl
+                      flex
+                      items-center
+                      gap-2
+                      rounded-2xl
+                      border
+                      border-border/70
                       bg-muted/30
-                    "
-                  />
-
-                  <Button
-                    type="submit"
-                    size="icon"
-                    disabled={
-                      sending ||
-                      !content.trim()
-                    }
-                    className="
-                      h-11
-                      w-11
-                      shrink-0
-                      rounded-xl
+                      p-1.5
+                      shadow-sm
+                      transition-all
+                      duration-200
+                      focus-within:border-primary/30
+                      focus-within:bg-background
+                      focus-within:shadow-md
+                      focus-within:shadow-primary/5
                     "
                   >
-                    {sending ? (
-                      <Loader2
-                        className="
-                          h-4
-                          w-4
-                          animate-spin
-                        "
-                      />
-                    ) : (
-                      <Send className="h-4 w-4" />
-                    )}
-                  </Button>
+                    <button
+                      type="button"
+                      className="
+                        flex
+                        h-9
+                        w-9
+                        shrink-0
+                        items-center
+                        justify-center
+                        rounded-xl
+                        text-muted-foreground
+                        transition-colors
+                        hover:bg-muted
+                        hover:text-foreground
+                      "
+                      title="Developer tools"
+                    >
+                      <Code2 className="h-4 w-4" />
+                    </button>
+
+                    <Input
+                      ref={inputRef}
+                      value={content}
+                      onChange={
+                        handleContentChange
+                      }
+                      onKeyDown={
+                        handleInputKeyDown
+                      }
+                      placeholder="Write a message..."
+                      disabled={sending}
+                      className="
+                        h-10
+                        flex-1
+                        border-0
+                        bg-transparent
+                        px-1
+                        shadow-none
+                        focus-visible:ring-0
+                      "
+                    />
+
+                    <Button
+                      type="submit"
+                      size="icon"
+                      disabled={
+                        sending ||
+                        !content.trim()
+                      }
+                      className="
+                        h-9
+                        w-9
+                        shrink-0
+                        rounded-xl
+                        shadow-sm
+                      "
+                    >
+                      {sending ? (
+                        <Loader2
+                          className="
+                            h-4
+                            w-4
+                            animate-spin
+                          "
+                        />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+
+                  <div className="mt-2 hidden justify-between px-1 sm:flex">
+                    <span className="text-[10px] text-muted-foreground">
+                      Enter to send
+                    </span>
+
+                    <span className="text-[10px] text-muted-foreground">
+                      Shift + Enter for a new line
+                    </span>
+                  </div>
                 </form>
               </div>
             </>
@@ -1967,62 +2634,100 @@ export default function ChatPage() {
             justify-center
             bg-background/70
             p-4
-            backdrop-blur-sm
+            backdrop-blur-md
           "
         >
           <div
             className="
               flex
-              max-h-[80%]
+              max-h-[82%]
               w-full
-              max-w-md
+              max-w-lg
               flex-col
               overflow-hidden
-              rounded-2xl
+              rounded-[26px]
               border
               border-border/60
-              bg-background
+              bg-background/95
               shadow-2xl
+              backdrop-blur-xl
             "
           >
+            {/* Modal Header */}
+
             <div
               className="
-                flex
-                items-center
-                justify-between
+                relative
+                overflow-hidden
                 border-b
                 border-border/60
                 px-5
-                py-4
+                pb-5
+                pt-5
               "
             >
-              <div>
-                <h2 className="font-semibold">
-                  Start a new chat
-                </h2>
-
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  Find a developer to message
-                </p>
-              </div>
-
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  setNewChatOpen(false);
-                  setNewChatSearch("");
-                }}
+              <div
                 className="
-                  h-9
-                  w-9
-                  rounded-xl
+                  pointer-events-none
+                  absolute
+                  -right-16
+                  -top-16
+                  h-36
+                  w-36
+                  rounded-full
+                  bg-primary/10
+                  blur-3xl
                 "
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              />
+
+              <div className="relative flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="
+                      flex
+                      h-10
+                      w-10
+                      items-center
+                      justify-center
+                      rounded-xl
+                      bg-primary/10
+                      text-primary
+                    "
+                  >
+                    <MessageCircle className="h-5 w-5" />
+                  </div>
+
+                  <div>
+                    <h2 className="font-bold">
+                      New conversation
+                    </h2>
+
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Find a developer on DevPulse
+                    </p>
+                  </div>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setNewChatOpen(false);
+                    setNewChatSearch("");
+                  }}
+                  className="
+                    h-9
+                    w-9
+                    rounded-xl
+                  "
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
+
+            {/* Search */}
 
             <div className="px-5 py-4">
               <div className="relative">
@@ -2030,7 +2735,7 @@ export default function ChatPage() {
                   className="
                     pointer-events-none
                     absolute
-                    left-3
+                    left-3.5
                     top-1/2
                     h-4
                     w-4
@@ -2047,16 +2752,18 @@ export default function ChatPage() {
                       event.target.value
                     )
                   }
-                  placeholder="Search developers..."
+                  placeholder="Search by name or username..."
                   className="
                     h-11
-                    rounded-xl
+                    rounded-2xl
                     bg-muted/30
-                    pl-9
+                    pl-10
                   "
                 />
               </div>
             </div>
+
+            {/* Results */}
 
             <div
               className="
@@ -2071,17 +2778,16 @@ export default function ChatPage() {
                 <div
                   className="
                     px-4
-                    py-10
+                    py-12
                     text-center
                   "
                 >
                   <div
                     className="
                       mx-auto
-                      mb-3
                       flex
-                      h-12
-                      w-12
+                      h-14
+                      w-14
                       items-center
                       justify-center
                       rounded-2xl
@@ -2089,51 +2795,75 @@ export default function ChatPage() {
                       text-primary
                     "
                   >
-                    <Search className="h-5 w-5" />
+                    <Search className="h-6 w-6" />
                   </div>
 
-                  <p className="text-sm font-medium">
-                    Find a developer
+                  <p className="mt-4 text-sm font-semibold">
+                    Find someone to talk to
                   </p>
 
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Type at least 2 characters
-                    to search.
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                    Search for a developer by
+                    name or username.
                   </p>
                 </div>
               )}
 
               {newChatSearch.trim().length >= 2 &&
                 searchingDevelopers && (
-                  <div className="flex items-center justify-center py-10">
-                    <Loader2
+                  <div className="flex items-center justify-center py-12">
+                    <div
                       className="
-                        h-5
-                        w-5
-                        animate-spin
-                        text-primary
+                        flex
+                        items-center
+                        gap-2
+                        rounded-xl
+                        bg-muted/40
+                        px-4
+                        py-3
                       "
-                    />
+                    >
+                      <Loader2
+                        className="
+                          h-4
+                          w-4
+                          animate-spin
+                          text-primary
+                        "
+                      />
+
+                      <span className="text-xs text-muted-foreground">
+                        Searching developers...
+                      </span>
+                    </div>
                   </div>
                 )}
 
               {newChatSearch.trim().length >= 2 &&
                 !searchingDevelopers &&
                 developerResults.length === 0 && (
-                  <div
-                    className="
-                      px-4
-                      py-10
-                      text-center
-                    "
-                  >
-                    <p className="text-sm font-medium">
+                  <div className="px-4 py-12 text-center">
+                    <div
+                      className="
+                        mx-auto
+                        flex
+                        h-12
+                        w-12
+                        items-center
+                        justify-center
+                        rounded-2xl
+                        bg-muted
+                      "
+                    >
+                      <Search className="h-5 w-5 text-muted-foreground" />
+                    </div>
+
+                    <p className="mt-4 text-sm font-semibold">
                       No developers found
                     </p>
 
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Try another name or
-                      username.
+                      Try another name or username.
                     </p>
                   </div>
                 )}
@@ -2155,89 +2885,118 @@ export default function ChatPage() {
                         )
                       }
                       className="
+                        group
                         flex
                         w-full
                         items-center
                         gap-3
-                        rounded-xl
+                        rounded-2xl
                         p-3
                         text-left
-                        transition-colors
+                        transition-all
+                        duration-200
                         hover:bg-muted/60
                         disabled:cursor-not-allowed
                         disabled:opacity-60
                       "
                     >
-                      <Avatar
-                        className="
-                          h-11
-                          w-11
-                          shrink-0
-                          border
-                          border-border/60
-                        "
-                      >
-                        <AvatarImage
-                          src={
-                            developer.avatar
-                          }
-                          alt={
-                            developer.fullName ||
-                            developer.username
-                          }
-                        />
-
-                        <AvatarFallback
+                      <div className="relative shrink-0">
+                        <Avatar
                           className="
-                            bg-primary/10
-                            font-semibold
-                            text-primary
+                            h-12
+                            w-12
+                            border
+                            border-border/60
+                            shadow-sm
                           "
                         >
-                          {developer.fullName
-                            ?.charAt(0)
-                            ?.toUpperCase() ||
-                            developer.username
-                              ?.charAt(0)
-                              ?.toUpperCase() ||
-                            "D"}
-                        </AvatarFallback>
-                      </Avatar>
+                          <AvatarImage
+                            src={
+                              developer.avatar
+                            }
+                            alt={
+                              developer.fullName ||
+                              developer.username
+                            }
+                          />
+
+                          <AvatarFallback
+                            className="
+                              bg-primary/10
+                              font-semibold
+                              text-primary
+                            "
+                          >
+                            {getInitials(
+                              developer.fullName ||
+                                developer.username
+                            )}
+                          </AvatarFallback>
+                        </Avatar>
+
+                        <span
+                          className="
+                            absolute
+                            bottom-0
+                            right-0
+                            h-3
+                            w-3
+                            rounded-full
+                            border-2
+                            border-background
+                            bg-emerald-500
+                          "
+                        />
+                      </div>
 
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">
+                        <p className="truncate text-sm font-semibold">
                           {developer.fullName ||
                             developer.username ||
                             "Developer"}
                         </p>
 
                         {developer.username && (
-                          <p className="truncate text-xs text-muted-foreground">
+                          <p className="mt-0.5 truncate text-xs text-muted-foreground">
                             @{developer.username}
+                          </p>
+                        )}
+
+                        {developer.bio && (
+                          <p className="mt-1 line-clamp-1 text-[11px] text-muted-foreground/70">
+                            {developer.bio}
                           </p>
                         )}
                       </div>
 
-                      {startingNewChat ? (
-                        <Loader2
-                          className="
-                            h-4
-                            w-4
-                            shrink-0
-                            animate-spin
-                            text-primary
-                          "
-                        />
-                      ) : (
-                        <MessageCircle
-                          className="
-                            h-4
-                            w-4
-                            shrink-0
-                            text-muted-foreground
-                          "
-                        />
-                      )}
+                      <div
+                        className="
+                          flex
+                          h-9
+                          w-9
+                          shrink-0
+                          items-center
+                          justify-center
+                          rounded-xl
+                          bg-primary/10
+                          text-primary
+                          opacity-70
+                          transition-all
+                          group-hover:opacity-100
+                        "
+                      >
+                        {startingNewChat ? (
+                          <Loader2
+                            className="
+                              h-4
+                              w-4
+                              animate-spin
+                            "
+                          />
+                        ) : (
+                          <MessageCircle className="h-4 w-4" />
+                        )}
+                      </div>
                     </button>
                   )
                 )}
@@ -2260,15 +3019,15 @@ export default function ChatPage() {
             z-[60]
             max-w-[90%]
             -translate-x-1/2
-            rounded-xl
+            rounded-2xl
             border
             border-red-500/20
-            bg-red-500/10
+            bg-background
             px-4
             py-3
             text-sm
             text-red-500
-            shadow-lg
+            shadow-xl
           "
         >
           {error}

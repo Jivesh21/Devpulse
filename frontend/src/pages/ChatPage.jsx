@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   getUserConversations,
@@ -21,13 +21,15 @@ import {
 } from "@/components/ui/avatar";
 
 import { Button } from "@/components/ui/button";
-
 import { Input } from "@/components/ui/input";
 
 import {
+  ArrowLeft,
   MessageCircle,
+  Search,
   Send,
   Loader2,
+  MoreVertical,
 } from "lucide-react";
 
 // ====================================
@@ -63,6 +65,25 @@ const getMessageList = (response) => {
 };
 
 // ====================================
+// Date Helpers
+// ====================================
+
+const formatTime = (date) => {
+  if (!date) return "";
+
+  const parsedDate = new Date(date);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "";
+  }
+
+  return parsedDate.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+};
+
+// ====================================
 // Chat Page
 // ====================================
 
@@ -80,6 +101,12 @@ export default function ChatPage() {
     selectedConversation,
     setSelectedConversation,
   ] = useState(null);
+
+  const [conversationSearch, setConversationSearch] =
+    useState("");
+
+  const [showConversationList, setShowConversationList] =
+    useState(true);
 
   // ====================================
   // Messages
@@ -120,43 +147,48 @@ export default function ChatPage() {
     useState("");
 
   // ====================================
+  // Refs
+  // ====================================
+
+  const messagesEndRef = useRef(null);
+
+  const inputRef = useRef(null);
+
+  // ====================================
   // Fetch Conversations
   // ====================================
 
   useEffect(() => {
-    const fetchConversations =
-      async () => {
-        try {
-          setLoadingConversations(true);
-          setError("");
+    const fetchConversations = async () => {
+      try {
+        setLoadingConversations(true);
+        setError("");
 
-          const response =
-            await getUserConversations();
+        const response =
+          await getUserConversations();
 
-          console.log(
-            "📨 Conversations response:",
-            response
-          );
+        console.log(
+          "📨 Conversations response:",
+          response
+        );
 
-          const conversationList =
-            getConversationList(response);
+        const conversationList =
+          getConversationList(response);
 
-          setConversations(
-            conversationList
-          );
-        } catch (error) {
-          console.error(
-            "❌ Failed to fetch conversations:",
-            error
-          );
+        setConversations(conversationList);
+      } catch (error) {
+        console.error(
+          "❌ Failed to fetch conversations:",
+          error
+        );
 
-          setError(
-            "Failed to load conversations."
-          );
-        } finally {
-          setLoadingConversations(false);
-        }
-      };
+        setError(
+          "Failed to load conversations."
+        );
+      } finally {
+        setLoadingConversations(false);
+      }
+    };
 
     fetchConversations();
   }, []);
@@ -183,6 +215,56 @@ export default function ChatPage() {
   };
 
   // ====================================
+  // Filter Conversations
+  // ====================================
+
+  const filteredConversations = useMemo(() => {
+    const search =
+      conversationSearch
+        .trim()
+        .toLowerCase();
+
+    if (!search) {
+      return conversations;
+    }
+
+    return conversations.filter(
+      (conversation) => {
+        const participant =
+          getOtherParticipant(
+            conversation
+          );
+
+        const name =
+          participant?.fullName || "";
+
+        const username =
+          participant?.username || "";
+
+        const lastMessage =
+          conversation?.lastMessage
+            ?.content || "";
+
+        return (
+          name
+            .toLowerCase()
+            .includes(search) ||
+          username
+            .toLowerCase()
+            .includes(search) ||
+          lastMessage
+            .toLowerCase()
+            .includes(search)
+        );
+      }
+    );
+  }, [
+    conversations,
+    conversationSearch,
+    user?._id,
+  ]);
+
+  // ====================================
   // Fetch Messages
   // ====================================
 
@@ -192,102 +274,115 @@ export default function ChatPage() {
       return;
     }
 
-    const fetchMessages =
-      async () => {
-        try {
-          setLoadingMessages(true);
-          setError("");
+    const fetchMessages = async () => {
+      try {
+        setLoadingMessages(true);
+        setError("");
 
-          const response =
-            await getConversationMessages(
-              selectedConversation._id
-            );
-
-          console.log(
-            "💬 Messages response:",
-            response
+        const response =
+          await getConversationMessages(
+            selectedConversation._id
           );
 
-          const messageList =
-            getMessageList(response);
+        console.log(
+          "💬 Messages response:",
+          response
+        );
 
-          setMessages(messageList);
-        } catch (error) {
-          console.error(
-            "❌ Failed to fetch messages:",
-            error
-          );
+        const messageList =
+          getMessageList(response);
 
-          setError(
-            "Failed to load messages."
-          );
-        } finally {
-          setLoadingMessages(false);
-        }
-      };
+        setMessages(messageList);
+      } catch (error) {
+        console.error(
+          "❌ Failed to fetch messages:",
+          error
+        );
+
+        setError(
+          "Failed to load messages."
+        );
+      } finally {
+        setLoadingMessages(false);
+      }
+    };
 
     fetchMessages();
   }, [selectedConversation]);
+
+  // ====================================
+  // Auto Scroll
+  // ====================================
+
+  useEffect(() => {
+    if (!selectedConversation) {
+      return;
+    }
+
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [
+    messages,
+    selectedConversation,
+  ]);
 
   // ====================================
   // Socket - Incoming Messages
   // ====================================
 
   useEffect(() => {
-    const handleNewMessage =
-      (message) => {
-        console.log(
-          "💬 ChatPage received:",
-          message
-        );
+    const handleNewMessage = (message) => {
+      console.log(
+        "💬 ChatPage received:",
+        message
+      );
 
-        if (
-          !selectedConversation?._id ||
-          !message
-        ) {
-          return;
-        }
+      if (
+        !selectedConversation?._id ||
+        !message
+      ) {
+        return;
+      }
 
-        const messageConversationId =
-          message.conversation?._id ||
-          message.conversation;
+      const messageConversationId =
+        message.conversation?._id ||
+        message.conversation;
 
-        if (
-          !messageConversationId
-        ) {
-          return;
-        }
+      if (!messageConversationId) {
+        return;
+      }
 
-        if (
-          messageConversationId.toString() !==
-          selectedConversation._id.toString()
-        ) {
-          return;
-        }
+      if (
+        messageConversationId.toString() !==
+        selectedConversation._id.toString()
+      ) {
+        return;
+      }
 
-        setMessages(
-          (previousMessages) => {
-            const messageId =
-              message._id?.toString();
+      setMessages(
+        (previousMessages) => {
+          const messageId =
+            message._id?.toString();
 
-            const alreadyExists =
-              previousMessages.some(
-                (existingMessage) =>
-                  existingMessage._id?.toString() ===
-                  messageId
-              );
+          const alreadyExists =
+            previousMessages.some(
+              (existingMessage) =>
+                existingMessage._id?.toString() ===
+                messageId
+            );
 
-            if (alreadyExists) {
-              return previousMessages;
-            }
-
-            return [
-              ...previousMessages,
-              message,
-            ];
+          if (alreadyExists) {
+            return previousMessages;
           }
-        );
-      };
+
+          return [
+            ...previousMessages,
+            message,
+          ];
+        }
+      );
+    };
 
     socket.on(
       "new_message",
@@ -323,6 +418,13 @@ export default function ChatPage() {
           conversationData ||
             conversation
         );
+
+        // Mobile: open chat
+        setShowConversationList(false);
+
+        setTimeout(() => {
+          inputRef.current?.focus();
+        }, 100);
       } catch (error) {
         console.error(
           "❌ Failed to open conversation:",
@@ -332,6 +434,8 @@ export default function ChatPage() {
         setSelectedConversation(
           conversation
         );
+
+        setShowConversationList(false);
       }
     };
 
@@ -390,6 +494,10 @@ export default function ChatPage() {
         }
 
         setContent("");
+
+        setTimeout(() => {
+          inputRef.current?.focus();
+        }, 0);
       } catch (error) {
         console.error(
           "❌ Failed to send message:",
@@ -405,6 +513,27 @@ export default function ChatPage() {
     };
 
   // ====================================
+  // Enter To Send
+  // ====================================
+
+  const handleInputKeyDown = (event) => {
+    if (
+      event.key === "Enter" &&
+      !event.shiftKey
+    ) {
+      event.preventDefault();
+
+      if (
+        content.trim() &&
+        selectedConversation &&
+        !sending
+      ) {
+        handleSendMessage(event);
+      }
+    }
+  };
+
+  // ====================================
   // Active Participant
   // ====================================
 
@@ -418,153 +547,325 @@ export default function ChatPage() {
   // ====================================
 
   return (
-    <div className="h-[calc(100vh-8rem)] min-h-[600px] overflow-hidden rounded-2xl border border-border/60 bg-background/50 shadow-sm">
+    <div
+      className="
+        h-[calc(100vh-8rem)]
+        min-h-[600px]
+        overflow-hidden
+        rounded-2xl
+        border
+        border-border/60
+        bg-background
+        shadow-sm
+      "
+    >
       <div className="flex h-full min-h-0">
+
         {/* ====================================
             Conversation List
         ==================================== */}
 
-        <aside className="w-full max-w-sm shrink-0 border-r border-border/60">
+        <aside
+          className={`
+            h-full
+            w-full
+            shrink-0
+            border-r
+            border-border/60
+            bg-background
+
+            md:block
+            md:w-[340px]
+            lg:w-[360px]
+
+            ${
+              showConversationList
+                ? "block"
+                : "hidden md:block"
+            }
+          `}
+        >
           {/* Header */}
 
-          <div className="border-b border-border/60 p-5">
+          <div
+            className="
+              border-b
+              border-border/60
+              px-4
+              py-4
+              sm:px-5
+            "
+          >
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <div
+                className="
+                  flex
+                  h-10
+                  w-10
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-xl
+                  bg-primary/10
+                  text-primary
+                "
+              >
                 <MessageCircle className="h-5 w-5" />
               </div>
 
-              <div>
+              <div className="min-w-0">
                 <h1 className="font-semibold">
                   Messages
                 </h1>
 
                 <p className="text-xs text-muted-foreground">
-                  Your conversations
+                  {conversations.length}{" "}
+                  {conversations.length === 1
+                    ? "conversation"
+                    : "conversations"}
                 </p>
               </div>
+            </div>
+
+            {/* Search */}
+
+            <div className="relative mt-4">
+              <Search
+                className="
+                  pointer-events-none
+                  absolute
+                  left-3
+                  top-1/2
+                  h-4
+                  w-4
+                  -translate-y-1/2
+                  text-muted-foreground
+                "
+              />
+
+              <Input
+                value={conversationSearch}
+                onChange={(event) =>
+                  setConversationSearch(
+                    event.target.value
+                  )
+                }
+                placeholder="Search conversations..."
+                className="
+                  h-10
+                  rounded-xl
+                  bg-muted/40
+                  pl-9
+                "
+              />
             </div>
           </div>
 
           {/* Conversations */}
 
-          <div className="h-[calc(100%-81px)] overflow-y-auto p-3">
+          <div
+            className="
+              h-[calc(100%-145px)]
+              overflow-y-auto
+              p-2
+              sm:p-3
+            "
+          >
             {loadingConversations && (
-              <div className="flex items-center justify-center py-10">
-                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <div className="flex items-center justify-center py-12">
+                <Loader2
+                  className="
+                    h-5
+                    w-5
+                    animate-spin
+                    text-primary
+                  "
+                />
               </div>
             )}
 
             {!loadingConversations &&
-              conversations.length === 0 && (
-                <div className="rounded-xl bg-muted/40 p-5 text-center">
-                  <MessageCircle className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
+              filteredConversations.length === 0 && (
+                <div
+                  className="
+                    rounded-xl
+                    bg-muted/40
+                    p-6
+                    text-center
+                  "
+                >
+                  <MessageCircle
+                    className="
+                      mx-auto
+                      mb-3
+                      h-8
+                      w-8
+                      text-muted-foreground
+                    "
+                  />
 
                   <p className="text-sm font-medium">
-                    No conversations
+                    {conversationSearch
+                      ? "No conversations found"
+                      : "No conversations"}
                   </p>
 
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Start a conversation with a developer.
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                    {conversationSearch
+                      ? "Try a different name or username."
+                      : "Start a conversation with a developer."}
                   </p>
                 </div>
               )}
 
             <div className="space-y-1">
-              {conversations.map(
-                (conversation) => {
-                  const participant =
-                    getOtherParticipant(
-                      conversation
-                    );
+              {!loadingConversations &&
+                filteredConversations.map(
+                  (conversation) => {
+                    const participant =
+                      getOtherParticipant(
+                        conversation
+                      );
 
-                  const isActive =
-                    selectedConversation?._id?.toString() ===
-                    conversation._id?.toString();
+                    const isActive =
+                      selectedConversation?._id?.toString() ===
+                      conversation._id?.toString();
 
-                  return (
-                    <button
-                      key={
-                        conversation._id
-                      }
-                      type="button"
-                      onClick={() =>
-                        handleSelectConversation(
-                          conversation
-                        )
-                      }
-                      className={`
-                        flex
-                        w-full
-                        items-center
-                        gap-3
-                        rounded-xl
-                        p-3
-                        text-left
-                        transition-all
-                        duration-200
+                    const participantName =
+                      participant?.fullName ||
+                      participant?.username ||
+                      "Developer";
 
-                        ${
-                          isActive
-                            ? `
-                              bg-primary/10
-                              text-primary
-                            `
-                            : `
-                              hover:bg-muted/60
-                            `
+                    const lastMessage =
+                      conversation.lastMessage
+                        ?.content || "";
+
+                    const lastMessageTime =
+                      conversation.lastMessage
+                        ?.createdAt;
+
+                    return (
+                      <button
+                        key={
+                          conversation._id
                         }
-                      `}
-                    >
-                      <Avatar className="h-11 w-11 shrink-0 border border-primary/10">
-                        <AvatarImage
-                          src={
-                            participant?.avatar
+                        type="button"
+                        onClick={() =>
+                          handleSelectConversation(
+                            conversation
+                          )
+                        }
+                        className={`
+                          flex
+                          w-full
+                          items-center
+                          gap-3
+                          rounded-xl
+                          p-3
+                          text-left
+                          transition-all
+                          duration-200
+
+                          ${
+                            isActive
+                              ? `
+                                bg-primary/10
+                                ring-1
+                                ring-primary/10
+                              `
+                              : `
+                                hover:bg-muted/60
+                              `
                           }
-                          alt={
-                            participant?.fullName ||
-                            "Developer"
-                          }
-                        />
+                        `}
+                      >
+                        <div className="relative shrink-0">
+                          <Avatar
+                            className="
+                              h-11
+                              w-11
+                              border
+                              border-border/60
+                            "
+                          >
+                            <AvatarImage
+                              src={
+                                participant?.avatar
+                              }
+                              alt={
+                                participantName
+                              }
+                            />
 
-                        <AvatarFallback className="bg-primary/10 text-primary">
-                          {participant?.fullName
-                            ?.charAt(0)
-                            ?.toUpperCase() ||
-                            participant?.username
-                              ?.charAt(0)
-                              ?.toUpperCase() ||
-                            "D"}
-                        </AvatarFallback>
-                      </Avatar>
+                            <AvatarFallback
+                              className="
+                                bg-primary/10
+                                font-semibold
+                                text-primary
+                              "
+                            >
+                              {participantName
+                                ?.charAt(0)
+                                ?.toUpperCase() ||
+                                "D"}
+                            </AvatarFallback>
+                          </Avatar>
+                        </div>
 
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold">
-                          {participant?.fullName ||
-                            participant?.username ||
-                            "Developer"}
-                        </p>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <p
+                              className={`
+                                truncate
+                                text-sm
+                                ${
+                                  isActive
+                                    ? "font-semibold text-primary"
+                                    : "font-medium"
+                                }
+                              `}
+                            >
+                              {participantName}
+                            </p>
 
-                        <p className="truncate text-xs text-muted-foreground">
-                          {participant?.username
-                            ? `@${participant.username}`
-                            : "Developer"}
-                        </p>
+                            {lastMessageTime && (
+                              <span
+                                className="
+                                  shrink-0
+                                  text-[10px]
+                                  text-muted-foreground
+                                "
+                              >
+                                {formatTime(
+                                  lastMessageTime
+                                )}
+                              </span>
+                            )}
+                          </div>
 
-                        {conversation.lastMessage
-                          ?.content && (
-                          <p className="mt-1 truncate text-xs text-muted-foreground">
-                            {
-                              conversation
-                                .lastMessage
-                                .content
-                            }
+                          <p className="truncate text-xs text-muted-foreground">
+                            {participant?.username
+                              ? `@${participant.username}`
+                              : "Developer"}
                           </p>
-                        )}
-                      </div>
-                    </button>
-                  );
-                }
-              )}
+
+                          {lastMessage && (
+                            <p
+                              className="
+                                mt-1
+                                truncate
+                                text-xs
+                                text-muted-foreground
+                              "
+                            >
+                              {lastMessage}
+                            </p>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  }
+                )}
             </div>
           </div>
         </aside>
@@ -573,10 +874,46 @@ export default function ChatPage() {
             Chat Window
         ==================================== */}
 
-        <main className="flex min-w-0 flex-1 flex-col">
+        <main
+          className={`
+            flex
+            min-w-0
+            flex-1
+            flex-col
+            bg-background
+
+            ${
+              showConversationList
+                ? "hidden md:flex"
+                : "flex"
+            }
+          `}
+        >
           {!selectedConversation ? (
-            <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <div
+              className="
+                flex
+                flex-1
+                flex-col
+                items-center
+                justify-center
+                px-6
+                text-center
+              "
+            >
+              <div
+                className="
+                  mb-5
+                  flex
+                  h-16
+                  w-16
+                  items-center
+                  justify-center
+                  rounded-2xl
+                  bg-primary/10
+                  text-primary
+                "
+              >
                 <MessageCircle className="h-8 w-8" />
               </div>
 
@@ -584,8 +921,17 @@ export default function ChatPage() {
                 Your messages
               </h2>
 
-              <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-                Select a conversation to view messages and start chatting.
+              <p
+                className="
+                  mt-2
+                  max-w-sm
+                  text-sm
+                  leading-6
+                  text-muted-foreground
+                "
+              >
+                Select a conversation to view
+                messages and start chatting.
               </p>
             </div>
           ) : (
@@ -594,8 +940,51 @@ export default function ChatPage() {
                   Chat Header
               ==================================== */}
 
-              <div className="flex shrink-0 items-center gap-3 border-b border-border/60 px-5 py-4">
-                <Avatar className="h-10 w-10 border border-primary/10">
+              <div
+                className="
+                  flex
+                  shrink-0
+                  items-center
+                  gap-3
+                  border-b
+                  border-border/60
+                  px-4
+                  py-3
+                  sm:px-5
+                  sm:py-4
+                "
+              >
+                {/* Mobile Back */}
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() =>
+                    setShowConversationList(
+                      true
+                    )
+                  }
+                  className="
+                    h-9
+                    w-9
+                    shrink-0
+                    rounded-xl
+                    md:hidden
+                  "
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+
+                <Avatar
+                  className="
+                    h-10
+                    w-10
+                    shrink-0
+                    border
+                    border-border/60
+                  "
+                >
                   <AvatarImage
                     src={
                       activeParticipant?.avatar
@@ -606,15 +995,24 @@ export default function ChatPage() {
                     }
                   />
 
-                  <AvatarFallback className="bg-primary/10 text-primary">
+                  <AvatarFallback
+                    className="
+                      bg-primary/10
+                      font-semibold
+                      text-primary
+                    "
+                  >
                     {activeParticipant?.fullName
                       ?.charAt(0)
                       ?.toUpperCase() ||
+                      activeParticipant?.username
+                        ?.charAt(0)
+                        ?.toUpperCase() ||
                       "D"}
                   </AvatarFallback>
                 </Avatar>
 
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <h2 className="truncate font-semibold">
                     {activeParticipant?.fullName ||
                       activeParticipant?.username ||
@@ -622,34 +1020,102 @@ export default function ChatPage() {
                   </h2>
 
                   {activeParticipant?.username && (
-                    <p className="truncate text-xs text-muted-foreground">
+                    <p
+                      className="
+                        truncate
+                        text-xs
+                        text-muted-foreground
+                      "
+                    >
                       @{activeParticipant.username}
                     </p>
                   )}
                 </div>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="
+                    hidden
+                    h-9
+                    w-9
+                    shrink-0
+                    rounded-xl
+                    sm:inline-flex
+                  "
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
               </div>
 
               {/* ====================================
                   Messages
               ==================================== */}
 
-              <div className="flex-1 overflow-y-auto px-5 py-5">
+              <div
+                className="
+                  min-h-0
+                  flex-1
+                  overflow-y-auto
+                  px-4
+                  py-5
+                  sm:px-6
+                  sm:py-6
+                "
+              >
                 {loadingMessages && (
                   <div className="flex items-center justify-center py-10">
-                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                    <Loader2
+                      className="
+                        h-5
+                        w-5
+                        animate-spin
+                        text-primary
+                      "
+                    />
                   </div>
                 )}
 
                 {!loadingMessages &&
                   messages.length === 0 && (
-                    <div className="flex h-full items-center justify-center">
-                      <p className="text-sm text-muted-foreground">
-                        No messages yet. Say hello!
-                      </p>
+                    <div className="flex h-full min-h-[300px] items-center justify-center">
+                      <div className="text-center">
+                        <div
+                          className="
+                            mx-auto
+                            mb-3
+                            flex
+                            h-12
+                            w-12
+                            items-center
+                            justify-center
+                            rounded-2xl
+                            bg-muted
+                          "
+                        >
+                          <MessageCircle
+                            className="
+                              h-5
+                              w-5
+                              text-muted-foreground
+                            "
+                          />
+                        </div>
+
+                        <p className="text-sm font-medium">
+                          No messages yet
+                        </p>
+
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Say hello and start the
+                          conversation.
+                        </p>
+                      </div>
                     </div>
                   )}
 
-                <div className="space-y-3">
+                <div className="mx-auto max-w-3xl space-y-3">
                   {messages.map(
                     (message) => {
                       const senderId =
@@ -666,41 +1132,77 @@ export default function ChatPage() {
                           key={
                             message._id
                           }
-                          className={`flex ${
-                            isOwnMessage
-                              ? "justify-end"
-                              : "justify-start"
-                          }`}
+                          className={`
+                            flex
+                            ${
+                              isOwnMessage
+                                ? "justify-end"
+                                : "justify-start"
+                            }
+                          `}
                         >
                           <div
                             className={`
-                              max-w-[75%]
-                              rounded-2xl
-                              px-4
-                              py-2.5
-                              text-sm
-                              shadow-sm
-
-                              ${
-                                isOwnMessage
-                                  ? `
-                                    rounded-br-md
-                                    bg-primary
-                                    text-primary-foreground
-                                  `
-                                  : `
-                                    rounded-bl-md
-                                    bg-muted
-                                  `
-                              }
+                              max-w-[82%]
+                              sm:max-w-[70%]
                             `}
                           >
-                            {message.content}
+                            <div
+                              className={`
+                                rounded-2xl
+                                px-4
+                                py-2.5
+                                text-sm
+                                leading-6
+                                shadow-sm
+
+                                ${
+                                  isOwnMessage
+                                    ? `
+                                      rounded-br-md
+                                      bg-primary
+                                      text-primary-foreground
+                                    `
+                                    : `
+                                      rounded-bl-md
+                                      border
+                                      border-border/50
+                                      bg-muted
+                                    `
+                                }
+                              `}
+                            >
+                              {message.content}
+                            </div>
+
+                            <p
+                              className={`
+                                mt-1
+                                px-1
+                                text-[10px]
+                                text-muted-foreground
+
+                                ${
+                                  isOwnMessage
+                                    ? "text-right"
+                                    : "text-left"
+                                }
+                              `}
+                            >
+                              {formatTime(
+                                message.createdAt
+                              )}
+                            </p>
                           </div>
                         </div>
                       );
                     }
                   )}
+
+                  <div
+                    ref={messagesEndRef}
+                    className="h-px"
+                  />
                 </div>
               </div>
 
@@ -708,40 +1210,76 @@ export default function ChatPage() {
                   Send Form
               ==================================== */}
 
-              <form
-                onSubmit={
-                  handleSendMessage
-                }
-                className="flex shrink-0 gap-2 border-t border-border/60 p-4"
+              <div
+                className="
+                  shrink-0
+                  border-t
+                  border-border/60
+                  bg-background
+                  p-3
+                  sm:p-4
+                "
               >
-                <Input
-                  value={content}
-                  onChange={(event) =>
-                    setContent(
-                      event.target.value
-                    )
+                <form
+                  onSubmit={
+                    handleSendMessage
                   }
-                  placeholder="Write a message..."
-                  disabled={sending}
-                  className="h-11 rounded-xl"
-                />
-
-                <Button
-                  type="submit"
-                  size="icon"
-                  disabled={
-                    sending ||
-                    !content.trim()
-                  }
-                  className="h-11 w-11 shrink-0 rounded-xl"
+                  className="
+                    mx-auto
+                    flex
+                    max-w-3xl
+                    items-center
+                    gap-2
+                  "
                 >
-                  {sending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
-                </Button>
-              </form>
+                  <Input
+                    ref={inputRef}
+                    value={content}
+                    onChange={(event) =>
+                      setContent(
+                        event.target.value
+                      )
+                    }
+                    onKeyDown={
+                      handleInputKeyDown
+                    }
+                    placeholder="Write a message..."
+                    disabled={sending}
+                    className="
+                      h-11
+                      rounded-xl
+                      bg-muted/30
+                    "
+                  />
+
+                  <Button
+                    type="submit"
+                    size="icon"
+                    disabled={
+                      sending ||
+                      !content.trim()
+                    }
+                    className="
+                      h-11
+                      w-11
+                      shrink-0
+                      rounded-xl
+                    "
+                  >
+                    {sending ? (
+                      <Loader2
+                        className="
+                          h-4
+                          w-4
+                          animate-spin
+                        "
+                      />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                  </Button>
+                </form>
+              </div>
             </>
           )}
         </main>
@@ -752,7 +1290,25 @@ export default function ChatPage() {
       ==================================== */}
 
       {error && (
-        <div className="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-500 shadow-lg">
+        <div
+          className="
+            fixed
+            bottom-5
+            left-1/2
+            z-50
+            max-w-[90vw]
+            -translate-x-1/2
+            rounded-xl
+            border
+            border-red-500/20
+            bg-red-500/10
+            px-4
+            py-3
+            text-sm
+            text-red-500
+            shadow-lg
+          "
+        >
           {error}
         </div>
       )}

@@ -87,17 +87,19 @@ export const sendMessageService = async (
         currentUserId.toString()
     );
 
-  if (recipient) {
-    // ====================================
-    // Emit Real-Time Message
-    // ====================================
+  // ====================================
+  // Emit Real-Time Message
+  // ====================================
 
-    getIO()
-      .to(`user:${recipient.toString()}`)
-      .emit(
-        "new_message",
-        message
-      );
+  if (recipient) {
+    const io = getIO();
+
+    io.to(
+      `user:${recipient.toString()}`
+    ).emit(
+      "new_message",
+      message
+    );
 
     console.log(
       `💬 New message emitted to user:${recipient.toString()}`
@@ -247,6 +249,56 @@ export const markConversationAsReadService =
           },
         }
       );
+
+    // ====================================
+    // Find Other Participant
+    // ====================================
+
+    const otherParticipant =
+      conversation.participants.find(
+        (participant) =>
+          participant.toString() !==
+          currentUserId.toString()
+      );
+
+    // ====================================
+    // Emit Read Receipt
+    // ====================================
+
+    if (
+      otherParticipant &&
+      result.modifiedCount > 0
+    ) {
+      const io = getIO();
+
+      io.to(
+        `user:${otherParticipant.toString()}`
+      ).emit(
+        "messages_read",
+        {
+          conversationId:
+            conversationId.toString(),
+
+          readerId:
+            currentUserId.toString(),
+
+          markedAsRead:
+            result.modifiedCount,
+        }
+      );
+
+      console.log(
+        `👁️ Messages read in conversation:${conversationId}`
+      );
+
+      console.log(
+        `📡 Read receipt emitted to user:${otherParticipant.toString()}`
+      );
+    }
+
+    // ====================================
+    // Return Result
+    // ====================================
 
     return {
       conversationId,

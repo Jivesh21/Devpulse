@@ -345,6 +345,15 @@ export default function ChatPage() {
   ]);
 
   // ====================================
+  // Active Participant
+  // ====================================
+
+  const activeParticipant =
+    getOtherParticipant(
+      selectedConversation
+    );
+
+  // ====================================
   // Check If Message Is Read
   // ====================================
 
@@ -386,7 +395,10 @@ export default function ChatPage() {
           conversationId
         );
 
-        // Immediately remove unread badge.
+        // ====================================
+        // Remove Unread Badge
+        // ====================================
+
         setConversations(
           (previousConversations) =>
             previousConversations.map(
@@ -401,10 +413,11 @@ export default function ChatPage() {
             )
         );
 
-        // Also update currently loaded
-        // messages so read receipts turn blue
-        // immediately when this conversation
-        // is opened.
+        // ====================================
+        // Immediately Mark Incoming Messages
+        // As Read Locally
+        // ====================================
+
         setMessages(
           (previousMessages) =>
             previousMessages.map(
@@ -413,8 +426,6 @@ export default function ChatPage() {
                   message.sender?._id ||
                   message.sender;
 
-                // Only incoming messages need
-                // the current user's read status.
                 if (
                   senderId?.toString() ===
                   user?._id?.toString()
@@ -492,7 +503,6 @@ export default function ChatPage() {
 
         setShowConversationList(false);
 
-        // Mark conversation as read.
         await handleMarkConversationAsRead(
           conversation._id
         );
@@ -788,8 +798,6 @@ export default function ChatPage() {
           }
         );
 
-        // Active conversation is already open,
-        // so incoming message is immediately read.
         handleMarkConversationAsRead(
           conversationId
         );
@@ -860,6 +868,119 @@ export default function ChatPage() {
   ]);
 
   // ====================================
+  // Socket - Messages Read
+  // ====================================
+
+  useEffect(() => {
+    const handleMessagesRead = (
+      data
+    ) => {
+      console.log(
+        "👁️ Messages read event received:",
+        data
+      );
+
+      if (!data?.conversationId) {
+        return;
+      }
+
+      const conversationId =
+        data.conversationId.toString();
+
+      const activeConversationId =
+        selectedConversation?._id?.toString();
+
+      // ====================================
+      // Ignore Other Conversations
+      // ====================================
+
+      if (
+        activeConversationId !==
+        conversationId
+      ) {
+        return;
+      }
+
+      const readerId =
+        data.readerId?.toString();
+
+      if (!readerId) {
+        return;
+      }
+
+      // ====================================
+      // Update Own Messages
+      // ====================================
+
+      setMessages(
+        (previousMessages) =>
+          previousMessages.map(
+            (message) => {
+              const senderId =
+                message.sender?._id ||
+                message.sender;
+
+              // Only our messages should
+              // receive the recipient's
+              // read status.
+              if (
+                senderId?.toString() !==
+                user?._id?.toString()
+              ) {
+                return message;
+              }
+
+              const alreadyRead =
+                Array.isArray(
+                  message.readBy
+                ) &&
+                message.readBy.some(
+                  (reader) => {
+                    const existingReaderId =
+                      reader?._id ||
+                      reader;
+
+                    return (
+                      existingReaderId?.toString() ===
+                      readerId
+                    );
+                  }
+                );
+
+              if (alreadyRead) {
+                return message;
+              }
+
+              return {
+                ...message,
+
+                readBy: [
+                  ...(message.readBy || []),
+                  readerId,
+                ],
+              };
+            }
+          )
+      );
+    };
+
+    socket.on(
+      "messages_read",
+      handleMessagesRead
+    );
+
+    return () => {
+      socket.off(
+        "messages_read",
+        handleMessagesRead
+      );
+    };
+  }, [
+    selectedConversation,
+    user?._id,
+  ]);
+
+  // ====================================
   // Send Message
   // ====================================
 
@@ -915,7 +1036,10 @@ export default function ChatPage() {
 
         setContent("");
 
-        // Update conversation locally.
+        // ====================================
+        // Update Conversation Locally
+        // ====================================
+
         setConversations(
           (previousConversations) => {
             const conversationId =
@@ -980,15 +1104,6 @@ export default function ChatPage() {
       }
     }
   };
-
-  // ====================================
-  // Active Participant
-  // ====================================
-
-  const activeParticipant =
-    getOtherParticipant(
-      selectedConversation
-    );
 
   // ====================================
   // Render
@@ -1078,8 +1193,6 @@ export default function ChatPage() {
                 </div>
               </div>
 
-              {/* New Chat */}
-
               <Button
                 type="button"
                 size="sm"
@@ -1101,8 +1214,6 @@ export default function ChatPage() {
                 </span>
               </Button>
             </div>
-
-            {/* Search Conversations */}
 
             <div className="relative mt-4">
               <Search
@@ -1135,8 +1246,6 @@ export default function ChatPage() {
               />
             </div>
           </div>
-
-          {/* Conversations */}
 
           <div
             className="
@@ -1323,8 +1432,6 @@ export default function ChatPage() {
                                   )}
                                 </span>
                               )}
-
-                              {/* Unread Badge */}
 
                               {unreadCount > 0 && (
                                 <span
@@ -1878,8 +1985,6 @@ export default function ChatPage() {
               shadow-2xl
             "
           >
-            {/* Modal Header */}
-
             <div
               className="
                 flex
@@ -1919,8 +2024,6 @@ export default function ChatPage() {
               </Button>
             </div>
 
-            {/* Search */}
-
             <div className="px-5 py-4">
               <div className="relative">
                 <Search
@@ -1954,8 +2057,6 @@ export default function ChatPage() {
                 />
               </div>
             </div>
-
-            {/* Results */}
 
             <div
               className="

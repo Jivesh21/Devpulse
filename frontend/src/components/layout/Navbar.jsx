@@ -56,7 +56,8 @@ function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] =
     useState(false);
 
-  const { data: unreadData } = useUnreadCount();
+  const { data: unreadData } =
+    useUnreadCount();
 
   const unreadCount =
     unreadData?.data?.unreadCount || 0;
@@ -170,7 +171,6 @@ function Navbar() {
 
       <header
         className="
-          glass
           sticky
           top-0
           z-50
@@ -180,8 +180,13 @@ function Navbar() {
           rounded-none
           border-x-0
           border-t-0
+          border-b
+          border-border/60
+          bg-background/95
           px-2
           py-2
+          shadow-sm
+          backdrop-blur-xl
           sm:px-4
           sm:py-3
           md:px-6

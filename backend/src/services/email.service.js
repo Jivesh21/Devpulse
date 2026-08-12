@@ -1,41 +1,99 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-const resend = new Resend(
-  process.env.RESEND_API_KEY
-);
+// ====================================
+// Gmail SMTP Transporter
+// ====================================
+
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT),
+  secure:
+    process.env.SMTP_SECURE === "true",
+
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
+
+// ====================================
+// Verify SMTP Configuration
+// ====================================
+
+transporter.verify((error) => {
+  if (error) {
+    console.error(
+      "❌ SMTP configuration error:",
+      error
+    );
+  } else {
+    console.log(
+      "✅ Gmail SMTP server is ready"
+    );
+  }
+});
+
+// ====================================
+// Send Email Helper
+// ====================================
+
+const sendEmail = async ({
+  to,
+  subject,
+  html,
+}) => {
+  try {
+    const info =
+      await transporter.sendMail({
+        from: `"DevPulse" <${process.env.SMTP_USER}>`,
+        to,
+        subject,
+        html,
+      });
+
+    console.log(
+      "📧 Email sent:",
+      info.messageId
+    );
+
+    return info;
+  } catch (error) {
+    console.error(
+      "❌ Email sending failed:",
+      error
+    );
+
+    throw error;
+  }
+};
 
 // ====================================
 // Send Email Verification Email
 // ====================================
-export const sendVerificationEmail = async ({
-  email,
-  fullName,
-  verificationToken,
-}) => {
-  const verificationUrl =
-    `${process.env.FRONTEND_URL}/verify-email/${verificationToken}`;
 
-  const { data, error } =
-    await resend.emails.send({
-      from: "DevPulse <onboarding@resend.dev>",
+export const sendVerificationEmail =
+  async ({
+    email,
+    fullName,
+    verificationToken,
+  }) => {
+    const verificationUrl =
+      `${process.env.FRONTEND_URL}/verify-email/${verificationToken}`;
 
-      to: [email],
+    return sendEmail({
+      to: email,
 
-      subject: "Verify your DevPulse email",
+      subject:
+        "Verify your DevPulse email",
 
       html: `
         <!DOCTYPE html>
         <html>
-          <head>
-            <meta charset="UTF-8" />
-            <title>Verify your DevPulse email</title>
-          </head>
-
           <body
             style="
               margin: 0;
               padding: 0;
-              background-color: #f5f5f5;
+              background: #f5f5f5;
               font-family: Arial, sans-serif;
             "
           >
@@ -44,16 +102,11 @@ export const sendVerificationEmail = async ({
                 max-width: 600px;
                 margin: 40px auto;
                 padding: 32px;
-                background-color: #ffffff;
+                background: #ffffff;
                 border-radius: 12px;
               "
             >
-              <h1
-                style="
-                  margin-bottom: 16px;
-                  color: #111827;
-                "
-              >
+              <h1 style="color: #111827;">
                 Welcome to DevPulse 👋
               </h1>
 
@@ -61,7 +114,6 @@ export const sendVerificationEmail = async ({
                 style="
                   color: #4b5563;
                   font-size: 16px;
-                  line-height: 1.6;
                 "
               >
                 Hi ${fullName},
@@ -85,7 +137,7 @@ export const sendVerificationEmail = async ({
                   style="
                     display: inline-block;
                     padding: 12px 24px;
-                    background-color: #7c3aed;
+                    background: #7c3aed;
                     color: #ffffff;
                     text-decoration: none;
                     border-radius: 8px;
@@ -100,7 +152,6 @@ export const sendVerificationEmail = async ({
                 style="
                   color: #6b7280;
                   font-size: 14px;
-                  line-height: 1.6;
                 "
               >
                 This verification link will expire
@@ -111,7 +162,6 @@ export const sendVerificationEmail = async ({
                 style="
                   color: #6b7280;
                   font-size: 14px;
-                  line-height: 1.6;
                 "
               >
                 If you did not create a DevPulse
@@ -141,53 +191,35 @@ export const sendVerificationEmail = async ({
         </html>
       `,
     });
-
-  if (error) {
-    console.error(
-      "Resend verification email error:",
-      error
-    );
-
-    throw new Error(
-      "Failed to send verification email"
-    );
-  }
-
-  return data;
-};
+  };
 
 // ====================================
 // Send Password Reset Email
 // ====================================
-export const sendPasswordResetEmail = async ({
-  email,
-  fullName,
-  resetToken,
-}) => {
-  const resetUrl =
-    `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 
-  const { data, error } =
-    await resend.emails.send({
-      from: "DevPulse <onboarding@resend.dev>",
+export const sendPasswordResetEmail =
+  async ({
+    email,
+    fullName,
+    resetToken,
+  }) => {
+    const resetUrl =
+      `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 
-      to: [email],
+    return sendEmail({
+      to: email,
 
-      subject: "Reset your DevPulse password",
+      subject:
+        "Reset your DevPulse password",
 
       html: `
         <!DOCTYPE html>
         <html>
-          <head>
-            <meta charset="UTF-8" />
-            <title>Reset your DevPulse password</title>
-          </head>
-
           <body
             style="
               margin: 0;
               padding: 0;
-              background-color: #f5f5f5;
+              background: #f5f5f5;
               font-family: Arial, sans-serif;
             "
           >
@@ -196,16 +228,11 @@ export const sendPasswordResetEmail = async ({
                 max-width: 600px;
                 margin: 40px auto;
                 padding: 32px;
-                background-color: #ffffff;
+                background: #ffffff;
                 border-radius: 12px;
               "
             >
-              <h1
-                style="
-                  margin-bottom: 16px;
-                  color: #111827;
-                "
-              >
+              <h1 style="color: #111827;">
                 Reset your DevPulse password
               </h1>
 
@@ -213,7 +240,6 @@ export const sendPasswordResetEmail = async ({
                 style="
                   color: #4b5563;
                   font-size: 16px;
-                  line-height: 1.6;
                 "
               >
                 Hi ${fullName},
@@ -236,7 +262,7 @@ export const sendPasswordResetEmail = async ({
                   style="
                     display: inline-block;
                     padding: 12px 24px;
-                    background-color: #7c3aed;
+                    background: #7c3aed;
                     color: #ffffff;
                     text-decoration: none;
                     border-radius: 8px;
@@ -251,74 +277,29 @@ export const sendPasswordResetEmail = async ({
                 style="
                   color: #6b7280;
                   font-size: 14px;
-                  line-height: 1.6;
                 "
               >
                 This password reset link will expire
                 in 15 minutes.
-              </p>
-
-              <p
-                style="
-                  color: #6b7280;
-                  font-size: 14px;
-                  line-height: 1.6;
-                "
-              >
-                If you did not request a password
-                reset, you can safely ignore this
-                email.
-              </p>
-
-              <hr
-                style="
-                  margin: 32px 0;
-                  border: none;
-                  border-top: 1px solid #e5e7eb;
-                "
-              />
-
-              <p
-                style="
-                  color: #9ca3af;
-                  font-size: 12px;
-                "
-              >
-                © ${new Date().getFullYear()}
-                DevPulse. All rights reserved.
               </p>
             </div>
           </body>
         </html>
       `,
     });
-
-  if (error) {
-    console.error(
-      "Resend password reset email error:",
-      error
-    );
-
-    throw new Error(
-      "Failed to send password reset email"
-    );
-  }
-
-  return data;
-};
+  };
 
 // ====================================
-// Send Password Changed Confirmation
+// Send Password Changed Email
 // ====================================
-export const sendPasswordChangedEmail = async ({
-  email,
-  fullName,
-}) => {
-  const { data, error } =
-    await resend.emails.send({
-      from: "DevPulse <onboarding@resend.dev>",
 
-      to: [email],
+export const sendPasswordChangedEmail =
+  async ({
+    email,
+    fullName,
+  }) => {
+    return sendEmail({
+      to: email,
 
       subject:
         "Your DevPulse password was changed",
@@ -326,18 +307,11 @@ export const sendPasswordChangedEmail = async ({
       html: `
         <!DOCTYPE html>
         <html>
-          <head>
-            <meta charset="UTF-8" />
-            <title>
-              Your DevPulse password was changed
-            </title>
-          </head>
-
           <body
             style="
               margin: 0;
               padding: 0;
-              background-color: #f5f5f5;
+              background: #f5f5f5;
               font-family: Arial, sans-serif;
             "
           >
@@ -346,16 +320,11 @@ export const sendPasswordChangedEmail = async ({
                 max-width: 600px;
                 margin: 40px auto;
                 padding: 32px;
-                background-color: #ffffff;
+                background: #ffffff;
                 border-radius: 12px;
               "
             >
-              <h1
-                style="
-                  margin-bottom: 16px;
-                  color: #111827;
-                "
-              >
+              <h1 style="color: #111827;">
                 Password Changed Successfully
               </h1>
 
@@ -363,7 +332,6 @@ export const sendPasswordChangedEmail = async ({
                 style="
                   color: #4b5563;
                   font-size: 16px;
-                  line-height: 1.6;
                 "
               >
                 Hi ${fullName},
@@ -382,77 +350,32 @@ export const sendPasswordChangedEmail = async ({
 
               <p
                 style="
-                  color: #4b5563;
-                  font-size: 16px;
-                  line-height: 1.6;
-                "
-              >
-                If you made this change, no further
-                action is required.
-              </p>
-
-              <p
-                style="
                   color: #b91c1c;
                   font-size: 14px;
-                  line-height: 1.6;
                 "
               >
                 If you did not make this change,
-                please secure your account immediately
-                and contact support.
-              </p>
-
-              <hr
-                style="
-                  margin: 32px 0;
-                  border: none;
-                  border-top: 1px solid #e5e7eb;
-                "
-              />
-
-              <p
-                style="
-                  color: #9ca3af;
-                  font-size: 12px;
-                "
-              >
-                © ${new Date().getFullYear()}
-                DevPulse. All rights reserved.
+                please secure your account immediately.
               </p>
             </div>
           </body>
         </html>
       `,
     });
-
-  if (error) {
-    console.error(
-      "Resend password changed email error:",
-      error
-    );
-
-    throw new Error(
-      "Failed to send password changed email"
-    );
-  }
-
-  return data;
-};
+  };
 
 // ====================================
 // Send Two-Factor Authentication Code
 // ====================================
-export const sendTwoFactorCodeEmail = async ({
-  email,
-  fullName,
-  code,
-}) => {
-  const { data, error } =
-    await resend.emails.send({
-      from: "DevPulse <onboarding@resend.dev>",
 
-      to: [email],
+export const sendTwoFactorCodeEmail =
+  async ({
+    email,
+    fullName,
+    code,
+  }) => {
+    return sendEmail({
+      to: email,
 
       subject:
         "Your DevPulse verification code",
@@ -460,18 +383,11 @@ export const sendTwoFactorCodeEmail = async ({
       html: `
         <!DOCTYPE html>
         <html>
-          <head>
-            <meta charset="UTF-8" />
-            <title>
-              Your DevPulse verification code
-            </title>
-          </head>
-
           <body
             style="
               margin: 0;
               padding: 0;
-              background-color: #f5f5f5;
+              background: #f5f5f5;
               font-family: Arial, sans-serif;
             "
           >
@@ -480,16 +396,11 @@ export const sendTwoFactorCodeEmail = async ({
                 max-width: 600px;
                 margin: 40px auto;
                 padding: 32px;
-                background-color: #ffffff;
+                background: #ffffff;
                 border-radius: 12px;
               "
             >
-              <h1
-                style="
-                  margin-bottom: 16px;
-                  color: #111827;
-                "
-              >
+              <h1 style="color: #111827;">
                 Verify your DevPulse login
               </h1>
 
@@ -497,7 +408,6 @@ export const sendTwoFactorCodeEmail = async ({
                 style="
                   color: #4b5563;
                   font-size: 16px;
-                  line-height: 1.6;
                 "
               >
                 Hi ${fullName},
@@ -507,12 +417,10 @@ export const sendTwoFactorCodeEmail = async ({
                 style="
                   color: #4b5563;
                   font-size: 16px;
-                  line-height: 1.6;
                 "
               >
-                Someone is trying to sign in to your
-                DevPulse account. Use the verification
-                code below to complete your login.
+                Use the verification code below to
+                complete your login.
               </p>
 
               <div
@@ -520,7 +428,7 @@ export const sendTwoFactorCodeEmail = async ({
                   margin: 32px 0;
                   padding: 20px;
                   text-align: center;
-                  background-color: #f3e8ff;
+                  background: #f3e8ff;
                   border-radius: 12px;
                 "
               >
@@ -540,7 +448,6 @@ export const sendTwoFactorCodeEmail = async ({
                 style="
                   color: #6b7280;
                   font-size: 14px;
-                  line-height: 1.6;
                 "
               >
                 This verification code will expire
@@ -551,59 +458,13 @@ export const sendTwoFactorCodeEmail = async ({
                 style="
                   color: #b91c1c;
                   font-size: 14px;
-                  line-height: 1.6;
                 "
               >
                 Never share this code with anyone.
-                DevPulse will never ask you for this
-                code.
-              </p>
-
-              <p
-                style="
-                  color: #6b7280;
-                  font-size: 14px;
-                  line-height: 1.6;
-                "
-              >
-                If you did not attempt to sign in,
-                you can safely ignore this email and
-                consider changing your password.
-              </p>
-
-              <hr
-                style="
-                  margin: 32px 0;
-                  border: none;
-                  border-top: 1px solid #e5e7eb;
-                "
-              />
-
-              <p
-                style="
-                  color: #9ca3af;
-                  font-size: 12px;
-                "
-              >
-                © ${new Date().getFullYear()}
-                DevPulse. All rights reserved.
               </p>
             </div>
           </body>
         </html>
       `,
     });
-
-  if (error) {
-    console.error(
-      "Resend two-factor email error:",
-      error
-    );
-
-    throw new Error(
-      "Failed to send two-factor authentication email"
-    );
-  }
-
-  return data;
-};
+  };

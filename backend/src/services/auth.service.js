@@ -15,11 +15,13 @@ import {
 // ====================================
 // Google OAuth Client
 // ====================================
+
 const googleClient = new OAuth2Client();
 
 // ====================================
 // Two-Factor Configuration
 // ====================================
+
 const TWO_FACTOR_CODE_EXPIRY =
   10 * 60 * 1000;
 
@@ -28,6 +30,7 @@ const TWO_FACTOR_MAX_ATTEMPTS = 5;
 // ====================================
 // Generate Email Verification Token
 // ====================================
+
 const generateEmailVerificationToken = () => {
   const rawToken = crypto
     .randomBytes(32)
@@ -47,6 +50,7 @@ const generateEmailVerificationToken = () => {
 // ====================================
 // Generate Password Reset Token
 // ====================================
+
 const generatePasswordResetToken = () => {
   const rawToken = crypto
     .randomBytes(32)
@@ -66,6 +70,7 @@ const generatePasswordResetToken = () => {
 // ====================================
 // Generate Two-Factor Code
 // ====================================
+
 const generateTwoFactorCode = () => {
   return crypto
     .randomInt(100000, 1000000)
@@ -75,6 +80,7 @@ const generateTwoFactorCode = () => {
 // ====================================
 // Hash Two-Factor Code
 // ====================================
+
 const hashTwoFactorCode = (code) => {
   return crypto
     .createHash("sha256")
@@ -85,11 +91,13 @@ const hashTwoFactorCode = (code) => {
 // ====================================
 // Generate Access & Refresh Tokens
 // ====================================
+
 const generateAccessAndRefreshTokens =
   async (userId) => {
-    const user = await User.findById(
-      userId
-    ).select("+refreshToken");
+    const user =
+      await User.findById(userId).select(
+        "+refreshToken"
+      );
 
     if (!user) {
       throw new ApiError(
@@ -119,9 +127,11 @@ const generateAccessAndRefreshTokens =
 // ====================================
 // Create Two-Factor Challenge
 // ====================================
+
 const createTwoFactorChallenge = async (
   user
 ) => {
+  // Remove previous challenges
   await TwoFactorChallenge.deleteMany({
     userId: user._id,
   });
@@ -135,11 +145,14 @@ const createTwoFactorChallenge = async (
   const challenge =
     await TwoFactorChallenge.create({
       userId: user._id,
+
       codeHash,
+
       expiresAt: new Date(
         Date.now() +
           TWO_FACTOR_CODE_EXPIRY
       ),
+
       attempts: 0,
     });
 
@@ -155,8 +168,6 @@ const createTwoFactorChallenge = async (
 // ====================================
 // Verify Security Credential
 // ====================================
-// Used before changing sensitive
-// authentication settings.
 //
 // Password users:
 //     current password required
@@ -164,14 +175,16 @@ const createTwoFactorChallenge = async (
 // Google-only users:
 //     fresh Google credential required
 // ====================================
+
 const verifySecurityCredential = async (
   user,
   password,
   credential
 ) => {
   // ====================================
-  // Password-based account
+  // Password Account
   // ====================================
+
   if (user.password) {
     if (!password) {
       throw new ApiError(
@@ -196,8 +209,9 @@ const verifySecurityCredential = async (
   }
 
   // ====================================
-  // Google-only account
+  // Google-only Account
   // ====================================
+
   if (user.googleId) {
     if (!credential) {
       throw new ApiError(
@@ -206,9 +220,7 @@ const verifySecurityCredential = async (
       );
     }
 
-    if (
-      !process.env.GOOGLE_CLIENT_ID
-    ) {
+    if (!process.env.GOOGLE_CLIENT_ID) {
       throw new ApiError(
         500,
         "Google authentication is not configured"
@@ -221,6 +233,7 @@ const verifySecurityCredential = async (
       const ticket =
         await googleClient.verifyIdToken({
           idToken: credential,
+
           audience:
             process.env.GOOGLE_CLIENT_ID,
         });
@@ -230,7 +243,7 @@ const verifySecurityCredential = async (
     } catch (error) {
       console.error(
         "Google security re-authentication failed:",
-        error
+        error.message
       );
 
       throw new ApiError(
@@ -275,6 +288,7 @@ const verifySecurityCredential = async (
 // ====================================
 // Register User
 // ====================================
+
 export const registerUser = async (
   userData
 ) => {
@@ -285,14 +299,115 @@ export const registerUser = async (
     password,
   } = userData;
 
+  // ====================================
+  // Normalize Input
+  // ====================================
+
+  const normalizedEmail =
+    String(email || "")
+      .toLowerCase()
+      .trim();
+
+  const normalizedUsername =
+    String(username || "")
+      .toLowerCase()
+      .trim();
+
+  const normalizedFullName =
+    String(fullName || "").trim();
+
+  // ====================================
+  // Basic Validation
+  // ====================================
+
+  if (!normalizedFullName) {
+    throw new ApiError(
+      400,
+      "Full name is required"
+    );
+  }
+
+  if (!normalizedUsername) {
+    throw new ApiError(
+      400,
+      "Username is required"
+    );
+  }
+
+  if (!normalizedEmail) {
+    throw new ApiError(
+      400,
+      "Email is required"
+    );
+  }
+
+  if (!password) {
+    throw new ApiError(
+      400,
+      "Password is required"
+    );
+  }
+
+  // ====================================
+  // Debug Information
+  // ====================================
+  // Safe logs only. No password/token.
+
+  console.log(
+    "========== REGISTER DEBUG =========="
+  );
+
+  console.log(
+    "DATABASE:",
+    User.db.name
+  );
+
+  console.log(
+    "EMAIL:",
+    normalizedEmail
+  );
+
+  console.log(
+    "USERNAME:",
+    normalizedUsername
+  );
+
+  // ====================================
+  // Check Existing User
+  // ====================================
+
   const existingUser =
     await User.findOne({
-      $or: [{ email }, { username }],
+      $or: [
+        {
+          email: normalizedEmail,
+        },
+        {
+          username: normalizedUsername,
+        },
+      ],
     });
+
+  console.log(
+    "EXISTING USER:",
+    existingUser
+      ? {
+          id: existingUser._id,
+          email: existingUser.email,
+          username:
+            existingUser.username,
+        }
+      : null
+  );
+
+  // ====================================
+  // Handle Duplicate
+  // ====================================
 
   if (existingUser) {
     if (
-      existingUser.email === email
+      existingUser.email ===
+      normalizedEmail
     ) {
       throw new ApiError(
         409,
@@ -302,14 +417,23 @@ export const registerUser = async (
 
     if (
       existingUser.username ===
-      username
+      normalizedUsername
     ) {
       throw new ApiError(
         409,
         "Username already exists"
       );
     }
+
+    throw new ApiError(
+      409,
+      "User already exists"
+    );
   }
+
+  // ====================================
+  // Generate Verification Token
+  // ====================================
 
   const {
     rawToken,
@@ -317,24 +441,79 @@ export const registerUser = async (
   } =
     generateEmailVerificationToken();
 
-  const user = await User.create({
-    fullName,
-    username,
-    email,
-    password,
+  // ====================================
+  // Create User
+  // ====================================
 
-    emailVerified: false,
+  let user;
 
-    emailVerificationToken:
-      hashedToken,
+  try {
+    user = await User.create({
+      fullName:
+        normalizedFullName,
 
-    emailVerificationExpires:
-      Date.now() +
-      24 * 60 * 60 * 1000,
-  });
+      username:
+        normalizedUsername,
+
+      email:
+        normalizedEmail,
+
+      password,
+
+      emailVerified: false,
+
+      emailVerificationToken:
+        hashedToken,
+
+      emailVerificationExpires:
+        Date.now() +
+        24 * 60 * 60 * 1000,
+    });
+  } catch (error) {
+    // Handle MongoDB duplicate-key
+    // race condition safely.
+
+    if (error.code === 11000) {
+      const duplicateField =
+        Object.keys(
+          error.keyPattern || {}
+        )[0];
+
+      if (
+        duplicateField === "email"
+      ) {
+        throw new ApiError(
+          409,
+          "Email already exists"
+        );
+      }
+
+      if (
+        duplicateField === "username"
+      ) {
+        throw new ApiError(
+          409,
+          "Username already exists"
+        );
+      }
+
+      throw new ApiError(
+        409,
+        "User already exists"
+      );
+    }
+
+    throw error;
+  }
+
+  // ====================================
+  // Verify User Creation
+  // ====================================
 
   const createdUser =
-    await User.findById(user._id);
+    await User.findById(
+      user._id
+    );
 
   if (!createdUser) {
     throw new ApiError(
@@ -343,11 +522,24 @@ export const registerUser = async (
     );
   }
 
+  // ====================================
+  // Send Verification Email
+  // ====================================
+
   await sendVerificationEmail({
-    email: createdUser.email,
-    fullName: createdUser.fullName,
-    verificationToken: rawToken,
+    email:
+      createdUser.email,
+
+    fullName:
+      createdUser.fullName,
+
+    verificationToken:
+      rawToken,
   });
+
+  // ====================================
+  // Generate Login Tokens
+  // ====================================
 
   const {
     accessToken,
@@ -359,7 +551,9 @@ export const registerUser = async (
 
   return {
     user: createdUser,
+
     accessToken,
+
     refreshToken,
   };
 };
@@ -367,61 +561,62 @@ export const registerUser = async (
 // ====================================
 // Verify Email
 // ====================================
-export const verifyEmailService = async (
-  token
-) => {
-  if (!token) {
-    throw new ApiError(
-      400,
-      "Email verification token is required"
-    );
-  }
 
-  const hashedToken =
-    crypto
-      .createHash("sha256")
-      .update(token)
-      .digest("hex");
+export const verifyEmailService =
+  async (token) => {
+    if (!token) {
+      throw new ApiError(
+        400,
+        "Email verification token is required"
+      );
+    }
 
-  const user =
-    await User.findOne({
-      emailVerificationToken:
-        hashedToken,
+    const hashedToken =
+      crypto
+        .createHash("sha256")
+        .update(token)
+        .digest("hex");
 
-      emailVerificationExpires: {
-        $gt: Date.now(),
-      },
-    }).select(
-      "+emailVerificationToken +emailVerificationExpires"
-    );
+    const user =
+      await User.findOne({
+        emailVerificationToken:
+          hashedToken,
 
-  if (!user) {
-    throw new ApiError(
-      400,
-      "Invalid or expired verification token"
-    );
-  }
+        emailVerificationExpires: {
+          $gt: Date.now(),
+        },
+      }).select(
+        "+emailVerificationToken +emailVerificationExpires"
+      );
 
-  user.emailVerified = true;
+    if (!user) {
+      throw new ApiError(
+        400,
+        "Invalid or expired verification token"
+      );
+    }
 
-  user.emailVerificationToken =
-    undefined;
+    user.emailVerified = true;
 
-  user.emailVerificationExpires =
-    undefined;
+    user.emailVerificationToken =
+      undefined;
 
-  await user.save({
-    validateBeforeSave: false,
-  });
+    user.emailVerificationExpires =
+      undefined;
 
-  return {
-    emailVerified: true,
+    await user.save({
+      validateBeforeSave: false,
+    });
+
+    return {
+      emailVerified: true,
+    };
   };
-};
 
 // ====================================
 // Forgot Password
 // ====================================
+
 export const forgotPasswordService =
   async (email) => {
     if (!email) {
@@ -441,12 +636,17 @@ export const forgotPasswordService =
         "+password +passwordResetToken +passwordResetExpires"
       );
 
+    // Don't reveal whether
+    // account exists.
+
     if (!user) {
       return {
         message:
           "If an account exists with this email, a password reset link has been sent.",
       };
     }
+
+    // Google-only account
 
     if (
       user.googleId &&
@@ -457,6 +657,8 @@ export const forgotPasswordService =
           "If an account exists with this email, a password reset link has been sent.",
       };
     }
+
+    // Generate reset token
 
     const {
       rawToken,
@@ -477,8 +679,12 @@ export const forgotPasswordService =
 
     await sendPasswordResetEmail({
       email: user.email,
-      fullName: user.fullName,
-      resetToken: rawToken,
+
+      fullName:
+        user.fullName,
+
+      resetToken:
+        rawToken,
     });
 
     return {
@@ -490,6 +696,7 @@ export const forgotPasswordService =
 // ====================================
 // Reset Password
 // ====================================
+
 export const resetPasswordService =
   async (
     token,
@@ -534,7 +741,8 @@ export const resetPasswordService =
       );
     }
 
-    user.password = newPassword;
+    user.password =
+      newPassword;
 
     user.passwordResetToken =
       undefined;
@@ -549,7 +757,9 @@ export const resetPasswordService =
 
     await sendPasswordChangedEmail({
       email: user.email,
-      fullName: user.fullName,
+
+      fullName:
+        user.fullName,
     });
 
     return {
@@ -561,6 +771,7 @@ export const resetPasswordService =
 // ====================================
 // Login User
 // ====================================
+
 export const loginUser = async (
   userData
 ) => {
@@ -601,6 +812,7 @@ export const loginUser = async (
   // ====================================
   // Two-Factor Authentication
   // ====================================
+
   if (user.twoFactorEnabled) {
     const challenge =
       await createTwoFactorChallenge(
@@ -615,10 +827,18 @@ export const loginUser = async (
 
       user: {
         _id: user._id,
-        fullName: user.fullName,
-        username: user.username,
-        email: user.email,
-        avatar: user.avatar,
+
+        fullName:
+          user.fullName,
+
+        username:
+          user.username,
+
+        email:
+          user.email,
+
+        avatar:
+          user.avatar,
       },
     };
   }
@@ -626,6 +846,7 @@ export const loginUser = async (
   // ====================================
   // Normal Login
   // ====================================
+
   const {
     accessToken,
     refreshToken,
@@ -634,13 +855,19 @@ export const loginUser = async (
       user._id
     );
 
-  user.password = undefined;
-  user.refreshToken = undefined;
+  user.password =
+    undefined;
+
+  user.refreshToken =
+    undefined;
 
   return {
     requiresTwoFactor: false,
+
     user,
+
     accessToken,
+
     refreshToken,
   };
 };
@@ -648,6 +875,7 @@ export const loginUser = async (
 // ====================================
 // Verify Two-Factor Code
 // ====================================
+
 export const verifyTwoFactorCode =
   async (
     challengeId,
@@ -775,12 +1003,17 @@ export const verifyTwoFactorCode =
         user._id
       );
 
-    user.password = undefined;
-    user.refreshToken = undefined;
+    user.password =
+      undefined;
+
+    user.refreshToken =
+      undefined;
 
     return {
       user,
+
       accessToken,
+
       refreshToken,
     };
   };
@@ -788,6 +1021,7 @@ export const verifyTwoFactorCode =
 // ====================================
 // Enable Two-Factor Authentication
 // ====================================
+
 export const enableTwoFactor =
   async (
     userId,
@@ -797,7 +1031,9 @@ export const enableTwoFactor =
     const user =
       await User.findById(
         userId
-      ).select("+password");
+      ).select(
+        "+password"
+      );
 
     if (!user) {
       throw new ApiError(
@@ -806,9 +1042,6 @@ export const enableTwoFactor =
       );
     }
 
-    // ====================================
-    // Re-authenticate user
-    // ====================================
     await verifySecurityCredential(
       user,
       password,
@@ -818,12 +1051,14 @@ export const enableTwoFactor =
     if (user.twoFactorEnabled) {
       return {
         twoFactorEnabled: true,
+
         message:
           "Two-factor authentication is already enabled",
       };
     }
 
-    user.twoFactorEnabled = true;
+    user.twoFactorEnabled =
+      true;
 
     await user.save({
       validateBeforeSave: false,
@@ -831,6 +1066,7 @@ export const enableTwoFactor =
 
     return {
       twoFactorEnabled: true,
+
       message:
         "Two-factor authentication enabled successfully",
     };
@@ -839,6 +1075,7 @@ export const enableTwoFactor =
 // ====================================
 // Disable Two-Factor Authentication
 // ====================================
+
 export const disableTwoFactor =
   async (
     userId,
@@ -848,7 +1085,9 @@ export const disableTwoFactor =
     const user =
       await User.findById(
         userId
-      ).select("+password");
+      ).select(
+        "+password"
+      );
 
     if (!user) {
       throw new ApiError(
@@ -857,9 +1096,6 @@ export const disableTwoFactor =
       );
     }
 
-    // ====================================
-    // Re-authenticate user
-    // ====================================
     await verifySecurityCredential(
       user,
       password,
@@ -869,14 +1105,15 @@ export const disableTwoFactor =
     if (!user.twoFactorEnabled) {
       return {
         twoFactorEnabled: false,
+
         message:
           "Two-factor authentication is already disabled",
       };
     }
 
-    user.twoFactorEnabled = false;
+    user.twoFactorEnabled =
+      false;
 
-    // Invalidate pending OTP challenges
     await TwoFactorChallenge.deleteMany({
       userId: user._id,
     });
@@ -887,6 +1124,7 @@ export const disableTwoFactor =
 
     return {
       twoFactorEnabled: false,
+
       message:
         "Two-factor authentication disabled successfully",
     };
@@ -895,6 +1133,7 @@ export const disableTwoFactor =
 // ====================================
 // Google Login
 // ====================================
+
 export const googleLoginUser = async (
   credential
 ) => {
@@ -916,10 +1155,15 @@ export const googleLoginUser = async (
 
   let payload;
 
+  // ====================================
+  // Verify Google Credential
+  // ====================================
+
   try {
     const ticket =
       await googleClient.verifyIdToken({
         idToken: credential,
+
         audience:
           process.env.GOOGLE_CLIENT_ID,
       });
@@ -929,7 +1173,7 @@ export const googleLoginUser = async (
   } catch (error) {
     console.error(
       "Google token verification failed:",
-      error
+      error.message
     );
 
     throw new ApiError(
@@ -968,26 +1212,42 @@ export const googleLoginUser = async (
     );
   }
 
+  const normalizedEmail =
+    email.toLowerCase().trim();
+
+  // ====================================
+  // Find Google Account
+  // ====================================
+
   let user =
     await User.findOne({
       googleId,
-    }).select("+refreshToken");
+    }).select(
+      "+refreshToken"
+    );
+
+  // ====================================
+  // Find Existing DevPulse Account
+  // ====================================
 
   if (!user) {
     user =
       await User.findOne({
         email:
-          email.toLowerCase(),
+          normalizedEmail,
       }).select(
         "+refreshToken"
       );
   }
 
+  // ====================================
+  // Create Google User
+  // ====================================
+
   if (!user) {
     const baseUsername =
-      email
+      normalizedEmail
         .split("@")[0]
-        .toLowerCase()
         .replace(
           /[^a-z0-9_]/g,
           "_"
@@ -1026,7 +1286,7 @@ export const googleLoginUser = async (
         username,
 
         email:
-          email.toLowerCase(),
+          normalizedEmail,
 
         googleId,
 
@@ -1043,6 +1303,10 @@ export const googleLoginUser = async (
         "+refreshToken"
       );
   } else {
+    // ====================================
+    // Link Google Account
+    // ====================================
+
     if (!user.googleId) {
       user.googleId =
         googleId;
@@ -1054,7 +1318,8 @@ export const googleLoginUser = async (
         !user.avatar &&
         picture
       ) {
-        user.avatar = picture;
+        user.avatar =
+          picture;
       }
 
       await user.save({
@@ -1067,6 +1332,7 @@ export const googleLoginUser = async (
   // ====================================
   // Google + 2FA
   // ====================================
+
   if (user.twoFactorEnabled) {
     const challenge =
       await createTwoFactorChallenge(
@@ -1081,13 +1347,25 @@ export const googleLoginUser = async (
 
       user: {
         _id: user._id,
-        fullName: user.fullName,
-        username: user.username,
-        email: user.email,
-        avatar: user.avatar,
+
+        fullName:
+          user.fullName,
+
+        username:
+          user.username,
+
+        email:
+          user.email,
+
+        avatar:
+          user.avatar,
       },
     };
   }
+
+  // ====================================
+  // Generate Tokens
+  // ====================================
 
   const {
     accessToken,
@@ -1097,13 +1375,19 @@ export const googleLoginUser = async (
       user._id
     );
 
-  user.password = undefined;
-  user.refreshToken = undefined;
+  user.password =
+    undefined;
+
+  user.refreshToken =
+    undefined;
 
   return {
     requiresTwoFactor: false,
+
     user,
+
     accessToken,
+
     refreshToken,
   };
 };
@@ -1111,6 +1395,7 @@ export const googleLoginUser = async (
 // ====================================
 // Logout User
 // ====================================
+
 export const logoutUser = async (
   userId
 ) => {
@@ -1130,6 +1415,7 @@ export const logoutUser = async (
 // ====================================
 // Refresh Access Token
 // ====================================
+
 export const refreshAccessTokenService =
   async (
     incomingRefreshToken
@@ -1141,12 +1427,21 @@ export const refreshAccessTokenService =
       );
     }
 
-    const decodedToken =
-      jwt.verify(
-        incomingRefreshToken,
-        process.env
-          .JWT_REFRESH_SECRET
+    let decodedToken;
+
+    try {
+      decodedToken =
+        jwt.verify(
+          incomingRefreshToken,
+          process.env
+            .JWT_REFRESH_SECRET
+        );
+    } catch (error) {
+      throw new ApiError(
+        401,
+        "Invalid or expired refresh token"
       );
+    }
 
     const user =
       await User.findById(
@@ -1182,6 +1477,7 @@ export const refreshAccessTokenService =
 
     return {
       accessToken,
+
       refreshToken,
     };
   };

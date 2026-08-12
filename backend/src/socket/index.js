@@ -33,6 +33,23 @@ export const initializeSocket = (server) => {
       `👤 User connected: ${socket.user.username}`
     );
 
+    // ====================================
+    // Join Private User Room
+    // ====================================
+
+    const userRoom =
+      `user:${socket.user._id.toString()}`;
+
+    socket.join(userRoom);
+
+    console.log(
+      `🏠 User joined room: ${userRoom}`
+    );
+
+    // ====================================
+    // Disconnect
+    // ====================================
+
     socket.on("disconnect", (reason) => {
       console.log(
         `🔌 Socket disconnected: ${socket.id} — ${reason}`
@@ -44,6 +61,10 @@ export const initializeSocket = (server) => {
 
   return io;
 };
+
+// ====================================
+// Get Socket.IO Instance
+// ====================================
 
 export const getIO = () => {
   if (!io) {

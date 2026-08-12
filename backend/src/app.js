@@ -19,7 +19,8 @@ import githubRouter from "./routes/github.routes.js";
 import ApiError from "./utils/ApiError.js";
 import errorHandler from "./middlewares/error.middleware.js";
 import portfolioRouter from "./routes/portfolio.routes.js";
-
+import conversationRouter from "./routes/conversation.routes.js";
+import messageRouter from "./routes/message.routes.js";
 const app = express();
 
 /**
@@ -103,7 +104,14 @@ app.use("/api/v1/feed", feedRouter);
 app.use("/api/v1/bookmarks", bookmarkRouter);
 app.use("/api/v1/github", githubRouter);
 app.use("/api/v1/portfolio", portfolioRouter);
-
+app.use(
+  "/api/v1/conversations",
+  conversationRouter
+);
+app.use(
+  "/api/v1/messages",
+  messageRouter
+);
 /**
  * ====================================
  * 404 Route Handler

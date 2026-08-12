@@ -17,7 +17,7 @@ export const socket = io(SOCKET_URL, {
 export const connectSocket = async () => {
   try {
     // ====================================
-    // Refresh authentication first
+    // Refresh Authentication First
     // ====================================
 
     await api.post("/auth/refresh-token");
@@ -79,5 +79,15 @@ socket.on("connect_error", (error) => {
 socket.on("disconnect", (reason) => {
   console.log(
     `🔌 Socket disconnected: ${reason}`
+  );
+});
+
+// ====================================
+// New Message Event
+// ====================================
+socket.on("new_message", (message) => {
+  console.log(
+    "💬 New message received:",
+    message
   );
 });

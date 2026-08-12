@@ -28,22 +28,29 @@ export function AuthProvider({ children }) {
   // ====================================
   // Socket Connection
   // ====================================
+useEffect(() => {
+  console.log("🔐 Auth state:", {
+    isLoading,
+    isAuthenticated,
+    user,
+  });
 
-  useEffect(() => {
-    if (isLoading) {
-      return;
-    }
+  if (isLoading) {
+    return;
+  }
 
-    if (isAuthenticated) {
-      connectSocket();
-    } else {
-      disconnectSocket();
-    }
+  if (isAuthenticated) {
+    console.log("🔌 Authenticated → connecting Socket.IO");
+    connectSocket();
+  } else {
+    console.log("🚫 Not authenticated → disconnecting Socket.IO");
+    disconnectSocket();
+  }
 
-    return () => {
-      disconnectSocket();
-    };
-  }, [isAuthenticated, isLoading]);
+  return () => {
+    disconnectSocket();
+  };
+}, [isAuthenticated, isLoading]);
 
   // ====================================
   // Auth Context

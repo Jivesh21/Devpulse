@@ -130,12 +130,17 @@ function PostCard({ post }) {
           to={`/profile/${post.author?.username}`}
           className="
             group/author
+            relative
+            z-10
             flex
             min-w-0
+            cursor-pointer
             items-center
             gap-3
             rounded-xl
             outline-none
+            transition-opacity
+            hover:opacity-90
             focus-visible:ring-2
             focus-visible:ring-ring
           "
@@ -206,6 +211,8 @@ function PostCard({ post }) {
                 variant="ghost"
                 size="icon"
                 className="
+                  relative
+                  z-20
                   h-8
                   w-8
                   rounded-lg

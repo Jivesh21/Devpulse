@@ -51,7 +51,10 @@ function DeveloperCard({ user }) {
         glass-card
         glass-hover
         group
-        block
+        flex
+        h-full
+        min-h-[300px]
+        flex-col
         rounded-2xl
         p-5
         outline-none
@@ -139,64 +142,86 @@ function DeveloperCard({ user }) {
       {/* Bio */}
       {/* ================================= */}
 
-      {user.bio && (
-        <p
-          className="
-            mt-4
-            line-clamp-2
-            text-sm
-            leading-6
-            text-muted-foreground
-          "
-        >
-          {user.bio}
-        </p>
-      )}
+      <div className="mt-4 min-h-[48px]">
+        {user.bio ? (
+          <p
+            className="
+              line-clamp-2
+              text-sm
+              leading-6
+              text-muted-foreground
+            "
+          >
+            {user.bio}
+          </p>
+        ) : (
+          <p
+            className="
+              text-sm
+              leading-6
+              text-muted-foreground/40
+            "
+          >
+            Developer on DevPulse
+          </p>
+        )}
+      </div>
 
       {/* ================================= */}
       {/* Skills */}
       {/* ================================= */}
 
-      {user.skills?.length > 0 && (
-        <div className="mt-4 flex flex-wrap gap-1.5">
-          {user.skills
-            .slice(0, 4)
-            .map((skill, index) => (
+      <div className="mt-4 min-h-[40px]">
+        {user.skills?.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5">
+            {user.skills
+              .slice(0, 4)
+              .map((skill, index) => (
+                <span
+                  key={`${skill}-${index}`}
+                  className="
+                    rounded-full
+                    border
+                    border-primary/10
+                    bg-primary/5
+                    px-2.5
+                    py-1
+                    text-[11px]
+                    font-medium
+                    text-primary
+                  "
+                >
+                  {skill}
+                </span>
+              ))}
+
+            {user.skills.length > 4 && (
               <span
-                key={`${skill}-${index}`}
                 className="
                   rounded-full
-                  border
-                  border-primary/10
-                  bg-primary/5
+                  bg-muted
                   px-2.5
                   py-1
                   text-[11px]
                   font-medium
-                  text-primary
+                  text-muted-foreground
                 "
               >
-                {skill}
+                +{user.skills.length - 4}
               </span>
-            ))}
-
-          {user.skills.length > 4 && (
-            <span
-              className="
-                rounded-full
-                bg-muted
-                px-2.5
-                py-1
-                text-[11px]
-                font-medium
-                text-muted-foreground
-              "
-            >
-              +{user.skills.length - 4}
-            </span>
-          )}
-        </div>
-      )}
+            )}
+          </div>
+        ) : (
+          <span
+            className="
+              text-xs
+              text-muted-foreground/40
+            "
+          >
+            No skills added
+          </span>
+        )}
+      </div>
 
       {/* ================================= */}
       {/* Follow */}
@@ -206,7 +231,7 @@ function DeveloperCard({ user }) {
         type="button"
         className="
           interactive
-          mt-5
+          mt-auto
           h-10
           w-full
           rounded-xl
@@ -271,7 +296,6 @@ export default function NetworkPage() {
             sm:p-8
           "
         >
-          {/* Background decoration */}
           <div
             className="
               pointer-events-none
@@ -516,6 +540,7 @@ export default function NetworkPage() {
             <div
               className="
                 grid
+                items-stretch
                 gap-5
                 sm:grid-cols-2
                 xl:grid-cols-3
@@ -525,7 +550,7 @@ export default function NetworkPage() {
                 (user, index) => (
                   <div
                     key={user._id}
-                    className="page-enter"
+                    className="page-enter h-full"
                     style={{
                       animationDelay: `${Math.min(
                         index * 60,

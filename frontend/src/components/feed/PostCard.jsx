@@ -24,6 +24,8 @@ import {
   MoreHorizontal,
   Pencil,
   Trash2,
+  UserPlus,
+  Loader2,
 } from "lucide-react";
 
 import { useAuthContext } from "@/context/AuthContext";
@@ -38,6 +40,11 @@ import {
   useToggleBookmark,
   useBookmarkStatus,
 } from "@/hooks/useBookmark";
+
+import {
+  useFollowStatus,
+  useToggleFollow,
+} from "@/hooks/useFollow";
 
 import CommentSection from "./CommentSection";
 import EditPostDialog from "./EditPostDialog";
@@ -93,6 +100,23 @@ function PostCard({ post }) {
     false;
 
   // ====================================
+  // Follow
+  // ====================================
+
+  const authorId = post.author?._id;
+
+  const {
+    data: followStatusData,
+  } = useFollowStatus(authorId);
+
+  const toggleFollowMutation =
+    useToggleFollow(authorId);
+
+  const isFollowing =
+    followStatusData?.data?.isFollowing ||
+    false;
+
+  // ====================================
   // Render
   // ====================================
 
@@ -122,10 +146,15 @@ function PostCard({ post }) {
           flex
           items-center
           justify-between
+          gap-3
           px-5
           py-4
         "
       >
+        {/* ================================= */}
+        {/* Author + Profile Link */}
+        {/* ================================= */}
+
         <Link
           to={`/profile/${post.author?.username}`}
           className="
@@ -134,6 +163,7 @@ function PostCard({ post }) {
             z-10
             flex
             min-w-0
+            flex-1
             cursor-pointer
             items-center
             gap-3
@@ -142,13 +172,14 @@ function PostCard({ post }) {
             transition-opacity
             hover:opacity-90
             focus-visible:ring-2
-            focus-visible:ring-ring
+            focus-visible:ring-primary
           "
         >
           <Avatar
             className="
               h-10
               w-10
+              shrink-0
               border
               border-border/60
               transition-transform
@@ -202,60 +233,119 @@ function PostCard({ post }) {
           </div>
         </Link>
 
-        {/* Owner Menu */}
+        {/* ================================= */}
+        {/* Follow + Owner Menu */}
+        {/* ================================= */}
 
-        {isOwner && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="
-                  relative
-                  z-20
-                  h-8
-                  w-8
-                  rounded-lg
-                  text-muted-foreground
-                  hover:bg-muted
-                  hover:text-foreground
-                "
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
+        <div
+          className="
+            relative
+            z-20
+            flex
+            shrink-0
+            items-center
+            gap-2
+          "
+        >
+          {/* Follow Button */}
 
-            <DropdownMenuContent
-              align="end"
-              className="w-40 rounded-xl"
+          {!isOwner && authorId && (
+            <Button
+              type="button"
+              size="sm"
+              variant={
+                isFollowing
+                  ? "secondary"
+                  : "default"
+              }
+              className="
+                interactive
+                h-9
+                rounded-xl
+                px-3
+                text-xs
+                font-medium
+              "
+              disabled={
+                toggleFollowMutation.isPending
+              }
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+
+                toggleFollowMutation.mutate();
+              }}
             >
-              <DropdownMenuItem
-                onClick={() =>
-                  setEditOpen(true)
-                }
-                className="cursor-pointer rounded-lg"
-              >
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
+              {toggleFollowMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : isFollowing ? (
+                "Following"
+              ) : (
+                <>
+                  <UserPlus className="mr-1.5 h-4 w-4" />
+                  Follow
+                </>
+              )}
+            </Button>
+          )}
 
-              <DropdownMenuItem
-                onClick={() =>
-                  setDeleteOpen(true)
-                }
-                className="
-                  cursor-pointer
-                  rounded-lg
-                  text-red-500
-                  focus:text-red-500
-                "
+          {/* Owner Menu */}
+
+          {isOwner && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="
+                    h-8
+                    w-8
+                    rounded-lg
+                    text-muted-foreground
+                    hover:bg-muted
+                    hover:text-foreground
+                  "
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent
+                align="end"
+                className="w-40 rounded-xl"
               >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+                <DropdownMenuItem
+                  onClick={() =>
+                    setEditOpen(true)
+                  }
+                  className="
+                    cursor-pointer
+                    rounded-lg
+                  "
+                >
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  onClick={() =>
+                    setDeleteOpen(true)
+                  }
+                  className="
+                    cursor-pointer
+                    rounded-lg
+                    text-red-500
+                    focus:text-red-500
+                  "
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </div>
 
       {/* ================================= */}
@@ -323,6 +413,7 @@ function PostCard({ post }) {
         {/* Like */}
 
         <Button
+          type="button"
           variant="ghost"
           className={`
             h-10
@@ -351,6 +442,7 @@ function PostCard({ post }) {
               w-4
               transition-transform
               duration-200
+
               ${
                 isLiked
                   ? "scale-110 fill-current"
@@ -365,6 +457,7 @@ function PostCard({ post }) {
         {/* Comment */}
 
         <Button
+          type="button"
           variant="ghost"
           className="
             h-10
@@ -392,6 +485,7 @@ function PostCard({ post }) {
         {/* Bookmark */}
 
         <Button
+          type="button"
           variant="ghost"
           className={`
             h-10
@@ -420,6 +514,7 @@ function PostCard({ post }) {
             className={`
               h-4
               w-4
+
               ${
                 isBookmarked
                   ? "fill-current"
@@ -438,6 +533,7 @@ function PostCard({ post }) {
         {/* Share */}
 
         <Button
+          type="button"
           variant="ghost"
           className="
             h-10

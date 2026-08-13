@@ -47,6 +47,27 @@ export const chatWithAI = asyncHandler(
     await conversation.save();
 
     // ====================================
+    // Build Conversation Context
+    // ====================================
+
+    const recentMessages =
+      conversation.messages.slice(-20);
+
+    const aiMessages =
+      recentMessages.map((item) => ({
+        role:
+          item.role === "assistant"
+            ? "model"
+            : "user",
+
+        parts: [
+          {
+            text: item.content,
+          },
+        ],
+      }));
+
+    // ====================================
     // Streaming Response Headers
     // ====================================
 
@@ -73,9 +94,13 @@ export const chatWithAI = asyncHandler(
     res.flushHeaders();
 
     try {
+      // ====================================
+      // Generate AI Response
+      // ====================================
+
       const responseStream =
         await generateAIResponseStream(
-          message
+          aiMessages
         );
 
       // ====================================
@@ -115,7 +140,10 @@ export const chatWithAI = asyncHandler(
           content: completeResponse,
         });
 
-        // Keep title updated after first message.
+        // ====================================
+        // Update Conversation Title
+        // ====================================
+
         if (
           conversation.title ===
           "New AI Chat"

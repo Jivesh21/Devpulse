@@ -13,13 +13,15 @@ const ai = new GoogleGenAI({
 // ====================================
 
 export const generateAIResponseStream = async (
-  message
+  messages
 ) => {
   try {
     const responseStream =
       await ai.models.generateContentStream({
         model: "gemini-3.5-flash",
-        contents: message,
+
+        contents: messages,
+
         config: {
           systemInstruction:
             "You are DevPulse AI, a helpful developer-focused AI assistant. " +

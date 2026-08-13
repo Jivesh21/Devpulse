@@ -449,16 +449,17 @@ const AiPage = () => {
       );
 
       await loadConversations();
-    } catch (error) {
+      } catch (error) {
       console.error(
         "AI streaming error:",
         error
       );
 
-      setError(
+      const errorMessage =
         error?.message ||
-          "Unable to get a response from DevPulse AI."
-      );
+        "Unable to get a response from DevPulse AI.";
+
+      setError(errorMessage);
 
       setMessages(
         (previousMessages) => {
@@ -1008,13 +1009,24 @@ const AiPage = () => {
             Error
         ==================================== */}
 
-        {error && (
-          <div className="px-4 pb-2 md:px-8">
-            <div className="mx-auto max-w-4xl rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">
-              {error}
-            </div>
-          </div>
-        )}
+      {error && (
+  <div className="px-4 pb-2 md:px-8">
+    <div className="mx-auto max-w-4xl rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+      <div className="flex items-start justify-between gap-3">
+        <p>{error}</p>
+
+        <button
+          type="button"
+          onClick={() => setError("")}
+          className="shrink-0 rounded-md p-1 text-destructive/70 hover:bg-destructive/10 hover:text-destructive"
+          aria-label="Dismiss error"
+        >
+          <X size={16} />
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
         {/* ====================================
             Input

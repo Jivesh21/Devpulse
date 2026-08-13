@@ -89,14 +89,14 @@ function RegisterForm() {
       {/* ================================= */}
 
       <div className="text-center lg:text-left">
-        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          Create your account
-        </h2>
+<h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+  Join DevPulse
+</h2>
 
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Join DevPulse and connect with developers
-          around the world.
-        </p>
+<p className="mt-2 text-sm leading-6 text-muted-foreground">
+  Create your developer profile and connect
+  with the community.
+</p>
       </div>
 
       {/* ================================= */}

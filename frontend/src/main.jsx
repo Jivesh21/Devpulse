@@ -10,6 +10,7 @@ import queryClient from "./lib/queryClient.js";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { ThemeProvider } from "./components/providers/theme-provider.jsx";
 import { ThemeContextProvider } from "./context/ThemeContext.jsx";
+import NotificationSocketListener from "./components/providers/NotificationSocketListener.jsx";
 
 import "./index.css";
 
@@ -24,6 +25,8 @@ createRoot(document.getElementById("root")).render(
       >
         <ThemeContextProvider>
           <AuthProvider>
+            <NotificationSocketListener />
+
             <GoogleOAuthProvider
               clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}
             >

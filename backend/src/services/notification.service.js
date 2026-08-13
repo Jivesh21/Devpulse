@@ -1,6 +1,7 @@
 import Notification from "../models/notification.model.js";
 import User from "../models/user.model.js";
 import ApiError from "../utils/ApiError.js";
+import { getIO } from "../socket/index.js";
 
 // ====================================
 // Create Notification
@@ -11,29 +12,89 @@ export const createNotificationService = async ({
   type,
   post = null,
 }) => {
+  // ====================================
   // Don't notify yourself
+  // ====================================
+
   if (recipient.toString() === sender.toString()) {
     return null;
   }
 
-  const recipientUser = await User.findById(recipient);
+  // ====================================
+  // Validate Recipient
+  // ====================================
+
+  const recipientUser =
+    await User.findById(recipient);
 
   if (!recipientUser) {
-    throw new ApiError(404, "Recipient not found");
+    throw new ApiError(
+      404,
+      "Recipient not found"
+    );
   }
 
-  const senderUser = await User.findById(sender);
+  // ====================================
+  // Validate Sender
+  // ====================================
+
+  const senderUser =
+    await User.findById(sender);
 
   if (!senderUser) {
-    throw new ApiError(404, "Sender not found");
+    throw new ApiError(
+      404,
+      "Sender not found"
+    );
   }
 
-  const notification = await Notification.create({
-    recipient,
-    sender,
-    type,
-    post,
-  });
+  // ====================================
+  // Create Notification
+  // ====================================
+
+  const notification =
+    await Notification.create({
+      recipient,
+      sender,
+      type,
+      post,
+    });
+
+  // ====================================
+  // Populate Notification
+  // ====================================
+
+  await notification.populate(
+    "sender",
+    "fullName username avatar"
+  );
+
+  await notification.populate(
+    "post",
+    "content image"
+  );
+
+  // ====================================
+  // Emit Real-Time Notification
+  // ====================================
+
+  try {
+    getIO()
+      .to(`user:${recipient.toString()}`)
+      .emit(
+        "new_notification",
+        notification
+      );
+
+    console.log(
+      `🔔 New notification emitted to user:${recipient.toString()}`
+    );
+  } catch (error) {
+    console.error(
+      "❌ Failed to emit notification:",
+      error.message
+    );
+  }
 
   return notification;
 };

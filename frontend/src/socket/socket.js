@@ -91,3 +91,12 @@ socket.on("new_message", (message) => {
     message
   );
 });
+// ====================================
+// New Notification Event
+// ====================================
+socket.on("new_notification", (notification) => {
+  console.log(
+    "🔔 New notification received:",
+    notification
+  );
+});

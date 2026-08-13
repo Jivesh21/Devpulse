@@ -3,6 +3,7 @@ import { Router } from "express";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import validate from "../middlewares/validate.middleware.js";
 import aiRateLimiter from "../middlewares/aiRateLimiter.middleware.js";
+import { checkAIUsage } from "../middlewares/aiUsage.middleware.js";
 
 import {
   chatWithAI,
@@ -23,6 +24,7 @@ router.post(
   verifyJWT,
   aiRateLimiter,
   validate(aiChatSchema),
+  checkAIUsage,
   chatWithAI
 );
 

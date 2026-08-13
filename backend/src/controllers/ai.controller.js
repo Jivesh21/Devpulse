@@ -2,6 +2,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 
 import AIConversation from "../models/aiConversation.model.js";
+import AIUsage from "../models/aiUsage.model.js";
 
 import {
   generateAIResponseStream,
@@ -113,6 +114,12 @@ export const chatWithAI = asyncHandler(
       let completeResponse = "";
 
       // ====================================
+      // Track Gemini Usage
+      // ====================================
+
+      let usageMetadata = null;
+
+      // ====================================
       // Stream Gemini Chunks
       // ====================================
 
@@ -120,6 +127,15 @@ export const chatWithAI = asyncHandler(
         const chunk of responseStream
       ) {
         const text = chunk.text;
+
+        // ====================================
+        // Capture Usage Metadata
+        // ====================================
+
+        if (chunk.usageMetadata) {
+          usageMetadata =
+            chunk.usageMetadata;
+        }
 
         if (!text) {
           continue;
@@ -160,6 +176,88 @@ export const chatWithAI = asyncHandler(
 
         await conversation.save();
       }
+
+      // ====================================
+      // Update AI Usage
+      // ====================================
+
+      if (completeResponse.trim()) {
+        const today = new Date();
+
+        const inputTokens =
+          Number(
+            usageMetadata?.promptTokenCount ||
+              usageMetadata?.inputTokenCount ||
+              0
+          );
+
+        const outputTokens =
+          Number(
+            usageMetadata?.candidatesTokenCount ||
+              usageMetadata?.outputTokenCount ||
+              0
+          );
+
+        const totalTokens =
+          Number(
+            usageMetadata?.totalTokenCount ||
+              inputTokens +
+                outputTokens
+          );
+
+        const usage =
+          await AIUsage.findOne({
+            user: req.user._id,
+          });
+
+        if (usage) {
+          usage.requestCount += 1;
+
+          usage.inputTokens +=
+            inputTokens;
+
+          usage.outputTokens +=
+            outputTokens;
+
+          usage.totalTokens +=
+            totalTokens;
+
+          usage.date = today;
+
+          await usage.save();
+        }
+      }
+
+      // ====================================
+      // Send Usage Information
+      // ====================================
+
+      res.write(
+        `data: ${JSON.stringify({
+          type: "usage",
+          usage: {
+            inputTokens:
+              Number(
+                usageMetadata?.promptTokenCount ||
+                  usageMetadata?.inputTokenCount ||
+                  0
+              ),
+
+            outputTokens:
+              Number(
+                usageMetadata?.candidatesTokenCount ||
+                  usageMetadata?.outputTokenCount ||
+                  0
+              ),
+
+            totalTokens:
+              Number(
+                usageMetadata?.totalTokenCount ||
+                  0
+              ),
+          },
+        })}\n\n`
+      );
 
       // ====================================
       // Stream Complete Event

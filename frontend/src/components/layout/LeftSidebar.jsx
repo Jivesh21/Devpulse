@@ -23,6 +23,7 @@ import {
   Settings,
   Sparkles,
   ChevronRight,
+  Bot,
 } from "lucide-react";
 
 function LeftSidebar() {
@@ -104,6 +105,11 @@ function LeftSidebar() {
       icon: MessageCircle,
       label: "Messages",
       path: "/messages",
+    },
+    {
+      icon: Bot,
+      label: "DevPulse AI",
+      path: "/ai",
     },
     {
       icon: Bookmark,

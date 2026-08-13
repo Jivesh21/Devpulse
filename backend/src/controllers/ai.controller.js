@@ -50,6 +50,9 @@ export const chatWithAI = asyncHandler(
     // Build Conversation Context
     // ====================================
 
+    // Keep only the latest 20 messages
+    // to control Gemini token usage.
+
     const recentMessages =
       conversation.messages.slice(-20);
 
@@ -113,7 +116,9 @@ export const chatWithAI = asyncHandler(
       // Stream Gemini Chunks
       // ====================================
 
-      for await (const chunk of responseStream) {
+      for await (
+        const chunk of responseStream
+      ) {
         const text = chunk.text;
 
         if (!text) {
@@ -173,11 +178,26 @@ export const chatWithAI = asyncHandler(
         error?.message || error
       );
 
+      // ====================================
+      // Determine Error Information
+      // ====================================
+
+      const statusCode =
+        error?.statusCode || 500;
+
+      const errorMessage =
+        error?.message ||
+        "Unable to generate AI response";
+
+      // ====================================
+      // Send SSE Error Event
+      // ====================================
+
       res.write(
         `data: ${JSON.stringify({
           type: "error",
-          message:
-            "Unable to generate AI response",
+          statusCode,
+          message: errorMessage,
         })}\n\n`
       );
 

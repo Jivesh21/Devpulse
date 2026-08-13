@@ -1,39 +1,18 @@
+import api from "@/api/axios";
+
 // ====================================
 // Create AI Conversation
 // ====================================
 
-export const createAIConversation = async () => {
-  const response = await fetch(
-    `${import.meta.env.VITE_API_URL}/ai/conversations`,
-    {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }
-  );
+export const createAIConversation =
+  async () => {
+    const response =
+      await api.post(
+        "/ai/conversations"
+      );
 
-  if (!response.ok) {
-    let errorMessage =
-      "Unable to create AI conversation.";
-
-    try {
-      const errorData =
-        await response.json();
-
-      errorMessage =
-        errorData?.message ||
-        errorMessage;
-    } catch {
-      // Ignore JSON parsing errors
-    }
-
-    throw new Error(errorMessage);
-  }
-
-  return response.json();
-};
+    return response.data;
+  };
 
 // ====================================
 // Get AI Conversations
@@ -41,33 +20,12 @@ export const createAIConversation = async () => {
 
 export const getAIConversations =
   async () => {
-    const response = await fetch(
-      `${import.meta.env.VITE_API_URL}/ai/conversations`,
-      {
-        method: "GET",
-        credentials: "include",
-      }
-    );
+    const response =
+      await api.get(
+        "/ai/conversations"
+      );
 
-    if (!response.ok) {
-      let errorMessage =
-        "Unable to fetch AI conversations.";
-
-      try {
-        const errorData =
-          await response.json();
-
-        errorMessage =
-          errorData?.message ||
-          errorMessage;
-      } catch {
-        // Ignore JSON parsing errors
-      }
-
-      throw new Error(errorMessage);
-    }
-
-    return response.json();
+    return response.data;
   };
 
 // ====================================
@@ -76,37 +34,30 @@ export const getAIConversations =
 
 export const getAIConversation =
   async (conversationId) => {
-    const response = await fetch(
-      `${import.meta.env.VITE_API_URL}/ai/conversations/${conversationId}`,
-      {
-        method: "GET",
-        credentials: "include",
-      }
-    );
+    const response =
+      await api.get(
+        `/ai/conversations/${conversationId}`
+      );
 
-    if (!response.ok) {
-      let errorMessage =
-        "Unable to fetch AI conversation.";
-
-      try {
-        const errorData =
-          await response.json();
-
-        errorMessage =
-          errorData?.message ||
-          errorMessage;
-      } catch {
-        // Ignore JSON parsing errors
-      }
-
-      throw new Error(errorMessage);
-    }
-
-    return response.json();
+    return response.data;
   };
 
 // ====================================
-// Stream AI Chat Message
+// Delete AI Conversation
+// ====================================
+
+export const deleteAIConversation =
+  async (conversationId) => {
+    const response =
+      await api.delete(
+        `/ai/conversations/${conversationId}`
+      );
+
+    return response.data;
+  };
+
+// ====================================
+// Stream AI Message
 // ====================================
 
 export const streamAIMessage = async (
@@ -118,10 +69,14 @@ export const streamAIMessage = async (
     `${import.meta.env.VITE_API_URL}/ai/chat`,
     {
       method: "POST",
-      credentials: "include",
+
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type":
+          "application/json",
       },
+
+      credentials: "include",
+
       body: JSON.stringify({
         conversationId,
         message,
@@ -130,19 +85,19 @@ export const streamAIMessage = async (
   );
 
   // ====================================
-  // Handle HTTP Errors
+  // HTTP-Level Error
   // ====================================
 
   if (!response.ok) {
     let errorMessage =
-      "Unable to get a response from DevPulse AI.";
+      "Unable to generate AI response.";
 
     try {
-      const errorData =
+      const data =
         await response.json();
 
       errorMessage =
-        errorData?.message ||
+        data?.message ||
         errorMessage;
     } catch {
       // Ignore JSON parsing errors
@@ -153,85 +108,126 @@ export const streamAIMessage = async (
 
   if (!response.body) {
     throw new Error(
-      "Streaming is not supported by this browser."
+      "AI response stream is unavailable."
     );
   }
 
   // ====================================
-  // Read Streaming Response
+  // Read SSE Stream
   // ====================================
 
   const reader =
     response.body.getReader();
 
-  const decoder = new TextDecoder();
+  const decoder =
+    new TextDecoder("utf-8");
 
   let buffer = "";
 
   try {
     while (true) {
-      const { value, done } =
-        await reader.read();
+      const {
+        value,
+        done,
+      } = await reader.read();
 
       if (done) {
         break;
       }
 
-      buffer += decoder.decode(value, {
-        stream: true,
-      });
+      buffer += decoder.decode(
+        value,
+        {
+          stream: true,
+        }
+      );
+
+      // ====================================
+      // Split SSE Events
+      // ====================================
 
       const events =
         buffer.split("\n\n");
 
+      // Keep incomplete event
       buffer =
         events.pop() || "";
 
       for (const event of events) {
-        const line = event
-          .split("\n")
-          .find((line) =>
-            line.startsWith("data:")
-          );
+        const lines =
+          event.split("\n");
 
-        if (!line) {
-          continue;
-        }
-
-        const data = line
-          .slice(5)
-          .trim();
-
-        if (!data) {
-          continue;
-        }
-
-        try {
-          const parsedData =
-            JSON.parse(data);
-
+        for (const line of lines) {
           if (
-            parsedData.type === "text" &&
-            parsedData.text
+            !line.startsWith(
+              "data:"
+            )
           ) {
-            onChunk(parsedData.text);
+            continue;
           }
 
+          const rawData =
+            line
+              .slice(5)
+              .trim();
+
+          if (!rawData) {
+            continue;
+          }
+
+          let data;
+
+          try {
+            data =
+              JSON.parse(rawData);
+          } catch (error) {
+            console.error(
+              "Invalid AI stream data:",
+              rawData
+            );
+
+            continue;
+          }
+
+          // ====================================
+          // Text Chunk
+          // ====================================
+
           if (
-            parsedData.type === "error"
+            data.type ===
+            "text"
+          ) {
+            if (
+              typeof onChunk ===
+              "function"
+            ) {
+              onChunk(data.text);
+            }
+          }
+
+          // ====================================
+          // AI Error
+          // ====================================
+
+          if (
+            data.type ===
+            "error"
           ) {
             throw new Error(
-              parsedData.message ||
-                "AI response failed."
+              data.message ||
+                "Unable to generate AI response."
             );
           }
-        } catch (error) {
+
+          // ====================================
+          // Stream Complete
+          // ====================================
+
           if (
-            error instanceof Error &&
-            error.message !==
-              "Unexpected end of JSON input"
+            data.type ===
+            "done"
           ) {
-            throw error;
+            return;
           }
         }
       }
@@ -240,37 +236,3 @@ export const streamAIMessage = async (
     reader.releaseLock();
   }
 };
-// ====================================
-// Delete AI Conversation
-// ====================================
-
-export const deleteAIConversation =
-  async (conversationId) => {
-    const response = await fetch(
-      `${import.meta.env.VITE_API_URL}/ai/conversations/${conversationId}`,
-      {
-        method: "DELETE",
-        credentials: "include",
-      }
-    );
-
-    if (!response.ok) {
-      let errorMessage =
-        "Unable to delete AI conversation.";
-
-      try {
-        const errorData =
-          await response.json();
-
-        errorMessage =
-          errorData?.message ||
-          errorMessage;
-      } catch {
-        // Ignore JSON parsing errors
-      }
-
-      throw new Error(errorMessage);
-    }
-
-    return response.json();
-  };

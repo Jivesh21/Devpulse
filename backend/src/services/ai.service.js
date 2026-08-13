@@ -53,8 +53,29 @@ export const generateAIResponseStream = async (
       error?.message || error
     );
 
-    throw new Error(
+    // ====================================
+    // Preserve Gemini Error Status
+    // ====================================
+
+    const aiError = new Error(
       "Unable to generate AI response"
     );
+
+    aiError.statusCode =
+      error?.status ||
+      error?.statusCode ||
+      error?.response?.status ||
+      500;
+
+    // ====================================
+    // Gemini Quota / Rate Limit
+    // ====================================
+
+    if (aiError.statusCode === 429) {
+      aiError.message =
+        "DevPulse AI is temporarily unavailable because the AI usage limit has been reached. Please try again later.";
+    }
+
+    throw aiError;
   }
 };

@@ -3,15 +3,15 @@ import { Router } from "express";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import validate from "../middlewares/validate.middleware.js";
 
-import { aiChatSchema } from "../validators/ai.validator.js";
+import {
+  chatWithAI,
+} from "../controllers/ai.controller.js";
 
-import { chatWithAI } from "../controllers/ai.controller.js";
+import {
+  aiChatSchema,
+} from "../validators/ai.validator.js";
 
 const router = Router();
-
-// ====================================
-// Protected AI Routes
-// ====================================
 
 // ====================================
 // AI Chat

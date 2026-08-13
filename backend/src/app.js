@@ -22,6 +22,7 @@ import portfolioRouter from "./routes/portfolio.routes.js";
 import conversationRouter from "./routes/conversation.routes.js";
 import messageRouter from "./routes/message.routes.js";
 import aiRouter from "./routes/ai.routes.js";
+import aiConversationRouter from "./routes/aiConversation.routes.js";
 const app = express();
 
 /**
@@ -95,6 +96,10 @@ app.use(
  * ====================================
  */
 app.use("/api/v1/ai", aiRouter);
+app.use(
+  "/api/v1/ai/conversations",
+  aiConversationRouter
+);
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/posts", postRouter);

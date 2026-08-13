@@ -1,8 +1,116 @@
 // ====================================
+// Create AI Conversation
+// ====================================
+
+export const createAIConversation = async () => {
+  const response = await fetch(
+    `${import.meta.env.VITE_API_URL}/ai/conversations`,
+    {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  if (!response.ok) {
+    let errorMessage =
+      "Unable to create AI conversation.";
+
+    try {
+      const errorData =
+        await response.json();
+
+      errorMessage =
+        errorData?.message ||
+        errorMessage;
+    } catch {
+      // Ignore JSON parsing errors
+    }
+
+    throw new Error(errorMessage);
+  }
+
+  return response.json();
+};
+
+// ====================================
+// Get AI Conversations
+// ====================================
+
+export const getAIConversations =
+  async () => {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/ai/conversations`,
+      {
+        method: "GET",
+        credentials: "include",
+      }
+    );
+
+    if (!response.ok) {
+      let errorMessage =
+        "Unable to fetch AI conversations.";
+
+      try {
+        const errorData =
+          await response.json();
+
+        errorMessage =
+          errorData?.message ||
+          errorMessage;
+      } catch {
+        // Ignore JSON parsing errors
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  };
+
+// ====================================
+// Get Single AI Conversation
+// ====================================
+
+export const getAIConversation =
+  async (conversationId) => {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/ai/conversations/${conversationId}`,
+      {
+        method: "GET",
+        credentials: "include",
+      }
+    );
+
+    if (!response.ok) {
+      let errorMessage =
+        "Unable to fetch AI conversation.";
+
+      try {
+        const errorData =
+          await response.json();
+
+        errorMessage =
+          errorData?.message ||
+          errorMessage;
+      } catch {
+        // Ignore JSON parsing errors
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  };
+
+// ====================================
 // Stream AI Chat Message
 // ====================================
 
 export const streamAIMessage = async (
+  conversationId,
   message,
   onChunk
 ) => {
@@ -15,6 +123,7 @@ export const streamAIMessage = async (
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        conversationId,
         message,
       }),
     }
@@ -29,10 +138,12 @@ export const streamAIMessage = async (
       "Unable to get a response from DevPulse AI.";
 
     try {
-      const errorData = await response.json();
+      const errorData =
+        await response.json();
 
       errorMessage =
-        errorData?.message || errorMessage;
+        errorData?.message ||
+        errorMessage;
     } catch {
       // Ignore JSON parsing errors
     }
@@ -70,9 +181,11 @@ export const streamAIMessage = async (
         stream: true,
       });
 
-      const events = buffer.split("\n\n");
+      const events =
+        buffer.split("\n\n");
 
-      buffer = events.pop() || "";
+      buffer =
+        events.pop() || "";
 
       for (const event of events) {
         const line = event

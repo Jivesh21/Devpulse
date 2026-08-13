@@ -143,15 +143,15 @@ const router = createBrowserRouter([
   // ====================================
 
   {
-    path: "/messages",
-    element: (
-      <ProtectedRoute>
-        <DashboardLayout>
-          <ChatPage />
-        </DashboardLayout>
-      </ProtectedRoute>
-    ),
-  },
+  path: "/messages",
+  element: (
+    <ProtectedRoute>
+      <DashboardLayout wide hideRightSidebar>
+        <ChatPage />
+      </DashboardLayout>
+    </ProtectedRoute>
+  ),
+},
 ]);
 
 // ====================================

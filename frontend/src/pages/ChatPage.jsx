@@ -39,7 +39,6 @@ import { Input } from "@/components/ui/input";
 
 import {
   ArrowLeft,
-  CheckCheck,
   Code2,
   Loader2,
   MessageCircle,
@@ -1300,20 +1299,20 @@ export default function ChatPage() {
   // ====================================
 
   return (
- <div
-  className="
-    relative
-    h-[calc(100vh-9.5rem)]
-    min-h-[560px]
-    overflow-hidden
-    rounded-[24px]
-    border
-    border-border/60
-    bg-background
-    shadow-lg
-    shadow-black/5
-  "
->
+    <div
+      className="
+        relative
+        h-[calc(100vh-9.5rem)]
+        min-h-[560px]
+        overflow-hidden
+        rounded-[24px]
+        border
+        border-border/60
+        bg-background
+        shadow-lg
+        shadow-black/5
+      "
+    >
       <div className="flex h-full min-h-0">
 
         {/* ====================================
@@ -2393,23 +2392,59 @@ export default function ChatPage() {
                               </span>
 
                               {isOwnMessage && (
-                                <CheckCheck
-                                  className={`
-                                    h-3.5
-                                    w-3.5
-                                    transition-colors
-                                    ${
-                                      read
-                                        ? "text-blue-500"
-                                        : "text-muted-foreground"
-                                    }
-                                  `}
+                                <span
+                                  className="
+                                    relative
+                                    inline-flex
+                                    h-4
+                                    w-5
+                                    shrink-0
+                                    items-center
+                                  "
                                   title={
                                     read
                                       ? "Read"
                                       : "Delivered"
                                   }
-                                />
+                                >
+                                  <svg
+                                    viewBox="0 0 24 24"
+                                    className="
+                                      absolute
+                                      left-0
+                                      h-4
+                                      w-4
+                                      text-blue-500
+                                    "
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    aria-hidden="true"
+                                  >
+                                    <path d="M4 12l4 4L16 8" />
+                                  </svg>
+
+                                  <svg
+                                    viewBox="0 0 24 24"
+                                    className="
+                                      absolute
+                                      left-[5px]
+                                      h-4
+                                      w-4
+                                      text-blue-500
+                                    "
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    aria-hidden="true"
+                                  >
+                                    <path d="M8 12l4 4L20 8" />
+                                  </svg>
+                                </span>
                               )}
                             </div>
                           </div>

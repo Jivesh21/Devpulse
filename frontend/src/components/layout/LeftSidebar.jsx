@@ -1,8 +1,18 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useAuthContext } from "@/context/AuthContext";
+
 import { useUnreadCount } from "@/hooks/useNotification";
+
+import { socket } from "@/socket/socket";
+
 import {
   Home,
   User,
@@ -19,11 +29,59 @@ function LeftSidebar() {
   const { user } = useAuthContext();
   const location = useLocation();
   const navigate = useNavigate();
-const { data: unreadData } =
-  useUnreadCount();
 
-const unreadCount =
-  unreadData?.data?.unreadCount || 0;
+  // ====================================
+  // Notification Unread Count
+  // ====================================
+
+  const { data: unreadData } =
+    useUnreadCount();
+
+  const notificationUnreadCount =
+    unreadData?.data?.unreadCount || 0;
+
+  // ====================================
+  // Message Unread Count
+  // ====================================
+
+  const [unreadMessageCount, setUnreadMessageCount] =
+    useState(0);
+
+  useEffect(() => {
+    const handleNewMessage = (message) => {
+      if (!message) {
+        return;
+      }
+
+      // If the user is already inside
+      // the Messages page, ChatPage handles
+      // conversation-level unread state.
+      if (location.pathname === "/messages") {
+        return;
+      }
+
+      console.log(
+        "💬 New unread message received"
+      );
+
+      setUnreadMessageCount(
+        (currentCount) => currentCount + 1
+      );
+    };
+
+    socket.on(
+      "new_message",
+      handleNewMessage
+    );
+
+    return () => {
+      socket.off(
+        "new_message",
+        handleNewMessage
+      );
+    };
+  }, [location.pathname]);
+
   const NAV_ITEMS = [
     {
       icon: Home,
@@ -85,7 +143,9 @@ const unreadCount =
     profileFields.filter(Boolean).length;
 
   const profileCompletion = Math.round(
-    (completedFields / profileFields.length) * 100
+    (completedFields /
+      profileFields.length) *
+      100
   );
 
   return (
@@ -132,6 +192,13 @@ const unreadCount =
                   key={path}
                   to={path}
                   className="block"
+                  onClick={() => {
+                    if (
+                      label === "Messages"
+                    ) {
+                      setUnreadMessageCount(0);
+                    }
+                  }}
                 >
                   <Button
                     type="button"
@@ -185,60 +252,109 @@ const unreadCount =
                       />
                     )}
 
-                  <div className="relative shrink-0">
-  <Icon
-    className={`
-      h-5
-      w-5
-      transition-transform
-      duration-200
-      group-hover:scale-105
+                    {/* Icon + Badge */}
 
-      ${
-        isActive
-          ? "text-primary"
-          : ""
-      }
-    `}
-    strokeWidth={
-      isActive ? 2.5 : 2
-    }
-  />
+                    <div className="relative shrink-0">
+                      <Icon
+                        className={`
+                          h-5
+                          w-5
+                          transition-transform
+                          duration-200
+                          group-hover:scale-105
 
-  {label === "Notifications" &&
-    unreadCount > 0 && (
-      <span
-        className="
-          absolute
-          -right-2
-          -top-2
-          flex
-          min-h-4
-          min-w-4
-          items-center
-          justify-center
-          rounded-full
-          bg-primary
-          px-1
-          text-[9px]
-          font-bold
-          leading-none
-          text-primary-foreground
-          shadow-sm
-          ring-2
-          ring-background
-        "
-      >
-        {unreadCount > 99
-          ? "99+"
-          : unreadCount}
-      </span>
-    )}
-</div>
+                          ${
+                            isActive
+                              ? "text-primary"
+                              : ""
+                          }
+                        `}
+                        strokeWidth={
+                          isActive ? 2.5 : 2
+                        }
+                      />
+
+                      {/* ================================= */}
+                      {/* Message Unread Badge */}
+                      {/* ================================= */}
+
+                      {label ===
+                        "Messages" &&
+                        unreadMessageCount > 0 && (
+                          <span
+                            className="
+                              absolute
+                              -right-2
+                              -top-2
+                              flex
+                              h-4
+                              min-w-4
+                              items-center
+                              justify-center
+                              rounded-full
+                              bg-primary
+                              px-1
+                              text-[9px]
+                              font-bold
+                              leading-none
+                              text-primary-foreground
+                              shadow-sm
+                              ring-2
+                              ring-background
+                            "
+                          >
+                            {unreadMessageCount >
+                            99
+                              ? "99+"
+                              : unreadMessageCount}
+                          </span>
+                        )}
+
+                      {/* ================================= */}
+                      {/* Notification Unread Badge */}
+                      {/* ================================= */}
+
+                      {label ===
+                        "Notifications" &&
+                        notificationUnreadCount >
+                          0 && (
+                          <span
+                            className="
+                              absolute
+                              -right-2
+                              -top-2
+                              flex
+                              h-4
+                              min-w-4
+                              items-center
+                              justify-center
+                              rounded-full
+                              bg-primary
+                              px-1
+                              text-[9px]
+                              font-bold
+                              leading-none
+                              text-primary-foreground
+                              shadow-sm
+                              ring-2
+                              ring-background
+                            "
+                          >
+                            {notificationUnreadCount >
+                            99
+                              ? "99+"
+                              : notificationUnreadCount}
+                          </span>
+                        )}
+                    </div>
+
+                    {/* Label */}
 
                     <span className="hidden flex-1 text-left xl:block">
                       {label}
                     </span>
+
+                    {/* Arrow */}
 
                     <ChevronRight
                       className={`

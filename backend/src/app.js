@@ -21,6 +21,7 @@ import errorHandler from "./middlewares/error.middleware.js";
 import portfolioRouter from "./routes/portfolio.routes.js";
 import conversationRouter from "./routes/conversation.routes.js";
 import messageRouter from "./routes/message.routes.js";
+import aiRouter from "./routes/ai.routes.js";
 const app = express();
 
 /**
@@ -93,6 +94,7 @@ app.use(
  * API Routes
  * ====================================
  */
+app.use("/api/v1/ai", aiRouter);
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/posts", postRouter);

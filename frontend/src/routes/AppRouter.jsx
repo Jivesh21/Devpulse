@@ -17,6 +17,7 @@ import SettingsPage from "@/pages/settings/SettingsPage";
 import BookmarksPage from "@/pages/BookmarksPage";
 import NetworkPage from "@/pages/NetworkPage";
 import ChatPage from "@/pages/ChatPage";
+import AiPage from "@/pages/AiPage";
 
 import ProtectedRoute from "./ProtectedRoute";
 import DashboardLayout from "@/layouts/DashboardLayout";
@@ -94,14 +95,16 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
-{
-  path: "/posts/:postId",
-  element: (
-    <ProtectedRoute>
-      <PostPage />
-    </ProtectedRoute>
-  ),
-},
+
+  {
+    path: "/posts/:postId",
+    element: (
+      <ProtectedRoute>
+        <PostPage />
+      </ProtectedRoute>
+    ),
+  },
+
   {
     path: "/network",
     element: (
@@ -143,15 +146,30 @@ const router = createBrowserRouter([
   // ====================================
 
   {
-  path: "/messages",
-  element: (
-    <ProtectedRoute>
-      <DashboardLayout wide hideRightSidebar>
-        <ChatPage />
-      </DashboardLayout>
-    </ProtectedRoute>
-  ),
-},
+    path: "/messages",
+    element: (
+      <ProtectedRoute>
+        <DashboardLayout wide hideRightSidebar>
+          <ChatPage />
+        </DashboardLayout>
+      </ProtectedRoute>
+    ),
+  },
+
+  // ====================================
+  // DevPulse AI
+  // ====================================
+
+  {
+    path: "/ai",
+    element: (
+      <ProtectedRoute>
+        <DashboardLayout wide hideRightSidebar>
+          <AiPage />
+        </DashboardLayout>
+      </ProtectedRoute>
+    ),
+  },
 ]);
 
 // ====================================

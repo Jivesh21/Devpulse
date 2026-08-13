@@ -6,6 +6,7 @@ import {
   createAIConversation,
   getAIConversations,
   getAIConversation,
+  deleteAIConversation,
 } from "../controllers/aiConversation.controller.js";
 
 const router = Router();
@@ -42,6 +43,16 @@ router.get(
   "/:conversationId",
   verifyJWT,
   getAIConversation
+);
+
+// ====================================
+// Delete Conversation
+// ====================================
+
+router.delete(
+  "/:conversationId",
+  verifyJWT,
+  deleteAIConversation
 );
 
 export default router;

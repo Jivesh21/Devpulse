@@ -12,6 +12,9 @@ import {
   MessageSquare,
   PanelLeftClose,
   PanelLeft,
+  Trash2,
+  X,
+  Check,
 } from "lucide-react";
 
 import ReactMarkdown from "react-markdown";
@@ -21,6 +24,7 @@ import {
   createAIConversation,
   getAIConversations,
   getAIConversation,
+  deleteAIConversation,
   streamAIMessage,
 } from "@/services/ai.service";
 
@@ -39,72 +43,55 @@ const DEFAULT_ASSISTANT_MESSAGE = {
 // ====================================
 
 const AiPage = () => {
-  const [messages, setMessages] =
-    useState([
-      DEFAULT_ASSISTANT_MESSAGE,
-    ]);
+  const [messages, setMessages] = useState([
+    DEFAULT_ASSISTANT_MESSAGE,
+  ]);
 
-  const [
-    conversationId,
-    setConversationId,
-  ] = useState(null);
+  const [conversationId, setConversationId] =
+    useState(null);
 
-  const [
-    conversations,
-    setConversations,
-  ] = useState([]);
+  const [conversations, setConversations] =
+    useState([]);
 
-  const [input, setInput] =
-    useState("");
+  const [input, setInput] = useState("");
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [initializing, setInitializing] =
     useState(true);
 
-  const [
-    loadingConversation,
-    setLoadingConversation,
-  ] = useState(false);
+  const [loadingConversation, setLoadingConversation] =
+    useState(false);
 
-  const [error, setError] =
-    useState("");
+  const [deletingConversationId, setDeletingConversationId] =
+    useState(null);
 
-  const [
-    sidebarOpen,
-    setSidebarOpen,
-  ] = useState(true);
+  const [error, setError] = useState("");
 
-  const messagesEndRef =
-    useRef(null);
+  const [sidebarOpen, setSidebarOpen] =
+    useState(true);
+
+  const messagesEndRef = useRef(null);
 
   // ====================================
   // Load Conversations
   // ====================================
 
-  const loadConversations =
-    async () => {
-      const response =
-        await getAIConversations();
+  const loadConversations = async () => {
+    const response = await getAIConversations();
 
-      const conversationList =
-        response?.data || [];
+    const conversationList = response?.data || [];
 
-      setConversations(
-        conversationList
-      );
+    setConversations(conversationList);
 
-      return conversationList;
-    };
+    return conversationList;
+  };
 
   // ====================================
   // Load Single Conversation
   // ====================================
 
-  const loadConversation = async (
-    id
-  ) => {
+  const loadConversation = async (id) => {
     if (!id) {
       return;
     }
@@ -113,11 +100,9 @@ const AiPage = () => {
       setLoadingConversation(true);
       setError("");
 
-      const response =
-        await getAIConversation(id);
+      const response = await getAIConversation(id);
 
-      const conversation =
-        response?.data;
+      const conversation = response?.data;
 
       if (!conversation?._id) {
         throw new Error(
@@ -125,16 +110,10 @@ const AiPage = () => {
         );
       }
 
-      setConversationId(
-        conversation._id
-      );
+      setConversationId(conversation._id);
 
-      if (
-        conversation.messages?.length
-      ) {
-        setMessages(
-          conversation.messages
-        );
+      if (conversation.messages?.length) {
+        setMessages(conversation.messages);
       } else {
         setMessages([
           DEFAULT_ASSISTANT_MESSAGE,
@@ -160,33 +139,199 @@ const AiPage = () => {
   // ====================================
 
   useEffect(() => {
-    const initializeConversation =
-      async () => {
-        try {
-          setInitializing(true);
-          setError("");
+    const initializeConversation = async () => {
+      try {
+        setInitializing(true);
+        setError("");
 
-          const conversationList =
-            await loadConversations();
+        const conversationList =
+          await loadConversations();
 
-          // ====================================
-          // Existing Conversation
-          // ====================================
+        if (conversationList.length > 0) {
+          await loadConversation(
+            conversationList[0]._id
+          );
 
-          if (
-            conversationList.length > 0
-          ) {
-            await loadConversation(
-              conversationList[0]._id
-            );
+          return;
+        }
 
-            return;
-          }
+        const response =
+          await createAIConversation();
 
-          // ====================================
-          // No Conversations
-          // ====================================
+        const newConversation =
+          response?.data;
 
+        if (!newConversation?._id) {
+          throw new Error(
+            "Unable to create AI conversation."
+          );
+        }
+
+        setConversationId(
+          newConversation._id
+        );
+
+        setMessages([
+          DEFAULT_ASSISTANT_MESSAGE,
+        ]);
+
+        setConversations([
+          newConversation,
+        ]);
+      } catch (error) {
+        console.error(
+          "AI initialization error:",
+          error
+        );
+
+        setError(
+          error?.message ||
+            "Unable to initialize DevPulse AI."
+        );
+      } finally {
+        setInitializing(false);
+      }
+    };
+
+    initializeConversation();
+  }, []);
+
+  // ====================================
+  // Scroll To Latest Message
+  // ====================================
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [messages, loading]);
+
+  // ====================================
+  // Create New Conversation
+  // ====================================
+
+  const handleNewConversation = async () => {
+    if (
+      loading ||
+      loadingConversation ||
+      deletingConversationId
+    ) {
+      return;
+    }
+
+    try {
+      setError("");
+      setLoading(true);
+
+      const response =
+        await createAIConversation();
+
+      const newConversation =
+        response?.data;
+
+      if (!newConversation?._id) {
+        throw new Error(
+          "Unable to create new AI conversation."
+        );
+      }
+
+      setConversationId(
+        newConversation._id
+      );
+
+      setMessages([
+        DEFAULT_ASSISTANT_MESSAGE,
+      ]);
+
+      setConversations((previous) => [
+        newConversation,
+        ...previous,
+      ]);
+    } catch (error) {
+      console.error(
+        "New AI conversation error:",
+        error
+      );
+
+      setError(
+        error?.message ||
+          "Unable to create a new AI conversation."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ====================================
+  // Select Conversation
+  // ====================================
+
+  const handleSelectConversation = async (
+    id
+  ) => {
+    if (
+      id === conversationId ||
+      loading ||
+      loadingConversation ||
+      deletingConversationId
+    ) {
+      return;
+    }
+
+    await loadConversation(id);
+  };
+
+  // ====================================
+  // Delete Conversation
+  // ====================================
+
+  const handleDeleteConversation = async (
+    id
+  ) => {
+    // IMPORTANT:
+    // Do NOT check deletingConversationId here.
+    // It is already set when the user clicks ✓.
+
+    if (
+      !id ||
+      loading ||
+      loadingConversation
+    ) {
+      return;
+    }
+
+    try {
+      setError("");
+
+      await deleteAIConversation(id);
+
+      // ====================================
+      // Remove Deleted Conversation Locally
+      // ====================================
+
+      const remainingConversations =
+        conversations.filter(
+          (conversation) =>
+            conversation._id !== id
+        );
+
+      setConversations(
+        remainingConversations
+      );
+
+      // ====================================
+      // Active Conversation Was Deleted
+      // ====================================
+
+      if (id === conversationId) {
+        if (
+          remainingConversations.length >
+          0
+        ) {
+          await loadConversation(
+            remainingConversations[0]._id
+          );
+        } else {
           const response =
             await createAIConversation();
 
@@ -195,7 +340,7 @@ const AiPage = () => {
 
           if (!newConversation?._id) {
             throw new Error(
-              "Unable to create AI conversation."
+              "Unable to create a new AI conversation."
             );
           }
 
@@ -210,243 +355,142 @@ const AiPage = () => {
           setConversations([
             newConversation,
           ]);
-        } catch (error) {
-          console.error(
-            "AI initialization error:",
-            error
-          );
-
-          setError(
-            error?.message ||
-              "Unable to initialize DevPulse AI."
-          );
-        } finally {
-          setInitializing(false);
         }
-      };
-
-    initializeConversation();
-  }, []);
-
-  // ====================================
-  // Scroll To Latest Message
-  // ====================================
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView(
-      {
-        behavior: "smooth",
       }
-    );
-  }, [messages, loading]);
+    } catch (error) {
+      console.error(
+        "Delete AI conversation error:",
+        error
+      );
 
-  // ====================================
-  // Create New Conversation
-  // ====================================
-
-  const handleNewConversation =
-    async () => {
-      if (loading) {
-        return;
-      }
-
-      try {
-        setError("");
-        setLoading(true);
-
-        const response =
-          await createAIConversation();
-
-        const newConversation =
-          response?.data;
-
-        if (!newConversation?._id) {
-          throw new Error(
-            "Unable to create new AI conversation."
-          );
-        }
-
-        setConversationId(
-          newConversation._id
-        );
-
-        setMessages([
-          DEFAULT_ASSISTANT_MESSAGE,
-        ]);
-
-        setConversations(
-          (previous) => [
-            newConversation,
-            ...previous,
-          ]
-        );
-      } catch (error) {
-        console.error(
-          "New AI conversation error:",
-          error
-        );
-
-        setError(
-          error?.message ||
-            "Unable to create a new AI conversation."
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-  // ====================================
-  // Select Conversation
-  // ====================================
-
-  const handleSelectConversation =
-    async (id) => {
-      if (
-        id === conversationId ||
-        loading ||
-        loadingConversation
-      ) {
-        return;
-      }
-
-      await loadConversation(id);
-    };
+      setError(
+        error?.message ||
+          "Unable to delete AI conversation."
+      );
+    } finally {
+      setDeletingConversationId(null);
+    }
+  };
 
   // ====================================
   // Send Message
   // ====================================
 
-  const handleSendMessage =
-    async () => {
-      const message =
-        input.trim();
+  const handleSendMessage = async () => {
+    const message = input.trim();
 
-      if (
-        !message ||
-        loading ||
-        initializing ||
-        loadingConversation ||
-        !conversationId
-      ) {
-        return;
-      }
+    if (
+      !message ||
+      loading ||
+      initializing ||
+      loadingConversation ||
+      deletingConversationId ||
+      !conversationId
+    ) {
+      return;
+    }
 
-      setError("");
-      setInput("");
-      setLoading(true);
+    setError("");
+    setInput("");
+    setLoading(true);
 
-      // ====================================
-      // Add User + Empty AI Message
-      // ====================================
+    setMessages((previousMessages) => [
+      ...previousMessages,
+      {
+        role: "user",
+        content: message,
+      },
+      {
+        role: "assistant",
+        content: "",
+      },
+    ]);
 
-      setMessages(
-        (previousMessages) => [
-          ...previousMessages,
-          {
-            role: "user",
-            content: message,
-          },
-          {
-            role: "assistant",
-            content: "",
-          },
-        ]
-      );
-
-      try {
-        await streamAIMessage(
-          conversationId,
-          message,
-          (chunk) => {
-            setMessages(
-              (previousMessages) => {
-                const updatedMessages =
-                  [
-                    ...previousMessages,
-                  ];
-
-                const lastMessageIndex =
-                  updatedMessages.length -
-                  1;
-
-                const lastMessage =
-                  updatedMessages[
-                    lastMessageIndex
-                  ];
-
-                if (
-                  !lastMessage ||
-                  lastMessage.role !==
-                    "assistant"
-                ) {
-                  return updatedMessages;
-                }
-
-                updatedMessages[
-                  lastMessageIndex
-                ] = {
-                  ...lastMessage,
-                  content:
-                    lastMessage.content +
-                    chunk,
-                };
-
-                return updatedMessages;
-              }
-            );
-          }
-        );
-
-        // ====================================
-        // Refresh Conversation List
-        // ====================================
-
-        await loadConversations();
-      } catch (error) {
-        console.error(
-          "AI streaming error:",
-          error
-        );
-
-        setError(
-          error?.message ||
-            "Unable to get a response from DevPulse AI."
-        );
-
-        setMessages(
-          (previousMessages) => {
-            const lastMessage =
-              previousMessages[
-                previousMessages.length -
-                  1
+    try {
+      await streamAIMessage(
+        conversationId,
+        message,
+        (chunk) => {
+          setMessages(
+            (previousMessages) => {
+              const updatedMessages = [
+                ...previousMessages,
               ];
 
-            if (
-              lastMessage?.role ===
-                "assistant" &&
-              !lastMessage.content
-            ) {
-              return previousMessages.slice(
-                0,
-                -1
-              );
-            }
+              const lastMessageIndex =
+                updatedMessages.length - 1;
 
-            return previousMessages;
+              const lastMessage =
+                updatedMessages[
+                  lastMessageIndex
+                ];
+
+              if (
+                !lastMessage ||
+                lastMessage.role !==
+                  "assistant"
+              ) {
+                return updatedMessages;
+              }
+
+              updatedMessages[
+                lastMessageIndex
+              ] = {
+                ...lastMessage,
+                content:
+                  lastMessage.content +
+                  chunk,
+              };
+
+              return updatedMessages;
+            }
+          );
+        }
+      );
+
+      await loadConversations();
+    } catch (error) {
+      console.error(
+        "AI streaming error:",
+        error
+      );
+
+      setError(
+        error?.message ||
+          "Unable to get a response from DevPulse AI."
+      );
+
+      setMessages(
+        (previousMessages) => {
+          const lastMessage =
+            previousMessages[
+              previousMessages.length - 1
+            ];
+
+          if (
+            lastMessage?.role ===
+              "assistant" &&
+            !lastMessage.content
+          ) {
+            return previousMessages.slice(
+              0,
+              -1
+            );
           }
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
+
+          return previousMessages;
+        }
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // ====================================
   // Handle Enter
   // ====================================
 
-  const handleKeyDown = (
-    event
-  ) => {
+  const handleKeyDown = (event) => {
     if (
       event.key === "Enter" &&
       !event.shiftKey
@@ -536,7 +580,11 @@ const AiPage = () => {
               onClick={
                 handleNewConversation
               }
-              disabled={loading}
+              disabled={
+                loading ||
+                loadingConversation ||
+                !!deletingConversationId
+              }
               className="flex w-full items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Plus size={17} />
@@ -555,37 +603,120 @@ const AiPage = () => {
                     conversation._id ===
                     conversationId;
 
+                  const isDeleting =
+                    deletingConversationId ===
+                    conversation._id;
+
                   return (
-                    <button
+                    <div
                       key={
                         conversation._id
                       }
-                      type="button"
-                      onClick={() =>
-                        handleSelectConversation(
-                          conversation._id
-                        )
-                      }
-                      disabled={
-                        loadingConversation ||
-                        loading
-                      }
-                      className={`flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition-colors ${
+                      className={`group flex items-center gap-1 rounded-xl transition-colors ${
                         isActive
-                          ? "bg-primary/10 text-primary"
+                          ? "bg-primary/10"
                           : "hover:bg-muted"
-                      } disabled:cursor-not-allowed disabled:opacity-60`}
+                      }`}
                     >
-                      <MessageSquare
-                        size={17}
-                        className="mt-0.5 shrink-0"
-                      />
+                      {/* Conversation Button */}
 
-                      <span className="min-w-0 flex-1 truncate text-sm">
-                        {conversation.title ||
-                          "New AI Chat"}
-                      </span>
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleSelectConversation(
+                            conversation._id
+                          )
+                        }
+                        disabled={
+                          loading ||
+                          loadingConversation ||
+                          !!deletingConversationId
+                        }
+                        className={`flex min-w-0 flex-1 items-start gap-3 px-3 py-3 text-left ${
+                          isActive
+                            ? "text-primary"
+                            : ""
+                        } disabled:cursor-not-allowed disabled:opacity-60`}
+                      >
+                        <MessageSquare
+                          size={17}
+                          className="mt-0.5 shrink-0"
+                        />
+
+                        <span className="min-w-0 flex-1 truncate text-sm">
+                          {conversation.title ||
+                            "New AI Chat"}
+                        </span>
+                      </button>
+
+                      {/* ====================================
+                          Delete Controls
+                      ==================================== */}
+
+                      {isDeleting ? (
+                        <div className="flex shrink-0 items-center gap-1 pr-2">
+                          {/* Confirm Delete */}
+
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+
+                              handleDeleteConversation(
+                                conversation._id
+                              );
+                            }}
+                            className="rounded-lg p-1.5 text-destructive hover:bg-destructive/10"
+                            aria-label="Confirm delete"
+                          >
+                            <Check
+                              size={15}
+                            />
+                          </button>
+
+                          {/* Cancel Delete */}
+
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+
+                              setDeletingConversationId(
+                                null
+                              );
+                            }}
+                            className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted"
+                            aria-label="Cancel delete"
+                          >
+                            <X
+                              size={15}
+                            />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+
+                            setDeletingConversationId(
+                              conversation._id
+                            );
+                          }}
+                          disabled={
+                            loading ||
+                            loadingConversation ||
+                            !!deletingConversationId
+                          }
+                          className="mr-2 shrink-0 rounded-lg p-1.5 text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-0"
+                          aria-label="Delete conversation"
+                        >
+                          <Trash2
+                            size={15}
+                          />
+                        </button>
+                      )}
+                    </div>
                   );
                 }
               )}
@@ -647,7 +778,11 @@ const AiPage = () => {
             onClick={
               handleNewConversation
             }
-            disabled={loading}
+            disabled={
+              loading ||
+              loadingConversation ||
+              !!deletingConversationId
+            }
             className="flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus size={17} />
@@ -890,31 +1025,27 @@ const AiPage = () => {
             <textarea
               value={input}
               onChange={(event) =>
-                setInput(
-                  event.target.value
-                )
+                setInput(event.target.value)
               }
-              onKeyDown={
-                handleKeyDown
-              }
+              onKeyDown={handleKeyDown}
               placeholder="Ask DevPulse AI..."
               rows={1}
               disabled={
                 loading ||
-                loadingConversation
+                loadingConversation ||
+                !!deletingConversationId
               }
               className="max-h-32 min-h-10 flex-1 resize-none bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
             />
 
             <button
               type="button"
-              onClick={
-                handleSendMessage
-              }
+              onClick={handleSendMessage}
               disabled={
                 !input.trim() ||
                 loading ||
                 loadingConversation ||
+                !!deletingConversationId ||
                 !conversationId
               }
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"

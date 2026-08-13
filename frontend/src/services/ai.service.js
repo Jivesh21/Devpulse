@@ -240,3 +240,37 @@ export const streamAIMessage = async (
     reader.releaseLock();
   }
 };
+// ====================================
+// Delete AI Conversation
+// ====================================
+
+export const deleteAIConversation =
+  async (conversationId) => {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/ai/conversations/${conversationId}`,
+      {
+        method: "DELETE",
+        credentials: "include",
+      }
+    );
+
+    if (!response.ok) {
+      let errorMessage =
+        "Unable to delete AI conversation.";
+
+      try {
+        const errorData =
+          await response.json();
+
+        errorMessage =
+          errorData?.message ||
+          errorMessage;
+      } catch {
+        // Ignore JSON parsing errors
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  };

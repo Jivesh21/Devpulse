@@ -77,3 +77,48 @@ export const getAIConversation =
       data: conversation,
     });
   });
+
+// ====================================
+// Delete AI Conversation
+// ====================================
+
+export const deleteAIConversation =
+  asyncHandler(async (req, res) => {
+    const { conversationId } = req.params;
+
+    // ====================================
+    // Find Conversation Owned By User
+    // ====================================
+
+    const conversation =
+      await AIConversation.findOne({
+        _id: conversationId,
+        user: req.user._id,
+      });
+
+    // ====================================
+    // Conversation Not Found
+    // ====================================
+
+    if (!conversation) {
+      throw new ApiError(
+        404,
+        "AI conversation not found"
+      );
+    }
+
+    // ====================================
+    // Delete Conversation
+    // ====================================
+
+    await AIConversation.deleteOne({
+      _id: conversationId,
+      user: req.user._id,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "AI conversation deleted successfully",
+    });
+  });

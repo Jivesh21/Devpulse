@@ -78,11 +78,15 @@ const AiPage = () => {
   // ====================================
 
   const loadConversations = async () => {
-    const response = await getAIConversations();
+    const response =
+      await getAIConversations();
 
-    const conversationList = response?.data || [];
+    const conversationList =
+      response?.data || [];
 
-    setConversations(conversationList);
+    setConversations(
+      conversationList
+    );
 
     return conversationList;
   };
@@ -100,9 +104,11 @@ const AiPage = () => {
       setLoadingConversation(true);
       setError("");
 
-      const response = await getAIConversation(id);
+      const response =
+        await getAIConversation(id);
 
-      const conversation = response?.data;
+      const conversation =
+        response?.data;
 
       if (!conversation?._id) {
         throw new Error(
@@ -110,14 +116,29 @@ const AiPage = () => {
         );
       }
 
-      setConversationId(conversation._id);
+      setConversationId(
+        conversation._id
+      );
 
-      if (conversation.messages?.length) {
-        setMessages(conversation.messages);
+      if (
+        conversation.messages?.length
+      ) {
+        setMessages(
+          conversation.messages
+        );
       } else {
         setMessages([
           DEFAULT_ASSISTANT_MESSAGE,
         ]);
+      }
+
+      // Close mobile sidebar after
+      // selecting a conversation.
+      if (
+        typeof window !== "undefined" &&
+        window.innerWidth < 768
+      ) {
+        setSidebarOpen(false);
       }
     } catch (error) {
       console.error(
@@ -139,59 +160,62 @@ const AiPage = () => {
   // ====================================
 
   useEffect(() => {
-    const initializeConversation = async () => {
-      try {
-        setInitializing(true);
-        setError("");
+    const initializeConversation =
+      async () => {
+        try {
+          setInitializing(true);
+          setError("");
 
-        const conversationList =
-          await loadConversations();
+          const conversationList =
+            await loadConversations();
 
-        if (conversationList.length > 0) {
-          await loadConversation(
-            conversationList[0]._id
+          if (
+            conversationList.length > 0
+          ) {
+            await loadConversation(
+              conversationList[0]._id
+            );
+
+            return;
+          }
+
+          const response =
+            await createAIConversation();
+
+          const newConversation =
+            response?.data;
+
+          if (!newConversation?._id) {
+            throw new Error(
+              "Unable to create AI conversation."
+            );
+          }
+
+          setConversationId(
+            newConversation._id
           );
 
-          return;
-        }
+          setMessages([
+            DEFAULT_ASSISTANT_MESSAGE,
+          ]);
 
-        const response =
-          await createAIConversation();
-
-        const newConversation =
-          response?.data;
-
-        if (!newConversation?._id) {
-          throw new Error(
-            "Unable to create AI conversation."
+          setConversations([
+            newConversation,
+          ]);
+        } catch (error) {
+          console.error(
+            "AI initialization error:",
+            error
           );
+
+          setError(
+            error?.message ||
+              "Unable to initialize DevPulse AI."
+          );
+        } finally {
+          setInitializing(false);
         }
-
-        setConversationId(
-          newConversation._id
-        );
-
-        setMessages([
-          DEFAULT_ASSISTANT_MESSAGE,
-        ]);
-
-        setConversations([
-          newConversation,
-        ]);
-      } catch (error) {
-        console.error(
-          "AI initialization error:",
-          error
-        );
-
-        setError(
-          error?.message ||
-            "Unable to initialize DevPulse AI."
-        );
-      } finally {
-        setInitializing(false);
-      }
-    };
+      };
 
     initializeConversation();
   }, []);
@@ -210,282 +234,300 @@ const AiPage = () => {
   // Create New Conversation
   // ====================================
 
-  const handleNewConversation = async () => {
-    if (
-      loading ||
-      loadingConversation ||
-      deletingConversationId
-    ) {
-      return;
-    }
-
-    try {
-      setError("");
-      setLoading(true);
-
-      const response =
-        await createAIConversation();
-
-      const newConversation =
-        response?.data;
-
-      if (!newConversation?._id) {
-        throw new Error(
-          "Unable to create new AI conversation."
-        );
+  const handleNewConversation =
+    async () => {
+      if (
+        loading ||
+        loadingConversation ||
+        deletingConversationId
+      ) {
+        return;
       }
 
-      setConversationId(
-        newConversation._id
-      );
+      try {
+        setError("");
+        setLoading(true);
 
-      setMessages([
-        DEFAULT_ASSISTANT_MESSAGE,
-      ]);
+        const response =
+          await createAIConversation();
 
-      setConversations((previous) => [
-        newConversation,
-        ...previous,
-      ]);
-    } catch (error) {
-      console.error(
-        "New AI conversation error:",
-        error
-      );
+        const newConversation =
+          response?.data;
 
-      setError(
-        error?.message ||
-          "Unable to create a new AI conversation."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+        if (!newConversation?._id) {
+          throw new Error(
+            "Unable to create new AI conversation."
+          );
+        }
+
+        setConversationId(
+          newConversation._id
+        );
+
+        setMessages([
+          DEFAULT_ASSISTANT_MESSAGE,
+        ]);
+
+        setConversations(
+          (previous) => [
+            newConversation,
+            ...previous,
+          ]
+        );
+
+        // On mobile, close sidebar
+        // after creating a new chat.
+        if (
+          typeof window !== "undefined" &&
+          window.innerWidth < 768
+        ) {
+          setSidebarOpen(false);
+        }
+      } catch (error) {
+        console.error(
+          "New AI conversation error:",
+          error
+        );
+
+        setError(
+          error?.message ||
+            "Unable to create a new AI conversation."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
 
   // ====================================
   // Select Conversation
   // ====================================
 
-  const handleSelectConversation = async (
-    id
-  ) => {
-    if (
-      id === conversationId ||
-      loading ||
-      loadingConversation ||
-      deletingConversationId
-    ) {
-      return;
-    }
+  const handleSelectConversation =
+    async (id) => {
+      if (
+        id === conversationId ||
+        loading ||
+        loadingConversation ||
+        deletingConversationId
+      ) {
+        return;
+      }
 
-    await loadConversation(id);
-  };
+      await loadConversation(id);
+    };
 
   // ====================================
   // Delete Conversation
   // ====================================
 
-  const handleDeleteConversation = async (
-    id
-  ) => {
-    // IMPORTANT:
-    // Do NOT check deletingConversationId here.
-    // It is already set when the user clicks ✓.
+  const handleDeleteConversation =
+    async (id) => {
+      // IMPORTANT:
+      // Do NOT check deletingConversationId here.
+      // It is already set when the user clicks ✓.
 
-    if (
-      !id ||
-      loading ||
-      loadingConversation
-    ) {
-      return;
-    }
+      if (
+        !id ||
+        loading ||
+        loadingConversation
+      ) {
+        return;
+      }
 
-    try {
-      setError("");
+      try {
+        setError("");
 
-      await deleteAIConversation(id);
+        await deleteAIConversation(id);
 
-      // ====================================
-      // Remove Deleted Conversation Locally
-      // ====================================
+        // ====================================
+        // Remove Deleted Conversation Locally
+        // ====================================
 
-      const remainingConversations =
-        conversations.filter(
-          (conversation) =>
-            conversation._id !== id
+        const remainingConversations =
+          conversations.filter(
+            (conversation) =>
+              conversation._id !== id
+          );
+
+        setConversations(
+          remainingConversations
         );
 
-      setConversations(
-        remainingConversations
-      );
+        // ====================================
+        // Active Conversation Was Deleted
+        // ====================================
 
-      // ====================================
-      // Active Conversation Was Deleted
-      // ====================================
-
-      if (id === conversationId) {
-        if (
-          remainingConversations.length >
-          0
-        ) {
-          await loadConversation(
-            remainingConversations[0]._id
-          );
-        } else {
-          const response =
-            await createAIConversation();
-
-          const newConversation =
-            response?.data;
-
-          if (!newConversation?._id) {
-            throw new Error(
-              "Unable to create a new AI conversation."
+        if (id === conversationId) {
+          if (
+            remainingConversations.length >
+            0
+          ) {
+            await loadConversation(
+              remainingConversations[0]._id
             );
+          } else {
+            const response =
+              await createAIConversation();
+
+            const newConversation =
+              response?.data;
+
+            if (!newConversation?._id) {
+              throw new Error(
+                "Unable to create a new AI conversation."
+              );
+            }
+
+            setConversationId(
+              newConversation._id
+            );
+
+            setMessages([
+              DEFAULT_ASSISTANT_MESSAGE,
+            ]);
+
+            setConversations([
+              newConversation,
+            ]);
           }
-
-          setConversationId(
-            newConversation._id
-          );
-
-          setMessages([
-            DEFAULT_ASSISTANT_MESSAGE,
-          ]);
-
-          setConversations([
-            newConversation,
-          ]);
         }
-      }
-    } catch (error) {
-      console.error(
-        "Delete AI conversation error:",
-        error
-      );
+      } catch (error) {
+        console.error(
+          "Delete AI conversation error:",
+          error
+        );
 
-      setError(
-        error?.message ||
-          "Unable to delete AI conversation."
-      );
-    } finally {
-      setDeletingConversationId(null);
-    }
-  };
+        setError(
+          error?.message ||
+            "Unable to delete AI conversation."
+        );
+      } finally {
+        setDeletingConversationId(
+          null
+        );
+      }
+    };
 
   // ====================================
   // Send Message
   // ====================================
 
-  const handleSendMessage = async () => {
-    const message = input.trim();
+  const handleSendMessage =
+    async () => {
+      const message =
+        input.trim();
 
-    if (
-      !message ||
-      loading ||
-      initializing ||
-      loadingConversation ||
-      deletingConversationId ||
-      !conversationId
-    ) {
-      return;
-    }
+      if (
+        !message ||
+        loading ||
+        initializing ||
+        loadingConversation ||
+        deletingConversationId ||
+        !conversationId
+      ) {
+        return;
+      }
 
-    setError("");
-    setInput("");
-    setLoading(true);
-
-    setMessages((previousMessages) => [
-      ...previousMessages,
-      {
-        role: "user",
-        content: message,
-      },
-      {
-        role: "assistant",
-        content: "",
-      },
-    ]);
-
-    try {
-      await streamAIMessage(
-        conversationId,
-        message,
-        (chunk) => {
-          setMessages(
-            (previousMessages) => {
-              const updatedMessages = [
-                ...previousMessages,
-              ];
-
-              const lastMessageIndex =
-                updatedMessages.length - 1;
-
-              const lastMessage =
-                updatedMessages[
-                  lastMessageIndex
-                ];
-
-              if (
-                !lastMessage ||
-                lastMessage.role !==
-                  "assistant"
-              ) {
-                return updatedMessages;
-              }
-
-              updatedMessages[
-                lastMessageIndex
-              ] = {
-                ...lastMessage,
-                content:
-                  lastMessage.content +
-                  chunk,
-              };
-
-              return updatedMessages;
-            }
-          );
-        }
-      );
-
-      await loadConversations();
-      } catch (error) {
-      console.error(
-        "AI streaming error:",
-        error
-      );
-
-      const errorMessage =
-        error?.message ||
-        "Unable to get a response from DevPulse AI.";
-
-      setError(errorMessage);
+      setError("");
+      setInput("");
+      setLoading(true);
 
       setMessages(
-        (previousMessages) => {
-          const lastMessage =
-            previousMessages[
-              previousMessages.length - 1
-            ];
+        (previousMessages) => [
+          ...previousMessages,
+          {
+            role: "user",
+            content: message,
+          },
+          {
+            role: "assistant",
+            content: "",
+          },
+        ]
+      );
 
-          if (
-            lastMessage?.role ===
-              "assistant" &&
-            !lastMessage.content
-          ) {
-            return previousMessages.slice(
-              0,
-              -1
+      try {
+        await streamAIMessage(
+          conversationId,
+          message,
+          (chunk) => {
+            setMessages(
+              (previousMessages) => {
+                const updatedMessages =
+                  [
+                    ...previousMessages,
+                  ];
+
+                const lastMessageIndex =
+                  updatedMessages.length -
+                  1;
+
+                const lastMessage =
+                  updatedMessages[
+                    lastMessageIndex
+                  ];
+
+                if (
+                  !lastMessage ||
+                  lastMessage.role !==
+                    "assistant"
+                ) {
+                  return updatedMessages;
+                }
+
+                updatedMessages[
+                  lastMessageIndex
+                ] = {
+                  ...lastMessage,
+                  content:
+                    lastMessage.content +
+                    chunk,
+                };
+
+                return updatedMessages;
+              }
             );
           }
+        );
 
-          return previousMessages;
-        }
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+        await loadConversations();
+      } catch (error) {
+        console.error(
+          "AI streaming error:",
+          error
+        );
+
+        const errorMessage =
+          error?.message ||
+          "Unable to get a response from DevPulse AI.";
+
+        setError(errorMessage);
+
+        setMessages(
+          (previousMessages) => {
+            const lastMessage =
+              previousMessages[
+                previousMessages.length - 1
+              ];
+
+            if (
+              lastMessage?.role ===
+                "assistant" &&
+              !lastMessage.content
+            ) {
+              return previousMessages.slice(
+                0,
+                -1
+              );
+            }
+
+            return previousMessages;
+          }
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
 
   // ====================================
   // Handle Enter
@@ -508,24 +550,24 @@ const AiPage = () => {
 
   if (initializing) {
     return (
-      <div className="flex h-full min-h-0 flex-col bg-background">
-        <div className="flex items-center gap-3 border-b px-6 py-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
+      <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background">
+        <div className="flex min-w-0 items-center gap-3 border-b px-4 py-4 sm:px-6">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
             <Bot size={22} />
           </div>
 
-          <div>
-            <h1 className="text-lg font-semibold">
+          <div className="min-w-0">
+            <h1 className="truncate text-lg font-semibold">
               DevPulse AI
             </h1>
 
-            <p className="text-sm text-muted-foreground">
+            <p className="truncate text-sm text-muted-foreground">
               Loading your conversations...
             </p>
           </div>
         </div>
 
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex min-h-0 min-w-0 flex-1 items-center justify-center px-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span className="animate-pulse">
               ●
@@ -539,22 +581,37 @@ const AiPage = () => {
   }
 
   return (
-    <div className="flex h-full min-h-0 bg-background">
+    <div className="relative flex h-full min-h-0 min-w-0 overflow-hidden bg-background">
+      {/* ====================================
+          Mobile Sidebar Backdrop
+      ==================================== */}
+
+      {sidebarOpen && (
+        <button
+          type="button"
+          onClick={() =>
+            setSidebarOpen(false)
+          }
+          className="absolute inset-0 z-40 bg-black/40 md:hidden"
+          aria-label="Close AI chat sidebar"
+        />
+      )}
+
       {/* ====================================
           AI Conversation Sidebar
       ==================================== */}
 
       {sidebarOpen && (
-        <aside className="flex w-64 shrink-0 flex-col border-r bg-background">
+        <aside className="absolute inset-y-0 left-0 z-50 flex w-64 min-w-0 shrink-0 flex-col overflow-hidden border-r bg-background shadow-xl md:static md:z-auto md:w-64 md:shadow-none">
           {/* Sidebar Header */}
 
-          <div className="flex items-center justify-between border-b px-4 py-4">
-            <div>
+          <div className="flex shrink-0 items-center justify-between border-b px-4 py-4">
+            <div className="min-w-0">
               <h2 className="text-sm font-semibold">
                 AI Chats
               </h2>
 
-              <p className="text-xs text-muted-foreground">
+              <p className="truncate text-xs text-muted-foreground">
                 Your conversations
               </p>
             </div>
@@ -564,7 +621,7 @@ const AiPage = () => {
               onClick={() =>
                 setSidebarOpen(false)
               }
-              className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+              className="shrink-0 rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
               aria-label="Close chat sidebar"
             >
               <PanelLeftClose
@@ -575,7 +632,7 @@ const AiPage = () => {
 
           {/* New Chat */}
 
-          <div className="p-3">
+          <div className="shrink-0 p-3">
             <button
               type="button"
               onClick={
@@ -596,7 +653,7 @@ const AiPage = () => {
 
           {/* Conversation List */}
 
-          <div className="flex-1 overflow-y-auto px-2 pb-3">
+          <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-2 pb-3">
             <div className="space-y-1">
               {conversations.map(
                 (conversation) => {
@@ -613,7 +670,7 @@ const AiPage = () => {
                       key={
                         conversation._id
                       }
-                      className={`group flex items-center gap-1 rounded-xl transition-colors ${
+                      className={`group flex min-w-0 items-center gap-1 rounded-xl transition-colors ${
                         isActive
                           ? "bg-primary/10"
                           : "hover:bg-muted"
@@ -650,9 +707,7 @@ const AiPage = () => {
                         </span>
                       </button>
 
-                      {/* ====================================
-                          Delete Controls
-                      ==================================== */}
+                      {/* Delete Controls */}
 
                       {isDeleting ? (
                         <div className="flex shrink-0 items-center gap-1 pr-2">
@@ -660,7 +715,9 @@ const AiPage = () => {
 
                           <button
                             type="button"
-                            onClick={(event) => {
+                            onClick={(
+                              event
+                            ) => {
                               event.stopPropagation();
 
                               handleDeleteConversation(
@@ -679,7 +736,9 @@ const AiPage = () => {
 
                           <button
                             type="button"
-                            onClick={(event) => {
+                            onClick={(
+                              event
+                            ) => {
                               event.stopPropagation();
 
                               setDeletingConversationId(
@@ -697,7 +756,9 @@ const AiPage = () => {
                       ) : (
                         <button
                           type="button"
-                          onClick={(event) => {
+                          onClick={(
+                            event
+                          ) => {
                             event.stopPropagation();
 
                             setDeletingConversationId(
@@ -737,18 +798,18 @@ const AiPage = () => {
           Main AI Area
       ==================================== */}
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {/* Header */}
 
-        <div className="flex items-center justify-between border-b px-4 py-4 md:px-6">
-          <div className="flex items-center gap-3">
+        <div className="flex min-w-0 shrink-0 items-center justify-between gap-3 border-b px-3 py-3 sm:px-4 sm:py-4 md:px-6">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             {!sidebarOpen && (
               <button
                 type="button"
                 onClick={() =>
                   setSidebarOpen(true)
                 }
-                className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="shrink-0 rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
                 aria-label="Open chat sidebar"
               >
                 <PanelLeft
@@ -757,16 +818,16 @@ const AiPage = () => {
               </button>
             )}
 
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
-              <Bot size={22} />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground sm:h-10 sm:w-10">
+              <Bot size={20} />
             </div>
 
-            <div>
-              <h1 className="text-lg font-semibold">
+            <div className="min-w-0">
+              <h1 className="truncate text-base font-semibold sm:text-lg">
                 DevPulse AI
               </h1>
 
-              <p className="text-sm text-muted-foreground">
+              <p className="truncate text-xs text-muted-foreground sm:text-sm">
                 Your developer assistant
               </p>
             </div>
@@ -784,7 +845,7 @@ const AiPage = () => {
               loadingConversation ||
               !!deletingConversationId
             }
-            className="flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-9 shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50 sm:h-auto"
           >
             <Plus size={17} />
 
@@ -798,8 +859,8 @@ const AiPage = () => {
             Messages
         ==================================== */}
 
-        <div className="flex-1 overflow-y-auto px-4 py-6 md:px-8">
-          <div className="mx-auto flex max-w-4xl flex-col gap-5">
+        <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-3 py-4 sm:px-4 sm:py-6 md:px-8">
+          <div className="mx-auto flex w-full min-w-0 max-w-4xl flex-col gap-4 sm:gap-5">
             {loadingConversation ? (
               <div className="flex flex-1 items-center justify-center py-20">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -820,7 +881,7 @@ const AiPage = () => {
                   return (
                     <div
                       key={`${conversationId}-${message.role}-${index}`}
-                      className={`flex gap-3 ${
+                      className={`flex min-w-0 gap-2 sm:gap-3 ${
                         isUser
                           ? "justify-end"
                           : "justify-start"
@@ -833,20 +894,20 @@ const AiPage = () => {
                       )}
 
                       <div
-                        className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 ${
+                        className={`min-w-0 max-w-[calc(100%-2.5rem)] overflow-hidden break-words rounded-2xl px-3 py-2.5 text-sm leading-6 sm:max-w-[85%] sm:px-4 sm:py-3 ${
                           isUser
                             ? "bg-primary text-primary-foreground"
                             : "bg-muted"
                         }`}
                       >
                         {isUser ? (
-                          <div className="whitespace-pre-wrap">
+                          <div className="min-w-0 whitespace-pre-wrap break-words">
                             {
                               message.content
                             }
                           </div>
                         ) : (
-                          <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:mb-3 prose-headings:mt-5 prose-p:my-2 prose-ul:my-3 prose-ol:my-3 prose-li:my-0 prose-pre:my-3">
+                          <div className="prose prose-sm min-w-0 max-w-none break-words dark:prose-invert prose-headings:mb-3 prose-headings:mt-5 prose-p:my-2 prose-ul:my-3 prose-ol:my-3 prose-li:my-0 prose-pre:my-3">
                             {message.content ? (
                               <ReactMarkdown
                                 remarkPlugins={[
@@ -881,7 +942,7 @@ const AiPage = () => {
                                     children,
                                   }) {
                                     return (
-                                      <li className="pl-1">
+                                      <li className="break-words pl-1">
                                         {
                                           children
                                         }
@@ -906,7 +967,7 @@ const AiPage = () => {
                                       match
                                     ) {
                                       return (
-                                        <pre className="overflow-x-auto rounded-lg bg-black/80 p-4 text-sm text-white">
+                                        <pre className="max-w-full overflow-x-auto rounded-lg bg-black/80 p-3 text-sm text-white sm:p-4">
                                           <code
                                             className={
                                               className
@@ -923,7 +984,7 @@ const AiPage = () => {
 
                                     return (
                                       <code
-                                        className="rounded bg-black/10 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10"
+                                        className="break-words rounded bg-black/10 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10"
                                         {...props}
                                       >
                                         {
@@ -937,7 +998,7 @@ const AiPage = () => {
                                     children,
                                   }) {
                                     return (
-                                      <div className="overflow-x-auto">
+                                      <div className="min-w-0 max-w-full overflow-x-auto">
                                         {
                                           children
                                         }
@@ -957,7 +1018,7 @@ const AiPage = () => {
                                         }
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="font-medium underline"
+                                        className="break-all font-medium underline"
                                         {...props}
                                       >
                                         {
@@ -973,12 +1034,12 @@ const AiPage = () => {
                                 }
                               </ReactMarkdown>
                             ) : (
-                              <div className="flex items-center gap-2 text-muted-foreground">
+                              <div className="flex min-w-0 items-center gap-2 text-muted-foreground">
                                 <span className="animate-pulse">
                                   ●
                                 </span>
 
-                                <span>
+                                <span className="break-words">
                                   DevPulse AI is
                                   thinking...
                                 </span>
@@ -1001,7 +1062,10 @@ const AiPage = () => {
               )
             )}
 
-            <div ref={messagesEndRef} />
+            <div
+              ref={messagesEndRef}
+              className="h-px"
+            />
           </div>
         </div>
 
@@ -1009,35 +1073,39 @@ const AiPage = () => {
             Error
         ==================================== */}
 
-      {error && (
-  <div className="px-4 pb-2 md:px-8">
-    <div className="mx-auto max-w-4xl rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-      <div className="flex items-start justify-between gap-3">
-        <p>{error}</p>
+        {error && (
+          <div className="min-w-0 shrink-0 px-3 pb-2 sm:px-4 md:px-8">
+            <div className="mx-auto flex min-w-0 max-w-4xl items-start gap-3 overflow-hidden rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-3 text-sm text-destructive sm:px-4">
+              <p className="min-w-0 flex-1 break-words">
+                {error}
+              </p>
 
-        <button
-          type="button"
-          onClick={() => setError("")}
-          className="shrink-0 rounded-md p-1 text-destructive/70 hover:bg-destructive/10 hover:text-destructive"
-          aria-label="Dismiss error"
-        >
-          <X size={16} />
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+              <button
+                type="button"
+                onClick={() =>
+                  setError("")
+                }
+                className="shrink-0 rounded-md p-1 text-destructive/70 hover:bg-destructive/10 hover:text-destructive"
+                aria-label="Dismiss error"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ====================================
             Input
         ==================================== */}
 
-        <div className="border-t p-4 md:px-8">
-          <div className="mx-auto flex max-w-4xl items-end gap-2 rounded-2xl border bg-background p-2 shadow-sm">
+        <div className="min-w-0 shrink-0 border-t px-3 py-3 sm:px-4 sm:py-4 md:px-8">
+          <div className="mx-auto flex w-full min-w-0 max-w-4xl items-end gap-2 rounded-2xl border bg-background p-2 shadow-sm">
             <textarea
               value={input}
               onChange={(event) =>
-                setInput(event.target.value)
+                setInput(
+                  event.target.value
+                )
               }
               onKeyDown={handleKeyDown}
               placeholder="Ask DevPulse AI..."
@@ -1047,12 +1115,14 @@ const AiPage = () => {
                 loadingConversation ||
                 !!deletingConversationId
               }
-              className="max-h-32 min-h-10 flex-1 resize-none bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              className="min-w-0 max-h-32 min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 sm:px-3"
             />
 
             <button
               type="button"
-              onClick={handleSendMessage}
+              onClick={
+                handleSendMessage
+              }
               disabled={
                 !input.trim() ||
                 loading ||
@@ -1067,7 +1137,7 @@ const AiPage = () => {
             </button>
           </div>
 
-          <p className="mx-auto mt-2 max-w-4xl text-center text-xs text-muted-foreground">
+          <p className="mx-auto mt-2 max-w-4xl px-2 text-center text-[11px] leading-4 text-muted-foreground sm:text-xs">
             DevPulse AI can make mistakes.
             Verify important technical
             information.

@@ -1,12 +1,128 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 
+import User from "../models/user.model.js";
 import AIConversation from "../models/aiConversation.model.js";
 import AIUsage from "../models/aiUsage.model.js";
 
 import {
   generateAIResponseStream,
 } from "../services/ai.service.js";
+
+// ====================================
+// Build Safe DevPulse User Context
+// ====================================
+
+const buildDevPulseContext = (
+  user
+) => {
+  const education =
+    Array.isArray(user.education)
+      ? user.education
+          .map((item) => ({
+            institution:
+              item.institution || "",
+            degree:
+              item.degree || "",
+            fieldOfStudy:
+              item.fieldOfStudy || "",
+            startDate:
+              item.startDate || null,
+            endDate:
+              item.endDate || null,
+            grade:
+              item.grade || "",
+            description:
+              item.description || "",
+          }))
+          .filter(
+            (item) =>
+              item.institution ||
+              item.degree ||
+              item.fieldOfStudy
+          )
+      : [];
+
+  const experience =
+    Array.isArray(user.experience)
+      ? user.experience
+          .map((item) => ({
+            company:
+              item.company || "",
+            position:
+              item.position || "",
+            startDate:
+              item.startDate || null,
+            endDate:
+              item.endDate || null,
+            currentlyWorking:
+              Boolean(
+                item.currentlyWorking
+              ),
+            location:
+              item.location || "",
+            description:
+              item.description || "",
+          }))
+          .filter(
+            (item) =>
+              item.company ||
+              item.position ||
+              item.description
+          )
+      : [];
+
+  const certificates =
+    Array.isArray(user.certificates)
+      ? user.certificates
+          .map((item) => ({
+            title:
+              item.title || "",
+            issuer:
+              item.issuer || "",
+            issueDate:
+              item.issueDate || null,
+            credentialUrl:
+              item.credentialUrl || "",
+          }))
+          .filter(
+            (item) =>
+              item.title ||
+              item.issuer
+          )
+      : [];
+
+  return {
+    fullName:
+      user.fullName || "",
+
+    username:
+      user.username || "",
+
+    bio:
+      user.bio || "",
+
+    skills:
+      Array.isArray(user.skills)
+        ? user.skills.filter(Boolean)
+        : [],
+
+    github:
+      user.github || "",
+
+    linkedin:
+      user.linkedin || "",
+
+    website:
+      user.website || "",
+
+    education,
+
+    experience,
+
+    certificates,
+  };
+};
 
 // ====================================
 // Generate AI Chat Response
@@ -35,6 +151,31 @@ export const chatWithAI = asyncHandler(
         "AI conversation not found"
       );
     }
+
+    // ====================================
+    // Get Current User Profile
+    // ====================================
+
+    const user =
+      await User.findById(
+        req.user._id
+      ).select(
+        "fullName username bio skills github linkedin website education experience certificates"
+      );
+
+    if (!user) {
+      throw new ApiError(
+        404,
+        "User not found"
+      );
+    }
+
+    // ====================================
+    // Build Safe DevPulse Context
+    // ====================================
+
+    const devPulseContext =
+      buildDevPulseContext(user);
 
     // ====================================
     // Save User Message
@@ -104,7 +245,8 @@ export const chatWithAI = asyncHandler(
 
       const responseStream =
         await generateAIResponseStream(
-          aiMessages
+          aiMessages,
+          devPulseContext
         );
 
       // ====================================
@@ -158,7 +300,8 @@ export const chatWithAI = asyncHandler(
       if (completeResponse.trim()) {
         conversation.messages.push({
           role: "assistant",
-          content: completeResponse,
+          content:
+            completeResponse,
         });
 
         // ====================================
@@ -182,7 +325,8 @@ export const chatWithAI = asyncHandler(
       // ====================================
 
       if (completeResponse.trim()) {
-        const today = new Date();
+        const today =
+          new Date();
 
         const inputTokens =
           Number(

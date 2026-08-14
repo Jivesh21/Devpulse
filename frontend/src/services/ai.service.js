@@ -106,6 +106,10 @@ export const streamAIMessage = async (
     throw new Error(errorMessage);
   }
 
+  // ====================================
+  // Validate Stream
+  // ====================================
+
   if (!response.body) {
     throw new Error(
       "AI response stream is unavailable."
@@ -113,7 +117,7 @@ export const streamAIMessage = async (
   }
 
   // ====================================
-  // Read SSE Stream
+  // Stream Reader
   // ====================================
 
   const reader =
@@ -124,6 +128,138 @@ export const streamAIMessage = async (
 
   let buffer = "";
 
+  // ====================================
+  // Process SSE Event
+  // ====================================
+
+  const processEvent = (event) => {
+    if (!event?.trim()) {
+      return false;
+    }
+
+    // Normalize Windows/Linux line endings.
+    const lines =
+      event.replace(
+        /\r/g,
+        ""
+      ).split("\n");
+
+    // ====================================
+    // Collect data lines
+    // ====================================
+
+    const dataLines = [];
+
+    for (const line of lines) {
+      if (
+        line.startsWith("data:")
+      ) {
+        dataLines.push(
+          line.slice(5).trim()
+        );
+      }
+    }
+
+    if (!dataLines.length) {
+      return false;
+    }
+
+    // SSE allows multiple data lines.
+    const rawData =
+      dataLines.join("\n").trim();
+
+    if (!rawData) {
+      return false;
+    }
+
+    // ====================================
+    // Handle SSE Done Marker
+    // ====================================
+
+    if (rawData === "[DONE]") {
+      return true;
+    }
+
+    // ====================================
+    // Parse JSON
+    // ====================================
+
+    let data;
+
+    try {
+      data = JSON.parse(rawData);
+    } catch (error) {
+      console.error(
+        "Invalid AI stream data:",
+        rawData
+      );
+
+      return false;
+    }
+
+    // ====================================
+    // Text Chunk
+    // ====================================
+
+    if (
+      data?.type === "text"
+    ) {
+      if (
+        typeof onChunk ===
+        "function" &&
+        typeof data.text ===
+          "string"
+      ) {
+        onChunk(data.text);
+      }
+
+      return false;
+    }
+
+    // ====================================
+    // Usage Information
+    // ====================================
+
+    if (
+      data?.type === "usage"
+    ) {
+      // Usage is handled by the backend.
+      // Nothing needs to be displayed
+      // inside the conversation.
+
+      return false;
+    }
+
+    // ====================================
+    // AI Error
+    // ====================================
+
+    if (
+      data?.type === "error"
+    ) {
+      throw new Error(
+        data.message ||
+          "Unable to generate AI response."
+      );
+    }
+
+    // ====================================
+    // Stream Complete
+    // ====================================
+
+    if (
+      data?.type === "done"
+    ) {
+      return true;
+    }
+
+    return false;
+  };
+
+  // ====================================
+  // Read SSE Stream
+  // ====================================
+
   try {
     while (true) {
       const {
@@ -131,9 +267,17 @@ export const streamAIMessage = async (
         done,
       } = await reader.read();
 
+      // ====================================
+      // Stream Finished
+      // ====================================
+
       if (done) {
         break;
       }
+
+      // ====================================
+      // Decode Chunk
+      // ====================================
 
       buffer += decoder.decode(
         value,
@@ -141,6 +285,22 @@ export const streamAIMessage = async (
           stream: true,
         }
       );
+
+      // ====================================
+      // Normalize Line Endings
+      // ====================================
+
+      buffer =
+        buffer.replace(
+          /\r\n/g,
+          "\n"
+        );
+
+      buffer =
+        buffer.replace(
+          /\r/g,
+          "\n"
+        );
 
       // ====================================
       // Split SSE Events
@@ -153,84 +313,32 @@ export const streamAIMessage = async (
       buffer =
         events.pop() || "";
 
+      // ====================================
+      // Process Complete Events
+      // ====================================
+
       for (const event of events) {
-        const lines =
-          event.split("\n");
+        const shouldStop =
+          processEvent(event);
 
-        for (const line of lines) {
-          if (
-            !line.startsWith(
-              "data:"
-            )
-          ) {
-            continue;
-          }
-
-          const rawData =
-            line
-              .slice(5)
-              .trim();
-
-          if (!rawData) {
-            continue;
-          }
-
-          let data;
-
-          try {
-            data =
-              JSON.parse(rawData);
-          } catch (error) {
-            console.error(
-              "Invalid AI stream data:",
-              rawData
-            );
-
-            continue;
-          }
-
-          // ====================================
-          // Text Chunk
-          // ====================================
-
-          if (
-            data.type ===
-            "text"
-          ) {
-            if (
-              typeof onChunk ===
-              "function"
-            ) {
-              onChunk(data.text);
-            }
-          }
-
-          // ====================================
-          // AI Error
-          // ====================================
-
-          if (
-            data.type ===
-            "error"
-          ) {
-            throw new Error(
-              data.message ||
-                "Unable to generate AI response."
-            );
-          }
-
-          // ====================================
-          // Stream Complete
-          // ====================================
-
-          if (
-            data.type ===
-            "done"
-          ) {
-            return;
-          }
+        if (shouldStop) {
+          return;
         }
       }
+    }
+
+    // ====================================
+    // Flush Decoder
+    // ====================================
+
+    buffer += decoder.decode();
+
+    // ====================================
+    // Process Final Event
+    // ====================================
+
+    if (buffer.trim()) {
+      processEvent(buffer);
     }
   } finally {
     reader.releaseLock();

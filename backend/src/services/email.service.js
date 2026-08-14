@@ -1,4 +1,15 @@
+import dns from "node:dns";
 import nodemailer from "nodemailer";
+
+// ====================================
+// Force IPv4 DNS Resolution
+// ====================================
+//
+// Render is unable to reach Gmail SMTP
+// over IPv6, so make Node prefer IPv4.
+//
+
+dns.setDefaultResultOrder("ipv4first");
 
 // ====================================
 // Gmail SMTP Transporter
@@ -6,17 +17,17 @@ import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT),
 
-  // Force IPv4 because Render is unable
-  // to reach the SMTP server over IPv6.
-  family: 4,
+  port: Number(
+    process.env.SMTP_PORT
+  ),
 
   secure:
     process.env.SMTP_SECURE === "true",
 
   auth: {
     user: process.env.SMTP_USER,
+
     pass: process.env.SMTP_PASS,
   },
 });

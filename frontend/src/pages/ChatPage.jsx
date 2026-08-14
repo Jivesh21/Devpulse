@@ -301,7 +301,16 @@ export default function ChatPage() {
     getOtherParticipant(
       selectedConversation
     );
+const handleOpenProfile = () => {
+  const username =
+    activeParticipant?.username;
 
+  if (!username) {
+    return;
+  }
+
+  navigate(`/profile/${username}`);
+};
   // ====================================
   // Filter Conversations
   // ====================================
@@ -1687,19 +1696,32 @@ export default function ChatPage() {
                           />
                         )}
 
-                        <div className="relative shrink-0">
-                          <Avatar
-                            className="
-                              h-12
-                              w-12
-                              border
-                              border-border/60
-                              shadow-sm
-                              transition-transform
-                              duration-200
-                              group-hover:scale-[1.03]
-                            "
-                          >
+                        <button
+  type="button"
+  onClick={handleOpenProfile}
+  disabled={!activeParticipant?.username}
+  className="
+    relative
+    shrink-0
+    rounded-full
+    focus:outline-none
+    focus-visible:ring-2
+    focus-visible:ring-primary/50
+    disabled:cursor-default
+  "
+>
+  <Avatar
+    className="
+      h-12
+      w-12
+      border
+      border-border/60
+      shadow-sm
+      transition-transform
+      duration-200
+      group-hover:scale-[1.03]
+    "
+  >
                             <AvatarImage
                               src={
                                 participant?.avatar
@@ -1737,7 +1759,7 @@ export default function ChatPage() {
                               "
                             />
                           )}
-                        </div>
+                        </button>
 
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-2">
@@ -2034,11 +2056,28 @@ export default function ChatPage() {
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <h2 className="truncate text-sm font-bold sm:text-base">
-                      {activeParticipant?.fullName ||
-                        activeParticipant?.username ||
-                        "Developer"}
-                    </h2>
+                    <button
+  type="button"
+  onClick={handleOpenProfile}
+  disabled={!activeParticipant?.username}
+  className="
+    max-w-full
+    truncate
+    text-left
+    text-sm
+    font-bold
+    transition-colors
+    hover:text-primary
+    focus:outline-none
+    focus-visible:ring-2
+    focus-visible:ring-primary/50
+    sm:text-base
+  "
+>
+  {activeParticipant?.fullName ||
+    activeParticipant?.username ||
+    "Developer"}
+</button>
 
                     <span
                       className="
@@ -2281,42 +2320,66 @@ export default function ChatPage() {
                           `}
                         >
                           {/* Incoming avatar */}
+{/* Incoming avatar */}
 
-                          {!isOwnMessage &&
-                            !isSameSender && (
-                              <Avatar
-                                className="
-                                  mb-5
-                                  h-7
-                                  w-7
-                                  shrink-0
-                                  border
-                                  border-border/50
-                                "
-                              >
-                                <AvatarImage
-                                  src={
-                                    activeParticipant?.avatar
-                                  }
-                                  alt=""
-                                />
+{!isOwnMessage &&
+  !isSameSender && (
+    <button
+      type="button"
+      onClick={() => {
+        const username =
+          activeParticipant?.username;
 
-                                <AvatarFallback
-                                  className="
-                                    bg-primary/10
-                                    text-[9px]
-                                    font-semibold
-                                    text-primary
-                                  "
-                                >
-                                  {getInitials(
-                                    activeParticipant?.fullName ||
-                                      activeParticipant?.username
-                                  )}
-                                </AvatarFallback>
-                              </Avatar>
-                            )}
+        if (!username) return;
 
+        navigate(`/profile/${username}`);
+      }}
+      disabled={!activeParticipant?.username}
+      className="
+        mb-5
+        shrink-0
+        rounded-full
+        focus:outline-none
+        focus-visible:ring-2
+        focus-visible:ring-primary/50
+        disabled:cursor-default
+      "
+    >
+      <Avatar
+        className="
+          h-7
+          w-7
+          shrink-0
+          border
+          border-border/50
+          transition-transform
+          duration-200
+          hover:scale-[1.08]
+        "
+      >
+        <AvatarImage
+          src={
+            activeParticipant?.avatar
+          }
+          alt=""
+        />
+
+        <AvatarFallback
+          className="
+            bg-primary/10
+            text-[9px]
+            font-semibold
+            text-primary
+          "
+        >
+          {getInitials(
+            activeParticipant?.fullName ||
+              activeParticipant?.username
+          )}
+        </AvatarFallback>
+      </Avatar>
+    </button>
+  )}
                           {!isOwnMessage &&
                             isSameSender && (
                               <div className="w-7 shrink-0" />

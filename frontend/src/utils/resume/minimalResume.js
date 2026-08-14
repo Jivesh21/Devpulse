@@ -1,5 +1,7 @@
 import jsPDF from "jspdf";
 
+import { cleanRichText } from "./richText";
+
 function formatDate(date) {
   if (!date) return "";
 
@@ -30,9 +32,17 @@ function addWrappedText(
     maxWidth
   );
 
-  doc.text(lines, x, y);
+  doc.text(
+    lines,
+    x,
+    y
+  );
 
-  return y + lines.length * lineHeight;
+  return (
+    y +
+    lines.length *
+      lineHeight
+  );
 }
 
 function addSectionTitle(
@@ -145,8 +155,6 @@ export function generateMinimalResume(
 
   y += 7;
 
-  // Professional identity
-
   if (profile?.username) {
     doc.setFont(
       "helvetica",
@@ -169,8 +177,6 @@ export function generateMinimalResume(
 
     y += 5;
   }
-
-  // Contact information
 
   const contactDetails = [
     profile?.email,
@@ -329,8 +335,6 @@ export function generateMinimalResume(
           margin
         );
 
-        // Position
-
         doc.setFont(
           "helvetica",
           "bold"
@@ -353,8 +357,6 @@ export function generateMinimalResume(
 
         y += 4.5;
 
-        // Company
-
         doc.setFont(
           "helvetica",
           "normal"
@@ -376,8 +378,6 @@ export function generateMinimalResume(
             y
           );
         }
-
-        // Date
 
         const dates = [
           formatDate(
@@ -413,11 +413,12 @@ export function generateMinimalResume(
 
         y += 5;
 
-        // Description
+        const description =
+          cleanRichText(
+            experience.description
+          );
 
-        if (
-          experience.description
-        ) {
+        if (description) {
           doc.setFont(
             "helvetica",
             "normal"
@@ -433,7 +434,7 @@ export function generateMinimalResume(
 
           y = addWrappedText(
             doc,
-            experience.description,
+            description,
             margin,
             y,
             contentWidth,
@@ -636,9 +637,12 @@ export function generateMinimalResume(
           y += 4.5;
         }
 
-        if (
-          project.description
-        ) {
+        const description =
+          cleanRichText(
+            project.description
+          );
+
+        if (description) {
           doc.setFont(
             "helvetica",
             "normal"
@@ -654,7 +658,7 @@ export function generateMinimalResume(
 
           y = addWrappedText(
             doc,
-            project.description,
+            description,
             margin,
             y,
             contentWidth,

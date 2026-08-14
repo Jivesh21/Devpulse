@@ -1,5 +1,7 @@
 import jsPDF from "jspdf";
 
+import { cleanRichText } from "./richText";
+
 const PAGE_WIDTH = 210;
 const PAGE_HEIGHT = 297;
 
@@ -29,7 +31,6 @@ function formatDate(date) {
 }
 
 function drawSidebar(doc, profile) {
-  // Sidebar background
   doc.setFillColor(24, 20, 38);
 
   doc.rect(
@@ -40,7 +41,6 @@ function drawSidebar(doc, profile) {
     "F"
   );
 
-  // Accent line
   doc.setFillColor(139, 92, 246);
 
   doc.rect(
@@ -53,7 +53,6 @@ function drawSidebar(doc, profile) {
 
   let y = 22;
 
-  // Avatar circle
   doc.setFillColor(139, 92, 246);
 
   doc.circle(
@@ -87,7 +86,6 @@ function drawSidebar(doc, profile) {
 
   y += 28;
 
-  // Contact heading
   doc.setTextColor(196, 181, 253);
   doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
@@ -126,7 +124,6 @@ function drawSidebar(doc, profile) {
     y += lines.length * 3.5 + 3;
   });
 
-  // Skills
   if (
     Array.isArray(profile.skills) &&
     profile.skills.length
@@ -176,7 +173,6 @@ function drawSidebar(doc, profile) {
     });
   }
 
-  // Bio
   if (clean(profile.bio)) {
     y += 6;
 
@@ -257,7 +253,6 @@ function drawHeader(doc, profile) {
     );
   }
 
-  // Accent divider
   doc.setDrawColor(
     139,
     92,
@@ -348,7 +343,9 @@ function drawExperience(
         clean(item.location);
 
       const description =
-        clean(item.description);
+        cleanRichText(
+          item.description
+        );
 
       doc.setTextColor(
         35,
@@ -478,7 +475,7 @@ function drawProjects(
         clean(project.title);
 
       const description =
-        clean(
+        cleanRichText(
           project.description
         );
 
@@ -830,13 +827,11 @@ export function generateModernResume(
       format: "a4",
     });
 
-  // Sidebar
   drawSidebar(
     doc,
     profile
   );
 
-  // Main header
   drawHeader(
     doc,
     profile

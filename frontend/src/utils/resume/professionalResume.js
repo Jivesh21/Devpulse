@@ -1,5 +1,7 @@
 import jsPDF from "jspdf";
 
+import { cleanRichText } from "./richText";
+
 function formatDate(date) {
   if (!date) return "";
 
@@ -41,11 +43,16 @@ export function generateProfessionalResume(
 ) {
   const doc = new jsPDF();
 
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
+  const pageWidth =
+    doc.internal.pageSize.getWidth();
+
+  const pageHeight =
+    doc.internal.pageSize.getHeight();
 
   const margin = 18;
-  const contentWidth = pageWidth - margin * 2;
+
+  const contentWidth =
+    pageWidth - margin * 2;
 
   let y = 18;
 
@@ -57,14 +64,19 @@ export function generateProfessionalResume(
   doc.setFontSize(22);
 
   doc.text(
-    profile?.fullName || "Your Name",
+    profile?.fullName ||
+      "Your Name",
     margin,
     y
   );
 
   y += 8;
 
-  doc.setFont("helvetica", "normal");
+  doc.setFont(
+    "helvetica",
+    "normal"
+  );
+
   doc.setFontSize(9);
 
   const contactDetails = [
@@ -93,9 +105,12 @@ export function generateProfessionalResume(
     y += 4;
   }
 
-  // Divider
+  doc.setDrawColor(
+    80,
+    80,
+    80
+  );
 
-  doc.setDrawColor(80, 80, 80);
   doc.line(
     margin,
     y,
@@ -118,7 +133,11 @@ export function generateProfessionalResume(
       contentWidth
     );
 
-    doc.setFont("helvetica", "normal");
+    doc.setFont(
+      "helvetica",
+      "normal"
+    );
+
     doc.setFontSize(9);
 
     y = addWrappedText(
@@ -146,12 +165,18 @@ export function generateProfessionalResume(
       contentWidth
     );
 
-    doc.setFont("helvetica", "normal");
+    doc.setFont(
+      "helvetica",
+      "normal"
+    );
+
     doc.setFontSize(9);
 
     y = addWrappedText(
       doc,
-      profile.skills.join("  •  "),
+      profile.skills.join(
+        "  •  "
+      ),
       margin,
       y,
       contentWidth,
@@ -176,13 +201,23 @@ export function generateProfessionalResume(
 
     profile.experience.forEach(
       (experience) => {
-        checkPageBreak(doc, y);
+        checkPageBreak(
+          doc,
+          y
+        );
 
-        if (y > pageHeight - 40) {
+        if (
+          y >
+          pageHeight - 40
+        ) {
           y = margin;
         }
 
-        doc.setFont("helvetica", "bold");
+        doc.setFont(
+          "helvetica",
+          "bold"
+        );
+
         doc.setFontSize(10);
 
         doc.text(
@@ -194,7 +229,11 @@ export function generateProfessionalResume(
 
         y += 5;
 
-        doc.setFont("helvetica", "normal");
+        doc.setFont(
+          "helvetica",
+          "normal"
+        );
+
         doc.setFontSize(9);
 
         const companyLine = [
@@ -204,11 +243,13 @@ export function generateProfessionalResume(
           .filter(Boolean)
           .join("  |  ");
 
-        doc.text(
-          companyLine,
-          margin,
-          y
-        );
+        if (companyLine) {
+          doc.text(
+            companyLine,
+            margin,
+            y
+          );
+        }
 
         const dates = [
           formatDate(
@@ -236,10 +277,15 @@ export function generateProfessionalResume(
 
         y += 5;
 
-        if (experience.description) {
+        const description =
+          cleanRichText(
+            experience.description
+          );
+
+        if (description) {
           y = addWrappedText(
             doc,
-            experience.description,
+            description,
             margin,
             y,
             contentWidth,
@@ -269,9 +315,15 @@ export function generateProfessionalResume(
 
     profile.education.forEach(
       (education) => {
-        checkPageBreak(doc, y);
+        checkPageBreak(
+          doc,
+          y
+        );
 
-        if (y > pageHeight - 35) {
+        if (
+          y >
+          pageHeight - 35
+        ) {
           y = margin;
         }
 
@@ -279,6 +331,7 @@ export function generateProfessionalResume(
           "helvetica",
           "bold"
         );
+
         doc.setFontSize(10);
 
         doc.text(
@@ -294,6 +347,7 @@ export function generateProfessionalResume(
           "helvetica",
           "normal"
         );
+
         doc.setFontSize(9);
 
         const educationLine = [
@@ -303,11 +357,13 @@ export function generateProfessionalResume(
           .filter(Boolean)
           .join("  |  ");
 
-        doc.text(
-          educationLine,
-          margin,
-          y
-        );
+        if (educationLine) {
+          doc.text(
+            educationLine,
+            margin,
+            y
+          );
+        }
 
         const dates = [
           formatDate(
@@ -351,63 +407,83 @@ export function generateProfessionalResume(
       contentWidth
     );
 
-    projects.forEach((project) => {
-      checkPageBreak(doc, y);
+    projects.forEach(
+      (project) => {
+        checkPageBreak(
+          doc,
+          y
+        );
 
-      if (y > pageHeight - 45) {
-        y = margin;
-      }
+        if (
+          y >
+          pageHeight - 45
+        ) {
+          y = margin;
+        }
 
-      doc.setFont(
-        "helvetica",
-        "bold"
-      );
-      doc.setFontSize(10);
-
-      doc.text(
-        project.title ||
-          "Project",
-        margin,
-        y
-      );
-
-      y += 5;
-
-      if (project.techStack?.length) {
         doc.setFont(
           "helvetica",
-          "italic"
+          "bold"
         );
-        doc.setFontSize(8);
+
+        doc.setFontSize(10);
 
         doc.text(
-          project.techStack.join(
-            "  •  "
-          ),
+          project.title ||
+            "Project",
           margin,
           y
         );
 
         y += 5;
+
+        if (
+          project.techStack?.length
+        ) {
+          doc.setFont(
+            "helvetica",
+            "italic"
+          );
+
+          doc.setFontSize(8);
+
+          doc.text(
+            project.techStack.join(
+              "  •  "
+            ),
+            margin,
+            y
+          );
+
+          y += 5;
+        }
+
+        const description =
+          cleanRichText(
+            project.description
+          );
+
+        if (description) {
+          doc.setFont(
+            "helvetica",
+            "normal"
+          );
+
+          doc.setFontSize(9);
+
+          y = addWrappedText(
+            doc,
+            description,
+            margin,
+            y,
+            contentWidth,
+            4.5
+          );
+
+          y += 5;
+        }
       }
-
-      doc.setFont(
-        "helvetica",
-        "normal"
-      );
-      doc.setFontSize(9);
-
-      y = addWrappedText(
-        doc,
-        project.description,
-        margin,
-        y,
-        contentWidth,
-        4.5
-      );
-
-      y += 5;
-    });
+    );
   }
 
   // ====================================
@@ -425,9 +501,15 @@ export function generateProfessionalResume(
 
     profile.certificates.forEach(
       (certificate) => {
-        checkPageBreak(doc, y);
+        checkPageBreak(
+          doc,
+          y
+        );
 
-        if (y > pageHeight - 30) {
+        if (
+          y >
+          pageHeight - 30
+        ) {
           y = margin;
         }
 
@@ -435,6 +517,7 @@ export function generateProfessionalResume(
           "helvetica",
           "bold"
         );
+
         doc.setFontSize(9);
 
         doc.text(
@@ -460,11 +543,13 @@ export function generateProfessionalResume(
           .filter(Boolean)
           .join("  |  ");
 
-        doc.text(
-          issuer,
-          margin,
-          y
-        );
+        if (issuer) {
+          doc.text(
+            issuer,
+            margin,
+            y
+          );
+        }
 
         y += 6;
       }
@@ -489,6 +574,7 @@ export function generateProfessionalResume(
       "helvetica",
       "normal"
     );
+
     doc.setFontSize(7);
 
     doc.setTextColor(
@@ -498,7 +584,10 @@ export function generateProfessionalResume(
     );
 
     doc.text(
-      `DevPulse • ${profile?.fullName || "Resume"}`,
+      `DevPulse • ${
+        profile?.fullName ||
+        "Resume"
+      }`,
       margin,
       pageHeight - 8
     );
@@ -514,7 +603,10 @@ export function generateProfessionalResume(
   }
 
   doc.save(
-    `${profile?.username || "resume"}-professional.pdf`
+    `${
+      profile?.username ||
+      "resume"
+    }-professional.pdf`
   );
 }
 
@@ -577,7 +669,10 @@ function checkPageBreak(
   const pageHeight =
     doc.internal.pageSize.getHeight();
 
-  if (y > pageHeight - 30) {
+  if (
+    y >
+    pageHeight - 30
+  ) {
     doc.addPage();
   }
 }

@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import {
   fetchGithubProfile,
+  fetchGithubContributions,
   connectGithub,
   githubCallback,
   getConnectedGithub,
@@ -20,6 +21,7 @@ console.log("✅ GitHub Router Loaded");
 
 // User must be logged into DevPulse
 // before connecting GitHub.
+
 router.get(
   "/connect",
   verifyJWT,
@@ -27,8 +29,7 @@ router.get(
 );
 
 // GitHub redirects back here after authorization.
-// We need the DevPulse user so we know whose
-// GitHub account to save.
+
 router.get(
   "/callback",
   verifyJWT,
@@ -36,6 +37,7 @@ router.get(
 );
 
 // Get currently connected GitHub account
+
 router.get(
   "/me",
   verifyJWT,
@@ -43,10 +45,24 @@ router.get(
 );
 
 // Disconnect GitHub
+
 router.post(
   "/disconnect",
   verifyJWT,
   disconnectGithub
+);
+
+// ====================================
+// Public GitHub Contribution Activity
+// ====================================
+
+// IMPORTANT:
+// This route must come before
+// /:username.
+
+router.get(
+  "/:username/contributions",
+  fetchGithubContributions
 );
 
 // ====================================
@@ -55,6 +71,7 @@ router.post(
 
 // Example:
 // GET /github/jivii21
+
 router.get(
   "/:username",
   fetchGithubProfile

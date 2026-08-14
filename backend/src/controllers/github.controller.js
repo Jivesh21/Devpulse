@@ -10,14 +10,13 @@ import {
   getAuthenticatedGithubRepositories,
   getGithubProfile,
   getGithubRepositories,
+  getGithubContributionCalendar,
 } from "../services/github.service.js";
 
 // ====================================
 // Connect GitHub
 // ====================================
-// ====================================
-// Connect GitHub
-// ====================================
+
 export const connectGithub = asyncHandler(
   async (req, res) => {
     const state = crypto
@@ -27,7 +26,6 @@ export const connectGithub = asyncHandler(
     const authorizationUrl =
       getGithubAuthorizationUrl(state);
 
-    // Store OAuth state temporarily
     res.cookie(
       "github_oauth_state",
       state,
@@ -59,6 +57,7 @@ export const connectGithub = asyncHandler(
 // ====================================
 // GitHub OAuth Callback
 // ====================================
+
 export const githubCallback =
   asyncHandler(async (req, res) => {
     const {
@@ -70,6 +69,7 @@ export const githubCallback =
     // ====================================
     // GitHub Authorization Cancelled
     // ====================================
+
     if (error) {
       return res.redirect(
         `${process.env.FRONTEND_URL}/settings?github=cancelled`
@@ -79,6 +79,7 @@ export const githubCallback =
     // ====================================
     // Missing OAuth Parameters
     // ====================================
+
     if (!code || !state) {
       return res.redirect(
         `${process.env.FRONTEND_URL}/settings?github=failed`
@@ -88,6 +89,7 @@ export const githubCallback =
     // ====================================
     // Validate OAuth State
     // ====================================
+
     const storedState =
       req.cookies?.github_oauth_state;
 
@@ -103,12 +105,14 @@ export const githubCallback =
     // ====================================
     // Exchange Code For Token
     // ====================================
+
     const accessToken =
       await exchangeGithubCode(code);
 
     // ====================================
     // Get GitHub User
     // ====================================
+
     const githubUser =
       await getAuthenticatedGithubUser(
         accessToken
@@ -117,6 +121,7 @@ export const githubCallback =
     // ====================================
     // Save GitHub Connection
     // ====================================
+
     await User.findByIdAndUpdate(
       req.user._id,
       {
@@ -132,8 +137,6 @@ export const githubCallback =
               new Date(),
           },
 
-          // Keep existing public
-          // GitHub field synchronized.
           github:
             `https://github.com/${githubUser.login}`,
         },
@@ -143,6 +146,7 @@ export const githubCallback =
     // ====================================
     // Clear OAuth State
     // ====================================
+
     res.clearCookie(
       "github_oauth_state"
     );
@@ -150,6 +154,7 @@ export const githubCallback =
     // ====================================
     // Redirect To Frontend
     // ====================================
+
     return res.redirect(
       `${process.env.FRONTEND_URL}/settings?github=connected`
     );
@@ -158,6 +163,7 @@ export const githubCallback =
 // ====================================
 // Get Connected GitHub Data
 // ====================================
+
 export const getConnectedGithub =
   asyncHandler(async (req, res) => {
     const user =
@@ -201,6 +207,7 @@ export const getConnectedGithub =
 // ====================================
 // Disconnect GitHub
 // ====================================
+
 export const disconnectGithub =
   asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(
@@ -233,8 +240,9 @@ export const disconnectGithub =
   });
 
 // ====================================
-// Existing Public GitHub Profile
+// Public GitHub Profile
 // ====================================
+
 export const fetchGithubProfile =
   async (req, res) => {
     try {
@@ -249,10 +257,18 @@ export const fetchGithubProfile =
         });
       }
 
+      // ====================================
+      // Public GitHub Profile
+      // ====================================
+
       const profile =
         await getGithubProfile(
           username
         );
+
+      // ====================================
+      // Public GitHub Repositories
+      // ====================================
 
       const repositories =
         await getGithubRepositories(
@@ -267,6 +283,90 @@ export const fetchGithubProfile =
         },
       });
     } catch (error) {
+      console.error(
+        "GitHub public profile error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  };
+
+// ====================================
+// GitHub Contribution Calendar
+// ====================================
+
+export const fetchGithubContributions =
+  async (req, res) => {
+    try {
+      const { username } =
+        req.params;
+
+      if (!username) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "GitHub username is required",
+        });
+      }
+
+      // ====================================
+      // Find Connected DevPulse User
+      // ====================================
+
+      const user =
+        await User.findOne({
+          "githubIntegration.username":
+            username,
+          "githubIntegration.connected":
+            true,
+        }).select(
+          "+githubIntegration.accessToken"
+        );
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "GitHub account is not connected to DevPulse",
+        });
+      }
+
+      const accessToken =
+        user.githubIntegration
+          .accessToken;
+
+      if (!accessToken) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "GitHub access token is unavailable",
+        });
+      }
+
+      // ====================================
+      // Fetch Contribution Calendar
+      // ====================================
+
+      const contributionCalendar =
+        await getGithubContributionCalendar(
+          username,
+          accessToken
+        );
+
+      return res.status(200).json({
+        success: true,
+        data: contributionCalendar,
+      });
+    } catch (error) {
+      console.error(
+        "GitHub contribution error:",
+        error
+      );
+
       return res.status(500).json({
         success: false,
         message: error.message,

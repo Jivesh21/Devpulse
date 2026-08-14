@@ -8,6 +8,7 @@ import {
   connectGithub,
   getConnectedGithub,
   getPublicGithubProfile,
+  getGithubContributions,
   disconnectGithub,
 } from "@/services/github.service";
 
@@ -27,8 +28,11 @@ export const useConnectGithub = () => {
 
 export const useConnectedGithub = () => {
   return useQuery({
-    queryKey: ["github-connected"],
-    queryFn: getConnectedGithub,
+    queryKey: [
+      "github-connected",
+    ],
+    queryFn:
+      getConnectedGithub,
     retry: false,
   });
 };
@@ -46,7 +50,30 @@ export const usePublicGithubProfile = (
       username,
     ],
     queryFn: () =>
-      getPublicGithubProfile(username),
+      getPublicGithubProfile(
+        username
+      ),
+    enabled: !!username,
+    retry: false,
+  });
+};
+
+// ====================================
+// GitHub Contributions
+// ====================================
+
+export const useGithubContributions = (
+  username
+) => {
+  return useQuery({
+    queryKey: [
+      "github-contributions",
+      username,
+    ],
+    queryFn: () =>
+      getGithubContributions(
+        username
+      ),
     enabled: !!username,
     retry: false,
   });
@@ -56,21 +83,25 @@ export const usePublicGithubProfile = (
 // Disconnect GitHub
 // ====================================
 
-export const useDisconnectGithub = () => {
-  const queryClient =
-    useQueryClient();
+export const useDisconnectGithub =
+  () => {
+    const queryClient =
+      useQueryClient();
 
-  return useMutation({
-    mutationFn: disconnectGithub,
+    return useMutation({
+      mutationFn:
+        disconnectGithub,
 
-    onSuccess: () => {
-      queryClient.removeQueries({
-        queryKey: ["github-connected"],
-      });
+      onSuccess: () => {
+        queryClient.removeQueries({
+          queryKey: [
+            "github-connected",
+          ],
+        });
 
-      queryClient.invalidateQueries({
-        queryKey: ["profile"],
-      });
-    },
-  });
-};
+        queryClient.invalidateQueries({
+          queryKey: ["profile"],
+        });
+      },
+    });
+  };

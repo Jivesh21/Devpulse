@@ -7,6 +7,11 @@ import nodemailer from "nodemailer";
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT),
+
+  // Force IPv4 because Render is unable
+  // to reach the SMTP server over IPv6.
+  family: 4,
+
   secure:
     process.env.SMTP_SECURE === "true",
 

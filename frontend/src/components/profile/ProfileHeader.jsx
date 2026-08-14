@@ -202,7 +202,7 @@ function ProfileHeader({
       <div
         className="
           relative
-          h-40
+          h-28
           overflow-hidden
           bg-gradient-to-br
           from-primary
@@ -215,7 +215,12 @@ function ProfileHeader({
           <img
             src={profile.coverImage}
             alt={`${profile.fullName}'s cover`}
-            className="h-full w-full object-cover"
+            className="
+              h-full
+              w-full
+              object-cover
+              object-center
+            "
           />
         ) : (
           <>
@@ -311,17 +316,17 @@ function ProfileHeader({
       {/* Main Content */}
       {/* ================================= */}
 
-      <div className="px-5 pb-5 sm:px-7 sm:pb-6">
+      <div className="px-4 pb-5 sm:px-7 sm:pb-6">
 
         {/* ================================= */}
         {/* Avatar */}
         {/* ================================= */}
 
-        <div className="relative -mt-14 w-fit sm:-mt-16">
+        <div className="relative -mt-12 w-fit sm:-mt-16">
           <Avatar
             className="
-              h-28
-              w-28
+              h-24
+              w-24
               border-4
               border-background
               bg-background

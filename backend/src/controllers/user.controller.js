@@ -1,6 +1,6 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiResponse from "../utils/ApiResponse.js";
-
+import cookieOptions from "../utils/cookieOptions.js";
 import {
   updateProfileService,
   getUserProfileService,
@@ -11,6 +11,7 @@ import {
   updateCoverImageService,
   removeAvatarService,
   removeCoverImageService,
+  deleteAccountService,
 } from "../services/user.service.js";
 
 // ====================================
@@ -200,4 +201,33 @@ export const getSuggestedDevelopers =
         "Suggested developers fetched successfully"
       )
     );
+  });
+
+// ====================================
+// Delete Account
+// ====================================
+
+export const deleteAccount =
+  asyncHandler(async (req, res) => {
+    await deleteAccountService(
+      req.user._id
+    );
+
+    return res
+      .status(200)
+     .clearCookie(
+  "accessToken",
+  cookieOptions
+)
+.clearCookie(
+  "refreshToken",
+  cookieOptions
+)
+      .json(
+        new ApiResponse(
+          200,
+          null,
+          "Account deleted successfully"
+        )
+      );
   });

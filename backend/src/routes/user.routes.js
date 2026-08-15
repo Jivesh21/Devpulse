@@ -18,6 +18,7 @@ import {
   updateCoverImage,
   removeAvatar,
   removeCoverImage,
+   deleteAccount,
 } from "../controllers/user.controller.js";
 
 const router = Router();
@@ -98,7 +99,15 @@ router.delete(
   verifyJWT,
   removeCoverImage
 );
+// ====================================
+// Delete Account
+// ====================================
 
+router.delete(
+  "/me",
+  verifyJWT,
+  deleteAccount
+);
 // ====================================
 // Public Routes
 // ====================================

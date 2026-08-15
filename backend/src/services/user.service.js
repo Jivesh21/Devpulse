@@ -2,6 +2,10 @@ import User from "../models/user.model.js";
 import ApiError from "../utils/ApiError.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
+import {
+  deleteUserRelatedData,
+} from "./userCleanup.service.js";
+
 // ====================================
 // Update User Profile
 // ====================================
@@ -306,11 +310,6 @@ export const getCurrentUserService =
 
 export const getSuggestedDevelopersService =
   async (currentUserId) => {
-    // Show other registered developers.
-    // The client displays whether each person
-    // is already followed through the
-    // follow-status endpoint.
-
     const users =
       await User.find({
         _id: {
@@ -326,4 +325,43 @@ export const getSuggestedDevelopersService =
         .limit(20);
 
     return users;
+  };
+
+// ====================================
+// Delete Account
+// ====================================
+
+export const deleteAccountService =
+  async (userId) => {
+    // ====================================
+    // Verify User Exists
+    // ====================================
+
+    const user =
+      await User.findById(userId);
+
+    if (!user) {
+      throw new ApiError(
+        404,
+        "User not found"
+      );
+    }
+
+    // ====================================
+    // Delete All Related Data
+    // ====================================
+
+    await deleteUserRelatedData(
+      userId
+    );
+
+    // ====================================
+    // Delete User
+    // ====================================
+
+    await User.findByIdAndDelete(
+      userId
+    );
+
+    return null;
   };

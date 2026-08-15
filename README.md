@@ -1,6 +1,6 @@
 # DevPulse 🚀
 
-> A full-stack developer social platform built with the MERN stack, featuring real-time messaging, secure authentication, notifications, and an AI-powered developer assistant.
+> A full-stack developer social platform built with the MERN stack, featuring secure authentication, real-time messaging, notifications, and an AI-powered developer assistant.
 
 ## 🌐 Live Demo
 
@@ -12,9 +12,9 @@
 
 ## 📌 Overview
 
-DevPulse is a developer-focused social platform where developers can create and share posts, connect with other developers, communicate in real time, receive notifications, and interact with an AI-powered assistant.
+DevPulse is a developer-focused social platform designed to help developers connect, share knowledge, communicate in real time, and access AI assistance from one place.
 
-The project was built to go beyond a basic CRUD social media application by implementing production-oriented features such as JWT authentication with refresh tokens, Google OAuth, two-factor authentication, Socket.IO messaging, read receipts, notification systems, cloud image uploads, and AI integration.
+The project goes beyond a basic CRUD application by implementing production-oriented features including JWT authentication, Google OAuth, two-factor authentication, real-time communication with Socket.IO, notifications, cloud image storage, and an integrated AI assistant.
 
 ---
 
@@ -23,28 +23,24 @@ The project was built to go beyond a basic CRUD social media application by impl
 ### 🔐 Authentication & Security
 
 - User registration and login
-- JWT-based authentication
-- Access token + refresh token architecture
+- JWT authentication
+- Access token and refresh token architecture
 - HTTP-only authentication cookies
-- Automatic access-token refresh
-- Google OAuth login
+- Automatic token refresh
+- Google OAuth
 - Email verification
-- Forgot password / password reset
+- Forgot password and password reset
 - Two-factor authentication (2FA)
 - Secure logout
 - Protected API routes
-- Authentication middleware
+- Request validation and authorization
 
 ### 👨‍💻 Developer Profiles
 
 - Developer profiles
-- Custom bio
-- Skills
-- GitHub profile
-- LinkedIn profile
-- Personal website
-- Experience
-- Education
+- Bio and skills
+- GitHub, LinkedIn and personal website
+- Experience and education
 - Certificates
 - Profile avatar
 - Cover image
@@ -60,7 +56,7 @@ The project was built to go beyond a basic CRUD social media application by impl
 - Hashtag extraction
 - Paginated feed
 - User-specific posts
-- Post likes
+- Likes
 - Comments
 - Bookmarks
 
@@ -68,26 +64,24 @@ The project was built to go beyond a basic CRUD social media application by impl
 
 - Follow developers
 - Unfollow developers
+- Followers and following
 - Follow status
-- Followers
-- Following
 - Developer discovery
 - Suggested developers
 
 ### 💬 Real-Time Messaging
 
 - One-to-one conversations
-- Real-time messages using Socket.IO
+- Real-time messaging with Socket.IO
 - Private user rooms
 - Message history
 - Read receipts
 - Typing indicators
 - Real-time message delivery
-- Online socket connection handling
 
 ### 🔔 Notifications
 
-Real-time notifications for events such as:
+Real-time notifications for:
 
 - Likes
 - Comments
@@ -95,11 +89,9 @@ Real-time notifications for events such as:
 - Messages
 - Other platform activity
 
-Unread notification counts are also supported.
-
 ### 🤖 DevPulse AI
 
-DevPulse includes an integrated AI assistant designed for developers.
+DevPulse includes an integrated AI assistant for developers.
 
 Features include:
 
@@ -108,31 +100,50 @@ Features include:
 - AI usage tracking
 - Token/usage management
 - Dedicated AI interface
-- AI accessible from desktop and mobile navigation
+- Desktop and mobile access
 
-### ☁️ Media & Cloud Storage
+### ☁️ Cloud Media
 
 - Image uploads
 - Cloudinary integration
-- Profile images
-- Cover images
 - Post images
+- Profile avatars
+- Cover images
 
-### 📱 Responsive UI
+### 📱 Responsive Design
 
-The application is designed to work across:
+DevPulse is designed for:
 
 - Desktop
 - Tablet
 - Mobile
 
-Mobile navigation includes access to the complete DevPulse experience, including DevPulse AI.
+The mobile navigation also provides access to DevPulse AI and the rest of the platform.
+
+---
+## 📸 Screenshots
+
+### Feed
+
+![DevPulse Feed](./screenshots/feed.png)
+
+### Real-Time Messaging
+
+![DevPulse Chat](./screenshots/chat.png)
+
+### DevPulse AI
+
+![DevPulse AI](./screenshots/ai.png)
+
+### Mobile Experience
+
+![DevPulse Mobile](./screenshots/mobile.png)
 
 ---
 
-# 🏗️ Tech Stack
+## 🛠️ Tech Stack
 
-## Frontend
+### Frontend
 
 - React
 - Vite
@@ -144,7 +155,7 @@ Mobile navigation includes access to the complete DevPulse experience, including
 - Lucide React
 - Socket.IO Client
 
-## Backend
+### Backend
 
 - Node.js
 - Express.js
@@ -156,13 +167,13 @@ Mobile navigation includes access to the complete DevPulse experience, including
 - Nodemailer
 - Cloudinary
 
-## AI
+### AI
 
 - AI API integration
 - Persistent AI conversations
-- Token/usage tracking
+- Usage and token tracking
 
-## Deployment
+### Deployment
 
 - Vercel — Frontend
 - Render — Backend
@@ -171,28 +182,22 @@ Mobile navigation includes access to the complete DevPulse experience, including
 
 ---
 
-# 🏛️ Architecture
+## 🏗️ Architecture
 
 DevPulse follows a modular full-stack architecture.
 
 ```text
-DevPulse
-│
-├── frontend
-│   ├── components
-│   ├── pages
-│   ├── hooks
-│   ├── context
-│   ├── api
-│   └── routes
-│
-└── backend
-    ├── controllers
-    ├── services
-    ├── models
-    ├── routes
-    ├── middlewares
-    ├── validators
-    ├── socket
-    ├── utils
-    └── config
+Frontend
+   │
+   │ HTTP / WebSocket
+   ▼
+Backend API
+   │
+   ├── Controllers
+   ├── Services
+   ├── Middleware
+   ├── Validators
+   ├── Socket.IO
+   │
+   ▼
+MongoDB

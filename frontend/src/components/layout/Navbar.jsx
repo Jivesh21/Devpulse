@@ -31,6 +31,7 @@ import {
   Bookmark,
   X,
   ChevronRight,
+  Bot,
 } from "lucide-react";
 
 import {
@@ -100,6 +101,11 @@ function Navbar() {
       icon: Users,
       label: "Network",
       path: "/network",
+    },
+    {
+      icon: Bot,
+      label: "DevPulse AI",
+      path: "/ai",
     },
     {
       icon: Bookmark,

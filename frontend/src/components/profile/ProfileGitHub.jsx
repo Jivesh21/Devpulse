@@ -808,9 +808,7 @@ function getContributionTooltipText(
 // Contribution Stats
 // ====================================
 
-function getContributionStats(
-  calendar
-) {
+function getContributionStats(calendar) {
   if (
     !calendar ||
     !Array.isArray(calendar.weeks)
@@ -846,41 +844,66 @@ function getContributionStats(
   // ====================================
   // Current Week
   // ====================================
+  // GitHub contribution weeks start
+  // on Sunday.
 
-  const currentWeek =
-    calendar.weeks.find(
-      (week) => {
-        const firstDay =
-          new Date(
-            `${week.firstDay}T00:00:00`
-          );
-
-        const lastDay =
-          new Date(firstDay);
-
-        lastDay.setDate(
-          lastDay.getDate() + 6
-        );
-
-        const currentDate =
-          new Date(
-            `${today}T00:00:00`
-          );
-
-        return (
-          currentDate >= firstDay &&
-          currentDate <= lastDay
-        );
-      }
+  const todayDate =
+    new Date(
+      `${today}T00:00:00`
     );
 
+  const dayOfWeek =
+    todayDate.getDay();
+
+  const startOfWeek =
+    new Date(todayDate);
+
+  startOfWeek.setDate(
+    todayDate.getDate() -
+      dayOfWeek
+  );
+
+  // ====================================
+  // This Week's Contributions
+  // ====================================
+
   const weekContributions =
-    currentWeek?.contributionDays?.reduce(
+    allDays.reduce(
+      (total, day) => {
+        const contributionDate =
+          new Date(
+            `${day.date}T00:00:00`
+          );
+
+        if (
+          contributionDate >=
+            startOfWeek &&
+          contributionDate <=
+            todayDate
+        ) {
+          return (
+            total +
+            (day.contributionCount || 0)
+          );
+        }
+
+        return total;
+      },
+      0
+    );
+
+  // ====================================
+  // Last Year
+  // ====================================
+
+  const yearContributions =
+    calendar.totalContributions ||
+    allDays.reduce(
       (total, day) =>
         total +
         (day.contributionCount || 0),
       0
-    ) || 0;
+    );
 
   // ====================================
   // Return Stats
@@ -894,13 +917,7 @@ function getContributionStats(
       weekContributions,
 
     year:
-      calendar.totalContributions ||
-      allDays.reduce(
-        (total, day) =>
-          total +
-          (day.contributionCount || 0),
-        0
-      ),
+      yearContributions,
   };
 }
 
@@ -909,7 +926,8 @@ function getContributionStats(
 // ====================================
 
 function getTodayDateString() {
-  const date = new Date();
+  const date =
+    new Date();
 
   const year =
     date.getFullYear();
